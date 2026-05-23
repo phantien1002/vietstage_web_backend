@@ -1,40 +1,35 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@ToString
-@SuperBuilder
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "practice_attempts")
 public class PracticeAttempts {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "learner_id", nullable = false)
-    private Long learnerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "learner_id", nullable = false)
+    private Users learner;
 
-    @Column(name = "exercise_id", nullable = false)
-    private Long exerciseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercise_id", nullable = false)
+    private Exercises exercise;
 
-    @Column(name = "audio_reference_id")
-    private Long audioReferenceId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "audio_reference_id")
+    private AudioReferences audioReference;
 
     @Column(name = "pitch_score")
     private BigDecimal pitchScore;
@@ -58,6 +53,6 @@ public class PracticeAttempts {
     private String feedback;
 
     @Column(name = "created_at")
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
 }

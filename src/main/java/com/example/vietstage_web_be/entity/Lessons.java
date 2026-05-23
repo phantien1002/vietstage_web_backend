@@ -1,39 +1,36 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
-@ToString
-@SuperBuilder
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "lessons")
 public class Lessons {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "instrument_id", nullable = false)
-    private Long instrumentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instrument_id", nullable = false)
+    private Instruments instrument;
 
-    @Column(name = "skill_level_id", nullable = false)
-    private Long skillLevelId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "skill_level_id", nullable = false)
+    private SkillLevels skillLevelId;
 
-    @Column(name = "instructor_id", nullable = false)
-    private Long instructorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_id", nullable = false)
+    private Users instructor;
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -42,7 +39,7 @@ public class Lessons {
     private String description;
 
     @Column(name = "duration_minutes")
-    private Long durationMinutes;
+    private Integer durationMinutes;
 
     @Column(name = "unlock_score")
     private Long unlockScore;
@@ -51,9 +48,24 @@ public class Lessons {
     private Boolean published;
 
     @Column(name = "created_at")
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<LessonContents> contents;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<AudioReferences> audioReferences;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Exercises> exercises;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<LearnerProgress> learnerProgresses;
 }

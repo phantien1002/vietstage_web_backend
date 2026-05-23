@@ -1,33 +1,26 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@ToString
-@SuperBuilder
+@AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Table(name = "leaderboards")
 public class Leaderboards {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "learner_id", nullable = false)
-    private Long learnerId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false, unique = true)
+    private Users learner;
 
     @Column(name = "total_points")
     private Long totalPoints;
@@ -36,6 +29,6 @@ public class Leaderboards {
     private Long rankPosition;
 
     @Column(name = "updated_at")
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
 }

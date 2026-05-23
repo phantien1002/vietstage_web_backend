@@ -1,28 +1,22 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
-@ToString
-@SuperBuilder
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "skill_levels")
 public class SkillLevels {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "level_name", nullable = false)
@@ -31,4 +25,7 @@ public class SkillLevels {
     @Column(name = "description")
     private String description;
 
+    @OneToMany(mappedBy = "skillLevel", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Lessons> lessons;
 }

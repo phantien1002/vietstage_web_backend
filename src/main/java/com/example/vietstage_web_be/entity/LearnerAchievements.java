@@ -1,38 +1,32 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@ToString
-@SuperBuilder
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "learner_achievements")
 public class LearnerAchievements {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "learner_id", nullable = false)
-    private Long learnerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "learner_id", nullable = false)
+    private Users learner;
 
-    @Column(name = "achievement_id", nullable = false)
-    private Long achievementId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "achievement_id", nullable = false)
+    private Achievements achievement;
 
     @Column(name = "unlocked_at")
-    private Date unlockedAt;
+    private LocalDateTime unlockedAt;
 
 }

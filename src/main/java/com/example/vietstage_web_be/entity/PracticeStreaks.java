@@ -1,33 +1,26 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
+import jakarta.persistence.*;
+import lombok.*;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@ToString
-@SuperBuilder
+@AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Table(name = "practice_streaks")
 public class PracticeStreaks {
 
     @Id
-    @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "learner_id", nullable = false)
-    private Long learnerId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "learner_id", referencedColumnName = "id", nullable = false, unique = true)
+    private Users learner;
 
     @Column(name = "current_streak")
     private Long currentStreak;
@@ -39,9 +32,9 @@ public class PracticeStreaks {
     private Long totalPracticeDays;
 
     @Column(name = "last_practice_date")
-    private Date lastPracticeDate;
+    private LocalDateTime lastPracticeDate;
 
     @Column(name = "updated_at")
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
 }
