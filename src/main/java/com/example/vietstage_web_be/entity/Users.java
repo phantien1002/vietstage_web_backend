@@ -44,7 +44,7 @@ public class Users {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private UserSessions sessions;
+    private List<UserSessions> sessions;
 
     @OneToMany(mappedBy = "instructor", fetch = FetchType.LAZY)
     private List<Lessons> instructedLessons;

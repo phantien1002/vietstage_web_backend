@@ -26,7 +26,7 @@ public class Lessons {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_level_id", nullable = false)
-    private SkillLevels skillLevelId;
+    private List<SkillLevels> skillLevel;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instructor_id", nullable = false)
