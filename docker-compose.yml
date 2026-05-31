@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: vietstage_db_container
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=vietstage_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vietstage_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vietstage-network
+
+  vietstage-app:
+    build: .
+    container_name: vietstage_web_be_container
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/vietstage_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - vietstage-network
+
+volumes:
+  postgres_data:
+
+networks:
+  vietstage-network:
+    driver: bridge
