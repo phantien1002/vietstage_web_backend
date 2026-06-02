@@ -76,6 +76,9 @@ public class SecurityConfig {
                         // Admin route — chỉ ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // Instructor route — chỉ INSTRUCTOR
+                        .requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
+
                         // Tất cả route còn lại — phải đăng nhập
                         .anyRequest().authenticated()
                 )
