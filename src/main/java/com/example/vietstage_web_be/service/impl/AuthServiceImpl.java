@@ -5,7 +5,6 @@ import com.example.vietstage_web_be.dto.request.LoginRequest;
 import com.example.vietstage_web_be.dto.request.RegisterRequest;
 import com.example.vietstage_web_be.dto.request.ResetPasswordRequest;
 import com.example.vietstage_web_be.dto.response.AuthResponse;
-import com.example.vietstage_web_be.entity.UserProfiles;
 import com.example.vietstage_web_be.entity.Users;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
@@ -41,21 +40,12 @@ public class AuthServiceImpl implements IAuthService {
         Users user = Users.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
                 .role("LEARNER")
                 .active(true)
                 .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
-        usersRepository.save(user);
-
-        UserProfiles profile = UserProfiles.builder()
-                .user(user)
-                .fullName(request.getFullName())
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        user.setUserProfiles(profile);
         usersRepository.save(user);
 
         return AuthResponse.builder().message("Register successfully!").build();
@@ -109,7 +99,6 @@ public class AuthServiceImpl implements IAuthService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "User not found"));
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        user.setUpdatedAt(LocalDateTime.now());
         usersRepository.save(user);
 
         this.tokenCache.remove(request.getEmail());

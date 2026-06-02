@@ -12,15 +12,15 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "learner_daily_challenges")
-public class LearnerDailyChallenges {
+@Table(name = "lesson_techniques")
+public class LessonTechniques {
 
     @Id
-    @Column(name = "learner_id", nullable = false)
-    private Long learnerId;
+    @Column(name = "lesson_id", nullable = false)
+    private Long lessonId;
 
     @Id
-    @Column(name = "challenge_id", nullable = false)
-    private Long challengeId;
+    @Column(name = "technique_id", nullable = false)
+    private Long techniqueId;
 
 }
