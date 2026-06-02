@@ -74,10 +74,12 @@ public class AuthServiceImpl implements IAuthService {
             throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Account locked");
         }
 
-        String token = jwtTokenProvider.generateLoginToken(user.getEmail());
+        String token = jwtTokenProvider.generateLoginToken(user.getEmail(), user.getRole());
 
-        return AuthResponse.builder().message("Login successfully")
+        return AuthResponse.builder()
+                .message("Login successfully")
                 .token(token)
+                .role(user.getRole())
                 .build();
     }
 
