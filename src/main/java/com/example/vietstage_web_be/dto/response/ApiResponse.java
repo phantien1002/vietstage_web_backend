@@ -6,10 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class AuthResponse {
-    private String token;
+@NoArgsConstructor
+@Builder
+public class ApiResponse<T> {
     private String message;
+    private T data;
 }
