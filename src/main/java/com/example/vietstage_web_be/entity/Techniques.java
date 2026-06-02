@@ -11,13 +11,17 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "achievements")
-public class Achievements {
+@Table(name = "techniques")
+public class Techniques {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "instrument_id")
+    private Instruments instrument;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -25,6 +29,6 @@ public class Achievements {
     @Column(name = "description")
     private String description;
 
-    @ManyToMany(mappedBy = "achievements")
-    private Set<Users> learners;
+    @ManyToMany(mappedBy = "techniques")
+    private Set<Lessons> lessons;
 }

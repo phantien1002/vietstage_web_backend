@@ -3,42 +3,31 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "learner_progress")
 public class LearnerProgress {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EmbeddedId
+    private LearnerProgressId id = new LearnerProgressId();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "learner_id", nullable = false)
+    @MapsId("learnerId")
+    @JoinColumn(name = "learner_id", foreignKey = @ForeignKey(name = "fk_progress_learner"))
     private Users learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_id", nullable = false)
+    @MapsId("lessonId")
+    @JoinColumn(name = "lesson_id", foreignKey = @ForeignKey(name = "fk_progress_lesson"))
     private Lessons lesson;
 
-    @Column(name = "completion_percentage")
-    private BigDecimal completionPercentage;
+    @Column(name = "stars")
+    private Integer stars;
 
-    @Column(name = "highest_score")
-    private BigDecimal highestScore;
-
-    @Column(name = "total_practice_time")
-    private Long totalPracticeTime;
-
-    @Column(name = "is_completed")
+    @Column(name = "completed")
     private Boolean completed;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
 }
