@@ -9,8 +9,8 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "lesson_contents")
-public class LessonContents {
+@Table(name = "instructor_feedback")
+public class InstructorFeedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,10 +18,13 @@ public class LessonContents {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "lesson_id")
-    private Lessons lesson;
+    @JoinColumn(name = "instructor_id")
+    private Users instructor;
 
-    @Column(name = "content_text", nullable = false)
-    private String contentText;
+    @Column(name = "comment", nullable = false)
+    private String comment;
 
+    @ManyToOne
+    @JoinColumn(name = "attempt_id")
+    private PracticeAttempts practiceAttempt;
 }

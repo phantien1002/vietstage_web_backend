@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -17,19 +18,16 @@ public class PracticeAttempts {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "learner_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "learner_id")
     private Users learner;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "exercise_id")
     private Exercises exercise;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "audio_reference_id")
-    private AudioReferences audioReference;
 
     @Column(name = "pitch_score")
     private BigDecimal pitchScore;
@@ -37,22 +35,12 @@ public class PracticeAttempts {
     @Column(name = "rhythm_score")
     private BigDecimal rhythmScore;
 
-    @Column(name = "tone_score")
-    private BigDecimal toneScore;
-
-    @Column(name = "overall_score")
-    private BigDecimal overallScore;
-
-    @Column(name = "stars_earned")
-    private Long starsEarned;
-
-    @Column(name = "audio_recording_url")
-    private String audioRecordingUrl;
-
-    @Column(name = "feedback")
-    private String feedback;
+    @Column(name = "total_score")
+    private BigDecimal totalScore;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "practiceAttempt", cascade = CascadeType.ALL)
+    private List<InstructorFeedback> feedbacks;
 }

@@ -1,9 +1,10 @@
 package com.example.vietstage_web_be.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -15,18 +16,11 @@ import java.time.LocalDateTime;
 public class LearnerAchievements {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "learner_id", nullable = false)
+    private Long learnerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "learner_id", nullable = false)
-    private Users learner;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "achievement_id", nullable = false)
-    private Achievements achievement;
-
-    @Column(name = "unlocked_at")
-    private LocalDateTime unlockedAt;
+    @Id
+    @Column(name = "achievement_id", nullable = false)
+    private Long achievementId;
 
 }
