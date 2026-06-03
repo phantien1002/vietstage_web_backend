@@ -146,17 +146,31 @@ CREATE TABLE leaderboards (
     total_points INT DEFAULT 0
 );
 
--- PASSWORD THỰC TẾ CHO TOÀN BỘ ACCOUNT DEMO:
--- Password@123
-
 INSERT INTO skill_levels(level_name)
 VALUES ('BEGINNER'),('INTERMEDIATE'),('ADVANCED');
 
-INSERT INTO users(email,password_hash,full_name,role)
-VALUES
-('admin@vietstage.com','$2a$10$Password123HashDemo','System Admin','ADMIN'),
-('teacher1@vietstage.com','$2a$10$Password123HashDemo','Nguyen Van A','INSTRUCTOR'),
-('learner1@vietstage.com','$2a$10$Password123HashDemo','Tran Van B','LEARNER');
+INSERT INTO users (email, password_hash, full_name, role, is_active) 
+VALUES 
+-- 1. Tài khoản ADMIN - Admin@123
+('admin@vietstage.com', 
+ '$2a$10$Ep6jP15pbui3U5SqytWFYOI/8Rzf76NbZwA91DZM51H2FL5FlQOsS', 
+ 'System Admin',
+ 'ADMIN', 
+ true),
+
+-- 2. Tài khoản INSTRUCTOR (Giảng viên) - Instruc@123
+('instructor@vietstage.com', 
+ '$2a$10$QyeuzCZ6qKim/jEmk83fBeWx3R3Yfvs3zkbCCUSOgnvIDhIZi/f4S', 
+ 'Nguyen Van A',
+ 'INSTRUCTOR', 
+ true),
+
+-- 3. Tài khoản LEARNER (Học viên) - Learner@123
+('learner@vietstage.com', 
+ '$2a$10$T5WLoeD2gI9WvBLpF4wMOOlJhrsdgaShmNa.su5yjf8MG0s32EK.S', 
+ 'Tran Thi B',
+ 'LEARNER', 
+ true);
 
 INSERT INTO instructor_profiles(user_id,specialization,biography,years_experience)
 VALUES (2,'Dan Tranh','Traditional music instructor',5);
@@ -193,3 +207,4 @@ VALUES ('First Lesson','Complete first lesson');
 
 INSERT INTO daily_challenges(title)
 VALUES ('Practice 10 Minutes');
+
