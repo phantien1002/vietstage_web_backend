@@ -3,6 +3,8 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.UserResponse;
 import com.example.vietstage_web_be.entity.Users;
+import com.example.vietstage_web_be.exception.AppException;
+import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.UsersRepository;
 import com.example.vietstage_web_be.service.IUserService;
 import com.example.vietstage_web_be.specification.UserSpecification;
@@ -21,12 +23,21 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
 
-    // Danh sách field hợp lệ để sắp xếp, tránh SQL injection
+    private static final int MAX_PAGE_SIZE = 100;
+
+    // Field hợp lệ để sắp xếp, tránh lỗi runtime hoặc SQL injection
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "id", "email", "fullName", "role", "active", "createdAt"
     );
 
     private final UsersRepository usersRepository;
+
+    @Override
+    public UserResponse getUserById(Long id) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "User not found with id: " + id));
+        return toUserResponse(user);
+    }
 
     @Override
     public PageResponse<UserResponse> getUsers(
@@ -35,9 +46,7 @@ public class UserServiceImpl implements IUserService {
 
         Pageable pageable = buildPageable(page, size, sortBy, sortDir);
         Specification<Users> spec = UserSpecification.filter(keyword, role, isActive);
-
-        Page<Users> usersPage = usersRepository.findAll(spec, pageable);
-        return toPageResponse(usersPage);
+        return toPageResponse(usersRepository.findAll(spec, pageable));
     }
 
     @Override
@@ -45,12 +54,19 @@ public class UserServiceImpl implements IUserService {
             String keyword, Boolean isActive,
             int page, int size, String sortBy, String sortDir) {
 
-        // Cố định role = LEARNER
         Pageable pageable = buildPageable(page, size, sortBy, sortDir);
         Specification<Users> spec = UserSpecification.filter(keyword, "LEARNER", isActive);
+        return toPageResponse(usersRepository.findAll(spec, pageable));
+    }
 
-        Page<Users> usersPage = usersRepository.findAll(spec, pageable);
-        return toPageResponse(usersPage);
+    @Override
+    public PageResponse<UserResponse> getInstructors(
+            String keyword, Boolean isActive,
+            int page, int size, String sortBy, String sortDir) {
+
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Specification<Users> spec = UserSpecification.filter(keyword, "INSTRUCTOR", isActive);
+        return toPageResponse(usersRepository.findAll(spec, pageable));
     }
 
     // ============================================================
@@ -58,12 +74,14 @@ public class UserServiceImpl implements IUserService {
     // ============================================================
 
     private Pageable buildPageable(int page, int size, String sortBy, String sortDir) {
-        // Validate sort field để tránh lỗi hoặc injection
+        // Giới hạn page size tối đa
+        int clampedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        // Validate sort field để tránh lỗi runtime
         String validSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "id";
         Sort sort = "desc".equalsIgnoreCase(sortDir)
                 ? Sort.by(validSortBy).descending()
                 : Sort.by(validSortBy).ascending();
-        return PageRequest.of(page, size, sort);
+        return PageRequest.of(Math.max(page, 0), clampedSize, sort);
     }
 
     private UserResponse toUserResponse(Users user) {
