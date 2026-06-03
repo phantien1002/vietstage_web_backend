@@ -52,19 +52,20 @@ public class UserController {
             @Parameter(description = "Lọc theo trạng thái: true = active, false = inactive")
             @RequestParam(required = false) Boolean isActive,
 
-            @Parameter(description = "Số trang, bắt đầu từ 0 (mặc định: 0)")
-            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số trang, bắt đầu từ 1 (mặc định: 1)")
+            @RequestParam(defaultValue = "1") int pageNumber,
 
             @Parameter(description = "Số phần tử mỗi trang, tối đa 100 (mặc định: 10)")
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "10") int pageSize,
 
             @Parameter(description = "Sắp xếp theo: id | email | fullName | role | createdAt (mặc định: id)")
             @RequestParam(defaultValue = "id") String sortBy,
 
-            @Parameter(description = "Chiều sắp xếp: asc | desc (mặc định: asc)")
-            @RequestParam(defaultValue = "asc") String sortDir
+            @Parameter(description = "true = giảm dần (Z→A, mới→cũ), false = tăng dần (mặc định: false)")
+            @RequestParam(defaultValue = "false") boolean sortDescending
     ) {
-        PageResponse<UserResponse> data = userService.getUsers(keyword, role, isActive, page, size, sortBy, sortDir);
+        PageResponse<UserResponse> data = userService.getUsers(
+                keyword, role, isActive, pageNumber, pageSize, sortBy, sortDescending);
         return ResponseEntity.ok(ApiResponse.<PageResponse<UserResponse>>builder()
                 .message("Users retrieved successfully")
                 .data(data)
@@ -84,19 +85,20 @@ public class UserController {
             @Parameter(description = "Lọc theo trạng thái: true = active, false = inactive")
             @RequestParam(required = false) Boolean isActive,
 
-            @Parameter(description = "Số trang, bắt đầu từ 0 (mặc định: 0)")
-            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số trang, bắt đầu từ 1 (mặc định: 1)")
+            @RequestParam(defaultValue = "1") int pageNumber,
 
             @Parameter(description = "Số phần tử mỗi trang, tối đa 100 (mặc định: 10)")
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "10") int pageSize,
 
             @Parameter(description = "Sắp xếp theo: id | email | fullName | createdAt (mặc định: id)")
             @RequestParam(defaultValue = "id") String sortBy,
 
-            @Parameter(description = "Chiều sắp xếp: asc | desc (mặc định: asc)")
-            @RequestParam(defaultValue = "asc") String sortDir
+            @Parameter(description = "true = giảm dần (Z→A, mới→cũ), false = tăng dần (mặc định: false)")
+            @RequestParam(defaultValue = "false") boolean sortDescending
     ) {
-        PageResponse<UserResponse> data = userService.getLearners(keyword, isActive, page, size, sortBy, sortDir);
+        PageResponse<UserResponse> data = userService.getLearners(
+                keyword, isActive, pageNumber, pageSize, sortBy, sortDescending);
         return ResponseEntity.ok(ApiResponse.<PageResponse<UserResponse>>builder()
                 .message("Learners retrieved successfully")
                 .data(data)
@@ -116,19 +118,20 @@ public class UserController {
             @Parameter(description = "Lọc theo trạng thái: true = active, false = inactive")
             @RequestParam(required = false) Boolean isActive,
 
-            @Parameter(description = "Số trang, bắt đầu từ 0 (mặc định: 0)")
-            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số trang, bắt đầu từ 1 (mặc định: 1)")
+            @RequestParam(defaultValue = "1") int pageNumber,
 
             @Parameter(description = "Số phần tử mỗi trang, tối đa 100 (mặc định: 10)")
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "10") int pageSize,
 
             @Parameter(description = "Sắp xếp theo: id | email | fullName | createdAt (mặc định: id)")
             @RequestParam(defaultValue = "id") String sortBy,
 
-            @Parameter(description = "Chiều sắp xếp: asc | desc (mặc định: asc)")
-            @RequestParam(defaultValue = "asc") String sortDir
+            @Parameter(description = "true = giảm dần (Z→A, mới→cũ), false = tăng dần (mặc định: false)")
+            @RequestParam(defaultValue = "false") boolean sortDescending
     ) {
-        PageResponse<UserResponse> data = userService.getInstructors(keyword, isActive, page, size, sortBy, sortDir);
+        PageResponse<UserResponse> data = userService.getInstructors(
+                keyword, isActive, pageNumber, pageSize, sortBy, sortDescending);
         return ResponseEntity.ok(ApiResponse.<PageResponse<UserResponse>>builder()
                 .message("Instructors retrieved successfully")
                 .data(data)

@@ -25,7 +25,7 @@ public class UserServiceImpl implements IUserService {
 
     private static final int MAX_PAGE_SIZE = 100;
 
-    // Field hợp lệ để sắp xếp, tránh lỗi runtime hoặc SQL injection
+    // Field hợp lệ để sắp xếp, tránh lỗi runtime
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "id", "email", "fullName", "role", "active", "createdAt"
     );
@@ -42,9 +42,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     public PageResponse<UserResponse> getUsers(
             String keyword, String role, Boolean isActive,
-            int page, int size, String sortBy, String sortDir) {
+            int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
 
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortDescending);
         Specification<Users> spec = UserSpecification.filter(keyword, role, isActive);
         return toPageResponse(usersRepository.findAll(spec, pageable));
     }
@@ -52,9 +52,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     public PageResponse<UserResponse> getLearners(
             String keyword, Boolean isActive,
-            int page, int size, String sortBy, String sortDir) {
+            int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
 
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortDescending);
         Specification<Users> spec = UserSpecification.filter(keyword, "LEARNER", isActive);
         return toPageResponse(usersRepository.findAll(spec, pageable));
     }
@@ -62,9 +62,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     public PageResponse<UserResponse> getInstructors(
             String keyword, Boolean isActive,
-            int page, int size, String sortBy, String sortDir) {
+            int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
 
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortDescending);
         Specification<Users> spec = UserSpecification.filter(keyword, "INSTRUCTOR", isActive);
         return toPageResponse(usersRepository.findAll(spec, pageable));
     }
@@ -73,15 +73,21 @@ public class UserServiceImpl implements IUserService {
     //  Private helpers
     // ============================================================
 
-    private Pageable buildPageable(int page, int size, String sortBy, String sortDir) {
-        // Giới hạn page size tối đa
-        int clampedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
-        // Validate sort field để tránh lỗi runtime
+    private Pageable buildPageable(int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
+        // pageNumber bắt đầu từ 1 (frontend) → chuyển sang 0-indexed cho Spring
+        int zeroBasedPage = Math.max(pageNumber - 1, 0);
+
+        // Giới hạn pageSize trong khoảng [1, 100]
+        int clampedSize = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE);
+
+        // Validate sort field
         String validSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "id";
-        Sort sort = "desc".equalsIgnoreCase(sortDir)
+
+        Sort sort = sortDescending
                 ? Sort.by(validSortBy).descending()
                 : Sort.by(validSortBy).ascending();
-        return PageRequest.of(Math.max(page, 0), clampedSize, sort);
+
+        return PageRequest.of(zeroBasedPage, clampedSize, sort);
     }
 
     private UserResponse toUserResponse(Users user) {
@@ -103,7 +109,7 @@ public class UserServiceImpl implements IUserService {
 
         return PageResponse.<UserResponse>builder()
                 .content(content)
-                .page(usersPage.getNumber())
+                .page(usersPage.getNumber() + 1)   // trả về 1-indexed cho frontend
                 .size(usersPage.getSize())
                 .totalElements(usersPage.getTotalElements())
                 .totalPages(usersPage.getTotalPages())
