@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,15 +23,15 @@ public class AdminController {
     }
 
     @PostMapping("/create-instructor")
-    public ResponseEntity<ApiResponse<CreateInstructorResponse>> createInstructor(
-            @RequestBody @Valid CreateInstructorRequest request) {
-        CreateInstructorResponse data = instructorService.createInstructorAccount(request);
+    public ResponseEntity<ApiResponse<CreateInstructorResponse>> createInstructorByAdmin(
+            @Valid @RequestBody CreateInstructorRequest request) {
+        CreateInstructorResponse response = instructorService.createInstructor(request);
 
-        ApiResponse<CreateInstructorResponse> response = ApiResponse.<CreateInstructorResponse>builder()
-                .message("Instructor created successfully")
-                .data(data)
-                .build();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.<CreateInstructorResponse>builder()
+                        .message("Instructor created successfully")
+                        .data(response)
+                        .build()
+        );
     }
 }

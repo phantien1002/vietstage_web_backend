@@ -9,7 +9,6 @@ import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.InstructorsRepository;
 import com.example.vietstage_web_be.repository.UsersRepository;
 import com.example.vietstage_web_be.service.IInstructorService;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,39 +24,42 @@ public class InstructorServiceImpl implements IInstructorService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    @Transactional
-    public CreateInstructorResponse createInstructorAccount(CreateInstructorRequest request) {
+    public CreateInstructorResponse createInstructor(CreateInstructorRequest request) {
         if (usersRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email already exist");
         }
 
-        String rawPassword = UUID.randomUUID().toString().substring(0, 8);
+        String generatedPassword =
+                UUID.randomUUID()
+                        .toString()
+                        .replace("-", "")
+                        .substring(0, 9);
 
         Users user = Users.builder()
                 .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(rawPassword))
-                .role("INSTRUCTOR")
+                .passwordHash(passwordEncoder.encode(generatedPassword))
                 .fullName(request.getFullName())
+                .role("INSTRUCTOR")
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
         usersRepository.save(user);
 
-        InstructorProfiles instructor = InstructorProfiles.builder()
+        InstructorProfiles profiles = InstructorProfiles.builder()
                 .user(user)
                 .specialization(request.getSpecialization())
                 .yearsExperience(request.getYearsExperience())
                 .build();
-        instructorsRepository.save(instructor);
+        instructorsRepository.save(profiles);
 
         return CreateInstructorResponse.builder()
+                .userId(user.getId())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .generatedPassword(rawPassword)
                 .fullName(user.getFullName())
-                .specialization(instructor.getSpecialization())
+                .specialization(profiles.getSpecialization())
+                .yearsExperience(profiles.getYearsExperience())
                 .createdAt(user.getCreatedAt())
-                .message("Instructor created successfully")
                 .build();
     }
 }
