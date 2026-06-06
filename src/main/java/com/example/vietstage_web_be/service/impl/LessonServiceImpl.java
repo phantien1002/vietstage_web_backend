@@ -44,7 +44,6 @@ public class LessonServiceImpl implements ILessonService {
             techniques.addAll(techniquesRepository.findAllById(request.getTechniqueIds()));
         }
 
-        // Tạo đối tượng Lessons cơ bản
         Lessons lesson = Lessons.builder()
                 .title(request.getTitle())
                 .difficulty(request.getDifficulty())
@@ -56,7 +55,6 @@ public class LessonServiceImpl implements ILessonService {
                 .exercises(new ArrayList<>())
                 .build();
 
-        // Gán các thông tin nội dung đi kèm
         if (request.getContents() != null) {
             List<LessonContents> contents = request.getContents().stream()
                     .map(text -> LessonContents.builder()
@@ -95,13 +93,9 @@ public class LessonServiceImpl implements ILessonService {
     @Transactional(readOnly = true)
     public PageResponse<LessonResponse> getLessons(String search, Long instrumentId, String difficulty,
                                                    int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
-        // Đảm bảo pageNumber tối thiểu là 1
         int zeroBasedPage = Math.max(pageNumber - 1, 0);
-
-        // Giới hạn pageSize tối đa 100
         int size = Math.min(Math.max(pageSize, 1), 100);
 
-        // Xử lý Sort
         String validSortBy = "id";
         if ("title".equalsIgnoreCase(sortBy) || "difficulty".equalsIgnoreCase(sortBy)) {
             validSortBy = sortBy;
@@ -141,7 +135,6 @@ public class LessonServiceImpl implements ILessonService {
         Lessons lesson = lessonsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        // Kiểm tra quyền sở hữu
         checkLessonPermission(lesson, userEmail);
 
         Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
@@ -152,13 +145,11 @@ public class LessonServiceImpl implements ILessonService {
             techniques.addAll(techniquesRepository.findAllById(request.getTechniqueIds()));
         }
 
-        // Cập nhật thông tin cơ bản
         lesson.setTitle(request.getTitle());
         lesson.setDifficulty(request.getDifficulty());
         lesson.setInstrument(instrument);
         lesson.setTechniques(techniques);
 
-        // Cập nhật các danh sách liên quan (Nhờ orphanRemoval = true)
         lesson.getLessonContents().clear();
         if (request.getContents() != null) {
             List<LessonContents> contents = request.getContents().stream()
@@ -202,7 +193,6 @@ public class LessonServiceImpl implements ILessonService {
         Lessons lesson = lessonsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        // Kiểm tra quyền sở hữu
         checkLessonPermission(lesson, userEmail);
 
         lessonsRepository.delete(lesson);
@@ -212,12 +202,10 @@ public class LessonServiceImpl implements ILessonService {
         Users user = usersRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        // Admin có toàn quyền
         if ("ADMIN".equals(user.getRole())) {
             return;
         }
 
-        // Instructor chỉ được sửa/xóa bài học của chính họ
         if (lesson.getCreatedBy() == null || !lesson.getCreatedBy().getEmail().equals(userEmail)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
         }

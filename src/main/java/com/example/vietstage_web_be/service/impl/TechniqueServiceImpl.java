@@ -50,7 +50,6 @@ public class TechniqueServiceImpl implements ITechniqueService {
     @Override
     @Transactional(readOnly = true)
     public List<TechniqueResponse> getTechniquesByInstrumentId(Long instrumentId) {
-        // Kiểm tra instrument có tồn tại không
         if (!instrumentsRepository.existsById(instrumentId)) {
             throw new AppException(ErrorCode.INSTRUMENT_NOT_FOUND);
         }

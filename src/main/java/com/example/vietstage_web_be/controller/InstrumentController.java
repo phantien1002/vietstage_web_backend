@@ -22,8 +22,6 @@ public class InstrumentController {
 
     private final IInstrumentService instrumentService;
 
-    // --- PUBLIC READ APIS ---
-
     @GetMapping("/instruments")
     @Operation(summary = "Get list of all instruments")
     public ResponseEntity<ApiResponse<List<InstrumentResponse>>> getAllInstruments() {
@@ -45,8 +43,6 @@ public class InstrumentController {
                 .build();
         return ResponseEntity.ok(response);
     }
-
-    // --- ADMIN WRITE APIS ---
 
     @PostMapping("/admin/instruments")
     @PreAuthorize("hasRole('ADMIN')")

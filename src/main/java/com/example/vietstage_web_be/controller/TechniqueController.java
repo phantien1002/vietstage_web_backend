@@ -21,8 +21,6 @@ public class TechniqueController {
 
     private final ITechniqueService techniqueService;
 
-    // --- PUBLIC READ APIS ---
-
     @GetMapping("/api/instruments/{id}/techniques")
     @Operation(summary = "Get techniques by instrument ID")
     public ResponseEntity<ApiResponse<List<TechniqueResponse>>> getTechniquesByInstrument(@PathVariable Long id) {
@@ -44,8 +42,6 @@ public class TechniqueController {
                 .build();
         return ResponseEntity.ok(response);
     }
-
-    // --- ADMIN WRITE APIS (PreAuthorize handled for role security) ---
 
     @PostMapping("/api/techniques")
     @PreAuthorize("hasRole('ADMIN')")
