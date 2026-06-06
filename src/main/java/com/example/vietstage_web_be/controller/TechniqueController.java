@@ -6,6 +6,7 @@ import com.example.vietstage_web_be.dto.response.TechniqueResponse;
 import com.example.vietstage_web_be.service.ITechniqueService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Techniques")
 public class TechniqueController {
 
     private final ITechniqueService techniqueService;

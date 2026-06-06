@@ -6,6 +6,7 @@ import com.example.vietstage_web_be.dto.response.InstrumentResponse;
 import com.example.vietstage_web_be.service.IInstrumentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "Instruments")
 public class InstrumentController {
 
     private final IInstrumentService instrumentService;
