@@ -23,6 +23,10 @@ public class InstrumentServiceImpl implements IInstrumentService {
     @Override
     @Transactional
     public InstrumentResponse createInstrument(InstrumentRequest request) {
+        if (instrumentsRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new AppException(ErrorCode.INSTRUMENT_ALREADY_EXIST);
+        }
+
         Instruments instrument = Instruments.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -53,6 +57,11 @@ public class InstrumentServiceImpl implements IInstrumentService {
     public InstrumentResponse updateInstrument(Long id, InstrumentRequest request) {
         Instruments instrument = instrumentsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
+
+        if (!instrument.getName().equalsIgnoreCase(request.getName()) &&
+                instrumentsRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new AppException(ErrorCode.INSTRUMENT_ALREADY_EXIST);
+        }
 
         instrument.setName(request.getName());
         instrument.setDescription(request.getDescription());

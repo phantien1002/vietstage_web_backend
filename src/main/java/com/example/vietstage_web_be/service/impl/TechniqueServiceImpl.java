@@ -29,6 +29,10 @@ public class TechniqueServiceImpl implements ITechniqueService {
         Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
 
+        if (techniquesRepository.existsByNameIgnoreCaseAndInstrumentId(request.getName(), request.getInstrumentId())) {
+            throw new AppException(ErrorCode.TECHNIQUE_ALREADY_EXIST);
+        }
+
         Techniques technique = Techniques.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -74,6 +78,14 @@ public class TechniqueServiceImpl implements ITechniqueService {
 
         Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
+
+        boolean isNameOrInstrumentChanged = !technique.getName().equalsIgnoreCase(request.getName()) || 
+                (technique.getInstrument() != null && !technique.getInstrument().getId().equals(request.getInstrumentId()));
+
+        if (isNameOrInstrumentChanged && 
+                techniquesRepository.existsByNameIgnoreCaseAndInstrumentId(request.getName(), request.getInstrumentId())) {
+            throw new AppException(ErrorCode.TECHNIQUE_ALREADY_EXIST);
+        }
 
         technique.setName(request.getName());
         technique.setDescription(request.getDescription());

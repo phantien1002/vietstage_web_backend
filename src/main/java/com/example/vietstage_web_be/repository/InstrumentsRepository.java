@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface InstrumentsRepository extends JpaRepository<Instruments, Long> {
+    boolean existsByNameIgnoreCase(String name);
 }

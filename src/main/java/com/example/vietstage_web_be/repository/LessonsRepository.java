@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LessonsRepository extends JpaRepository<Lessons, Long>, JpaSpecificationExecutor<Lessons> {
+    boolean existsByTitleIgnoreCaseAndInstrumentId(String title, Long instrumentId);
 }

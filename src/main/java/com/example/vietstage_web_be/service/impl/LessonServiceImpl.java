@@ -39,6 +39,10 @@ public class LessonServiceImpl implements ILessonService {
         Users creator = usersRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        if (lessonsRepository.existsByTitleIgnoreCaseAndInstrumentId(request.getTitle(), request.getInstrumentId())) {
+            throw new AppException(ErrorCode.LESSON_ALREADY_EXIST);
+        }
+
         Set<Techniques> techniques = new HashSet<>();
         if (request.getTechniqueIds() != null && !request.getTechniqueIds().isEmpty()) {
             techniques.addAll(techniquesRepository.findAllById(request.getTechniqueIds()));
@@ -139,6 +143,14 @@ public class LessonServiceImpl implements ILessonService {
 
         Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
+
+        boolean isTitleOrInstrumentChanged = !lesson.getTitle().equalsIgnoreCase(request.getTitle()) ||
+                (lesson.getInstrument() != null && !lesson.getInstrument().getId().equals(request.getInstrumentId()));
+
+        if (isTitleOrInstrumentChanged &&
+                lessonsRepository.existsByTitleIgnoreCaseAndInstrumentId(request.getTitle(), request.getInstrumentId())) {
+            throw new AppException(ErrorCode.LESSON_ALREADY_EXIST);
+        }
 
         Set<Techniques> techniques = new HashSet<>();
         if (request.getTechniqueIds() != null && !request.getTechniqueIds().isEmpty()) {

@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface TechniquesRepository extends JpaRepository<Techniques, Long> {
     List<Techniques> findByInstrumentId(Long instrumentId);
+    boolean existsByNameIgnoreCaseAndInstrumentId(String name, Long instrumentId);
 }
