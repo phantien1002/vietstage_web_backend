@@ -4,33 +4,22 @@ import com.example.vietstage_web_be.dto.request.TechniqueRequest;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.TechniqueResponse;
 import com.example.vietstage_web_be.service.ITechniqueService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
+@RequestMapping("/api/techniques")
 @RequiredArgsConstructor
 @Tag(name = "Techniques")
 public class TechniqueController {
 
     private final ITechniqueService techniqueService;
 
-    @GetMapping("/api/instruments/{id}/techniques")
-    public ResponseEntity<ApiResponse<List<TechniqueResponse>>> getTechniquesByInstrument(@PathVariable Long id) {
-        List<TechniqueResponse> data = techniqueService.getTechniquesByInstrumentId(id);
-        ApiResponse<List<TechniqueResponse>> response = ApiResponse.<List<TechniqueResponse>>builder()
-                .message("Get techniques by instrument successfully")
-                .data(data)
-                .build();
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/api/techniques/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TechniqueResponse>> getTechniqueById(@PathVariable Long id) {
         TechniqueResponse data = techniqueService.getTechniqueById(id);
         ApiResponse<TechniqueResponse> response = ApiResponse.<TechniqueResponse>builder()
@@ -40,7 +29,7 @@ public class TechniqueController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/api/techniques")
+    @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<TechniqueResponse>> createTechnique(
             @RequestBody @Valid TechniqueRequest request) {
@@ -52,7 +41,7 @@ public class TechniqueController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/api/techniques/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<TechniqueResponse>> updateTechnique(
             @PathVariable Long id,
@@ -65,7 +54,7 @@ public class TechniqueController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/api/techniques/{id}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteTechnique(@PathVariable Long id) {
         techniqueService.deleteTechnique(id);
