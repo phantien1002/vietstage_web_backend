@@ -14,7 +14,11 @@ public enum ErrorCode {
     ROLE_NOT_FOUND(1007, HttpStatus.NOT_FOUND),
     INVALID_ROLE(1008, HttpStatus.BAD_REQUEST),
     ACCOUNT_LOCKED(1009, HttpStatus.FORBIDDEN),
-    INVALID_VERIFICATION_CODE(1010, HttpStatus.BAD_REQUEST);
+    INVALID_VERIFICATION_CODE(1010, HttpStatus.BAD_REQUEST),
+    LESSON_NOT_FOUND(2001, HttpStatus.NOT_FOUND),
+    INSTRUMENT_NOT_FOUND(2002, HttpStatus.NOT_FOUND),
+    TECHNIQUE_NOT_FOUND(2003, HttpStatus.NOT_FOUND),
+    UNAUTHORIZED_LESSON_ACCESS(2004, HttpStatus.FORBIDDEN);
 
     private final int code;
     private final HttpStatus httpStatus;
