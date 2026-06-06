@@ -9,7 +9,6 @@ import com.example.vietstage_web_be.dto.response.AuthResponse;
 import com.example.vietstage_web_be.service.IAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication", description = "APIs for user registration, login, and password management")
 public class AuthController {
     private final IAuthService authService;
 

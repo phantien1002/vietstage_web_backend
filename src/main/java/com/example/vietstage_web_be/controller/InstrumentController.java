@@ -4,8 +4,6 @@ import com.example.vietstage_web_be.dto.request.InstrumentRequest;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.InstrumentResponse;
 import com.example.vietstage_web_be.service.IInstrumentService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,13 +15,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "Instruments", description = "APIs for managing musical instruments")
 public class InstrumentController {
 
     private final IInstrumentService instrumentService;
 
     @GetMapping("/instruments")
-    @Operation(summary = "Get list of all instruments")
     public ResponseEntity<ApiResponse<List<InstrumentResponse>>> getAllInstruments() {
         List<InstrumentResponse> data = instrumentService.getAllInstruments();
         ApiResponse<List<InstrumentResponse>> response = ApiResponse.<List<InstrumentResponse>>builder()
@@ -34,7 +30,6 @@ public class InstrumentController {
     }
 
     @GetMapping("/instruments/{id}")
-    @Operation(summary = "Get instrument detail by ID")
     public ResponseEntity<ApiResponse<InstrumentResponse>> getInstrumentById(@PathVariable Long id) {
         InstrumentResponse data = instrumentService.getInstrumentById(id);
         ApiResponse<InstrumentResponse> response = ApiResponse.<InstrumentResponse>builder()
@@ -46,7 +41,6 @@ public class InstrumentController {
 
     @PostMapping("/admin/instruments")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create a new instrument (ADMIN only)")
     public ResponseEntity<ApiResponse<InstrumentResponse>> createInstrument(
             @RequestBody @Valid InstrumentRequest request) {
         InstrumentResponse data = instrumentService.createInstrument(request);
@@ -59,7 +53,6 @@ public class InstrumentController {
 
     @PutMapping("/admin/instruments/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update an instrument (ADMIN only)")
     public ResponseEntity<ApiResponse<InstrumentResponse>> updateInstrument(
             @PathVariable Long id,
             @RequestBody @Valid InstrumentRequest request) {
@@ -73,7 +66,6 @@ public class InstrumentController {
 
     @DeleteMapping("/admin/instruments/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Delete an instrument (ADMIN only)")
     public ResponseEntity<ApiResponse<Void>> deleteInstrument(@PathVariable Long id) {
         instrumentService.deleteInstrument(id);
         ApiResponse<Void> response = ApiResponse.<Void>builder()

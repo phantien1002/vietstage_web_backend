@@ -5,8 +5,6 @@ import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.LessonResponse;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.service.ILessonService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,14 +15,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/lessons")
 @RequiredArgsConstructor
-@Tag(name = "Lessons", description = "APIs for lesson management and retrieval")
 public class LessonController {
 
     private final ILessonService lessonService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Operation(summary = "Create a new lesson (ADMIN or INSTRUCTOR only)")
     public ResponseEntity<ApiResponse<LessonResponse>> createLesson(
             @RequestBody @Valid LessonRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -39,7 +35,6 @@ public class LessonController {
     }
 
     @GetMapping
-    @Operation(summary = "Get list of lessons with search, filters, pagination, and sorting")
     public ResponseEntity<ApiResponse<PageResponse<LessonResponse>>> getLessons(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long instrumentId,
@@ -61,7 +56,6 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get detailed lesson by ID")
     public ResponseEntity<ApiResponse<LessonResponse>> getLessonById(@PathVariable Long id) {
         LessonResponse data = lessonService.getLessonById(id);
 
@@ -75,7 +69,6 @@ public class LessonController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Operation(summary = "Update an existing lesson (ADMIN or the creator INSTRUCTOR)")
     public ResponseEntity<ApiResponse<LessonResponse>> updateLesson(
             @PathVariable Long id,
             @RequestBody @Valid LessonRequest request) {
@@ -92,7 +85,6 @@ public class LessonController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Operation(summary = "Delete a lesson (ADMIN or the creator INSTRUCTOR)")
     public ResponseEntity<ApiResponse<Void>> deleteLesson(@PathVariable Long id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         lessonService.deleteLesson(id, email);
