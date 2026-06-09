@@ -1,0 +1,66 @@
+package com.example.vietstage_web_be.controller;
+
+import com.example.vietstage_web_be.dto.request.TechniqueRequest;
+import com.example.vietstage_web_be.dto.response.ApiResponse;
+import com.example.vietstage_web_be.dto.response.TechniqueResponse;
+import com.example.vietstage_web_be.service.ITechniqueService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/techniques")
+@RequiredArgsConstructor
+@Tag(name = "Techniques")
+public class TechniqueController {
+
+    private final ITechniqueService techniqueService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<TechniqueResponse>> getTechniqueById(@PathVariable Long id) {
+        TechniqueResponse data = techniqueService.getTechniqueById(id);
+        ApiResponse<TechniqueResponse> response = ApiResponse.<TechniqueResponse>builder()
+                .message("Get technique successfully")
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TechniqueResponse>> createTechnique(
+            @RequestBody @Valid TechniqueRequest request) {
+        TechniqueResponse data = techniqueService.createTechnique(request);
+        ApiResponse<TechniqueResponse> response = ApiResponse.<TechniqueResponse>builder()
+                .message("Technique created successfully")
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<TechniqueResponse>> updateTechnique(
+            @PathVariable Long id,
+            @RequestBody @Valid TechniqueRequest request) {
+        TechniqueResponse data = techniqueService.updateTechnique(id, request);
+        ApiResponse<TechniqueResponse> response = ApiResponse.<TechniqueResponse>builder()
+                .message("Technique updated successfully")
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteTechnique(@PathVariable Long id) {
+        techniqueService.deleteTechnique(id);
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .message("Technique deleted successfully")
+                .build();
+        return ResponseEntity.ok(response);
+    }
+}
