@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.service.impl;
 
 import com.example.vietstage_web_be.dto.request.TechniqueRequest;
+import com.example.vietstage_web_be.dto.request.UpdateTechniqueRequest;
 import com.example.vietstage_web_be.dto.response.TechniqueResponse;
 import com.example.vietstage_web_be.entity.Instruments;
 import com.example.vietstage_web_be.entity.Techniques;
@@ -36,6 +37,7 @@ public class TechniqueServiceImpl implements ITechniqueService {
         Techniques technique = Techniques.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .guideUrl(request.getGuideUrl())
                 .instrument(instrument)
                 .build();
 
@@ -72,24 +74,24 @@ public class TechniqueServiceImpl implements ITechniqueService {
 
     @Override
     @Transactional
-    public TechniqueResponse updateTechnique(Long id, TechniqueRequest request) {
+    public TechniqueResponse updateTechnique(Long id, UpdateTechniqueRequest request) {
         Techniques technique = techniquesRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.TECHNIQUE_NOT_FOUND));
 
-        Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
-                .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
-
-        boolean isNameOrInstrumentChanged = !technique.getName().equalsIgnoreCase(request.getName()) || 
-                (technique.getInstrument() != null && !technique.getInstrument().getId().equals(request.getInstrumentId()));
-
-        if (isNameOrInstrumentChanged && 
-                techniquesRepository.existsByNameIgnoreCaseAndInstrumentId(request.getName(), request.getInstrumentId())) {
-            throw new AppException(ErrorCode.TECHNIQUE_ALREADY_EXIST);
+        // Kiểm tra trùng tên trong cùng nhạc cụ (instrument giữ nguyên, không đổi)
+        boolean isNameChanged = !technique.getName().equalsIgnoreCase(request.getName());
+        if (isNameChanged) {
+            Long instrumentId = technique.getInstrument() != null ? technique.getInstrument().getId() : null;
+            if (instrumentId != null &&
+                    techniquesRepository.existsByNameIgnoreCaseAndInstrumentId(request.getName(), instrumentId)) {
+                throw new AppException(ErrorCode.TECHNIQUE_ALREADY_EXIST);
+            }
         }
 
+        // Chỉ cập nhật name, description, guideUrl — instrument KHÔNG thay đổi
         technique.setName(request.getName());
         technique.setDescription(request.getDescription());
-        technique.setInstrument(instrument);
+        technique.setGuideUrl(request.getGuideUrl());
 
         Techniques updated = techniquesRepository.save(technique);
         return mapToResponse(updated);
@@ -108,6 +110,7 @@ public class TechniqueServiceImpl implements ITechniqueService {
                 .id(technique.getId())
                 .name(technique.getName())
                 .description(technique.getDescription())
+                .guideUrl(technique.getGuideUrl())
                 .instrumentId(technique.getInstrument() != null ? technique.getInstrument().getId() : null)
                 .build();
     }

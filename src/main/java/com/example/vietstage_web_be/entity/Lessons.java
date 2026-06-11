@@ -3,6 +3,7 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -24,15 +25,31 @@ public class Lessons {
     @JoinColumn(name = "instrument_id")
     private Instruments instrument;
 
+    @ManyToOne
+    @JoinColumn(name = "skill_level_id")
+    private SkillLevels skillLevel;
+
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "difficulty")
-    private String difficulty;
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "order_index")
+    private Integer orderIndex;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
     private Users createdBy;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @ManyToMany
     @JoinTable(
@@ -46,8 +63,16 @@ public class Lessons {
     private List<LessonContents> lessonContents;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AudioReferences> audioReferences;
+    private List<LessonAssets> lessonAssets;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Exercises> exercises;
+
+    @ManyToMany
+    @JoinTable(
+            name = "lesson_mini_games",
+            joinColumns = @JoinColumn(name = "lesson_id"),
+            inverseJoinColumns = @JoinColumn(name = "mini_game_id")
+    )
+    private Set<MiniGames> miniGames;
 }

@@ -6,18 +6,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Response gọn cho PUT /api/lessons/{id}/status
+ * Chỉ trả về {id, status} theo spec
+ */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TechniqueResponse {
+public class LessonStatusResponse {
     private Long id;
-    private String name;
-    private String description;
-
-    @JsonProperty("guide_url")
-    private String guideUrl;
-
-    @JsonProperty("instrument_id")
-    private Long instrumentId;
+    private String status;
 }

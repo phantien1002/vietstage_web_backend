@@ -30,6 +30,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
         Instruments instrument = Instruments.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .iconUrl(request.getIconUrl())
                 .build();
 
         Instruments saved = instrumentsRepository.save(instrument);
@@ -65,6 +66,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
 
         instrument.setName(request.getName());
         instrument.setDescription(request.getDescription());
+        instrument.setIconUrl(request.getIconUrl());
 
         Instruments updated = instrumentsRepository.save(instrument);
         return mapToResponse(updated);
@@ -83,6 +85,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
                 .id(instrument.getId())
                 .name(instrument.getName())
                 .description(instrument.getDescription())
+                .iconUrl(instrument.getIconUrl())
                 .build();
     }
 }

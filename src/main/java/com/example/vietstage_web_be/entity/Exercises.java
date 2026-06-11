@@ -3,6 +3,7 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -25,6 +26,19 @@ public class Exercises {
 
     @Column(name = "title", nullable = false)
     private String title;
+
+    @Column(name = "description")
+    private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "beat_map_asset_id")
+    private LessonAssets beatMapAsset;
+
+    @Column(name = "pass_threshold")
+    private BigDecimal passThreshold;
+
+    @Column(name = "order_index")
+    private Integer orderIndex;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
     private List<PracticeAttempts> practiceAttempts;

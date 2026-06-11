@@ -3,6 +3,8 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -30,4 +32,15 @@ public class LearnerProgress {
     @Column(name = "completed")
     private Boolean completed;
 
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "sync_status")
+    private String syncStatus; // SYNCED | PENDING_SYNC | CONFLICT
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
