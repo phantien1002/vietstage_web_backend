@@ -34,16 +34,6 @@ public class InstrumentController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<InstrumentResponse>> getInstrumentById(@PathVariable Long id) {
-        InstrumentResponse data = instrumentService.getInstrumentById(id);
-        ApiResponse<InstrumentResponse> response = ApiResponse.<InstrumentResponse>builder()
-                .message("Get instrument successfully")
-                .data(data)
-                .build();
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/{id}/techniques")
     public ResponseEntity<ApiResponse<List<TechniqueResponse>>> getTechniquesByInstrument(@PathVariable Long id) {
         List<TechniqueResponse> data = techniqueService.getTechniquesByInstrumentId(id);
@@ -78,14 +68,5 @@ public class InstrumentController {
                 .build();
         return ResponseEntity.ok(response);
     }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteInstrument(@PathVariable Long id) {
-        instrumentService.deleteInstrument(id);
-        ApiResponse<Void> response = ApiResponse.<Void>builder()
-                .message("Instrument deleted successfully")
-                .build();
-        return ResponseEntity.ok(response);
-    }
 }
+

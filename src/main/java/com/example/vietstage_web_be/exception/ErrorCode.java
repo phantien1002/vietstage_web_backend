@@ -21,7 +21,9 @@ public enum ErrorCode {
     UNAUTHORIZED_LESSON_ACCESS(2004, "Bạn không có quyền thao tác trên bài học này", HttpStatus.FORBIDDEN),
     INSTRUMENT_ALREADY_EXIST(2005, "Tên nhạc cụ đã tồn tại", HttpStatus.CONFLICT),
     TECHNIQUE_ALREADY_EXIST(2006, "Kỹ thuật đã tồn tại trong nhạc cụ này", HttpStatus.CONFLICT),
-    LESSON_ALREADY_EXIST(2007, "Tiêu đề bài học đã tồn tại trong nhạc cụ này", HttpStatus.CONFLICT);
+    LESSON_ALREADY_EXIST(2007, "Tiêu đề bài học đã tồn tại trong nhạc cụ này", HttpStatus.CONFLICT),
+    INVALID_LESSON_STATUS(2008, "Trạng thái bài học không hợp lệ", HttpStatus.BAD_REQUEST),
+    LESSON_STATUS_FORBIDDEN(2009, "Chỉ ADMIN mới có quyền duyệt/từ chối bài học", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;

@@ -29,6 +29,9 @@ public class Techniques {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "guide_url")
+    private String guideUrl;
+
     @ManyToMany(mappedBy = "techniques")
     private Set<Lessons> lessons;
 }

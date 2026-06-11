@@ -1,7 +1,10 @@
 package com.example.vietstage_web_be.service.impl;
 
 import com.example.vietstage_web_be.dto.request.LessonRequest;
+import com.example.vietstage_web_be.dto.request.LessonStatusRequest;
+import com.example.vietstage_web_be.dto.request.UpdateLessonRequest;
 import com.example.vietstage_web_be.dto.response.LessonResponse;
+import com.example.vietstage_web_be.dto.response.LessonStatusResponse;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.entity.*;
 import com.example.vietstage_web_be.exception.AppException;
@@ -18,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,11 +29,19 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LessonServiceImpl implements ILessonService {
 
+    private static final List<String> VALID_STATUSES = List.of("DRAFT", "PENDING", "APPROVED", "REJECTED");
+
     private final LessonsRepository lessonsRepository;
     private final InstrumentsRepository instrumentsRepository;
     private final UsersRepository usersRepository;
     private final TechniquesRepository techniquesRepository;
+    private final SkillLevelsRepository skillLevelsRepository;
+    private final ContentReviewsRepository contentReviewsRepository;
+    private final NotificationsRepository notificationsRepository;
 
+    // =========================================================
+    // POST /api/lessons
+    // =========================================================
     @Override
     @Transactional
     public LessonResponse createLesson(LessonRequest request, String userEmail) {
@@ -43,6 +55,12 @@ public class LessonServiceImpl implements ILessonService {
             throw new AppException(ErrorCode.LESSON_ALREADY_EXIST);
         }
 
+        // v2.0: skill_level_id thay thế difficulty string
+        SkillLevels skillLevel = null;
+        if (request.getSkillLevelId() != null) {
+            skillLevel = skillLevelsRepository.findById(request.getSkillLevelId()).orElse(null);
+        }
+
         Set<Techniques> techniques = new HashSet<>();
         if (request.getTechniqueIds() != null && !request.getTechniqueIds().isEmpty()) {
             techniques.addAll(techniquesRepository.findAllById(request.getTechniqueIds()));
@@ -50,42 +68,56 @@ public class LessonServiceImpl implements ILessonService {
 
         Lessons lesson = Lessons.builder()
                 .title(request.getTitle())
-                .difficulty(request.getDifficulty())
+                .description(request.getDescription())
+                .status("DRAFT")                            // Spec: POST luôn tạo với status=DRAFT
+                .orderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0)
+                .skillLevel(skillLevel)
                 .instrument(instrument)
                 .createdBy(creator)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .techniques(techniques)
                 .lessonContents(new ArrayList<>())
-                .audioReferences(new ArrayList<>())
+                .lessonAssets(new ArrayList<>())
                 .exercises(new ArrayList<>())
                 .build();
 
         if (request.getContents() != null) {
-            List<LessonContents> contents = request.getContents().stream()
-                    .map(text -> LessonContents.builder()
-                            .lesson(lesson)
-                            .contentText(text)
-                            .build())
-                    .collect(Collectors.toList());
+            List<LessonContents> contents = new ArrayList<>();
+            for (int i = 0; i < request.getContents().size(); i++) {
+                contents.add(LessonContents.builder()
+                        .lesson(lesson)
+                        .contentText(request.getContents().get(i))
+                        .orderIndex(i + 1)
+                        .build());
+            }
             lesson.getLessonContents().addAll(contents);
         }
 
-        if (request.getAudioUrls() != null) {
-            List<AudioReferences> audios = request.getAudioUrls().stream()
-                    .map(url -> AudioReferences.builder()
+        // v2.0: lesson_assets thay thế audio_references
+        if (request.getAssets() != null) {
+            List<LessonAssets> assets = request.getAssets().stream()
+                    .map(a -> LessonAssets.builder()
                             .lesson(lesson)
-                            .audioUrl(url)
+                            .assetType(a.getAssetType())
+                            .assetUrl(a.getAssetUrl())
+                            .tempoBpm(a.getTempoBpm())
+                            .durationSec(a.getDurationSec())
+                            .createdAt(LocalDateTime.now())
                             .build())
                     .collect(Collectors.toList());
-            lesson.getAudioReferences().addAll(audios);
+            lesson.getLessonAssets().addAll(assets);
         }
 
         if (request.getExercises() != null) {
-            List<Exercises> exercises = request.getExercises().stream()
-                    .map(title -> Exercises.builder()
-                            .lesson(lesson)
-                            .title(title)
-                            .build())
-                    .collect(Collectors.toList());
+            List<Exercises> exercises = new ArrayList<>();
+            for (int i = 0; i < request.getExercises().size(); i++) {
+                exercises.add(Exercises.builder()
+                        .lesson(lesson)
+                        .title(request.getExercises().get(i))
+                        .orderIndex(i + 1)
+                        .build());
+            }
             lesson.getExercises().addAll(exercises);
         }
 
@@ -93,21 +125,19 @@ public class LessonServiceImpl implements ILessonService {
         return mapToResponse(saved);
     }
 
+    // =========================================================
+    // GET /api/lessons
+    // =========================================================
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<LessonResponse> getLessons(String search, Long instrumentId, String difficulty,
-                                                   int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
+    public PageResponse<LessonResponse> getLessons(String search, Long instrumentId, Long skillLevelId,
+                                                   String status,
+                                                   int pageNumber, int pageSize) {
         int zeroBasedPage = Math.max(pageNumber - 1, 0);
         int size = Math.min(Math.max(pageSize, 1), 100);
 
-        String validSortBy = "id";
-        if ("title".equalsIgnoreCase(sortBy) || "difficulty".equalsIgnoreCase(sortBy)) {
-            validSortBy = sortBy;
-        }
-        Sort sort = sortDescending ? Sort.by(validSortBy).descending() : Sort.by(validSortBy).ascending();
-
-        Pageable pageable = PageRequest.of(zeroBasedPage, size, sort);
-        Specification<Lessons> spec = LessonSpecification.filter(search, instrumentId, difficulty);
+        Pageable pageable = PageRequest.of(zeroBasedPage, size, Sort.by("orderIndex").ascending());
+        Specification<Lessons> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status);
 
         Page<Lessons> lessonsPage = lessonsRepository.findAll(spec, pageable);
 
@@ -125,6 +155,9 @@ public class LessonServiceImpl implements ILessonService {
                 .build();
     }
 
+    // =========================================================
+    // GET /api/lessons/{id}
+    // =========================================================
     @Override
     @Transactional(readOnly = true)
     public LessonResponse getLessonById(Long id) {
@@ -133,72 +166,49 @@ public class LessonServiceImpl implements ILessonService {
         return mapToResponse(lesson);
     }
 
+    // =========================================================
+    // PUT /api/lessons/{id}
+    // Spec: chỉ cập nhật title, description, order_index, skill_level_id
+    // instrument_id KHÔNG thay đổi sau khi tạo
+    // =========================================================
     @Override
     @Transactional
-    public LessonResponse updateLesson(Long id, LessonRequest request, String userEmail) {
+    public LessonResponse updateLesson(Long id, UpdateLessonRequest request, String userEmail) {
         Lessons lesson = lessonsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         checkLessonPermission(lesson, userEmail);
 
-        Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
-                .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
-
-        boolean isTitleOrInstrumentChanged = !lesson.getTitle().equalsIgnoreCase(request.getTitle()) ||
-                (lesson.getInstrument() != null && !lesson.getInstrument().getId().equals(request.getInstrumentId()));
-
-        if (isTitleOrInstrumentChanged &&
-                lessonsRepository.existsByTitleIgnoreCaseAndInstrumentId(request.getTitle(), request.getInstrumentId())) {
-            throw new AppException(ErrorCode.LESSON_ALREADY_EXIST);
+        // Check trùng title trong cùng nhạc cụ (nếu title thay đổi)
+        if (!lesson.getTitle().equalsIgnoreCase(request.getTitle())) {
+            Long instrumentId = lesson.getInstrument() != null ? lesson.getInstrument().getId() : null;
+            if (instrumentId != null &&
+                    lessonsRepository.existsByTitleIgnoreCaseAndInstrumentId(request.getTitle(), instrumentId)) {
+                throw new AppException(ErrorCode.LESSON_ALREADY_EXIST);
+            }
         }
 
-        Set<Techniques> techniques = new HashSet<>();
-        if (request.getTechniqueIds() != null && !request.getTechniqueIds().isEmpty()) {
-            techniques.addAll(techniquesRepository.findAllById(request.getTechniqueIds()));
+        // v2.0: skill_level_id
+        SkillLevels skillLevel = null;
+        if (request.getSkillLevelId() != null) {
+            skillLevel = skillLevelsRepository.findById(request.getSkillLevelId()).orElse(null);
         }
 
         lesson.setTitle(request.getTitle());
-        lesson.setDifficulty(request.getDifficulty());
-        lesson.setInstrument(instrument);
-        lesson.setTechniques(techniques);
-
-        lesson.getLessonContents().clear();
-        if (request.getContents() != null) {
-            List<LessonContents> contents = request.getContents().stream()
-                    .map(text -> LessonContents.builder()
-                            .lesson(lesson)
-                            .contentText(text)
-                            .build())
-                    .collect(Collectors.toList());
-            lesson.getLessonContents().addAll(contents);
+        lesson.setDescription(request.getDescription());
+        if (request.getOrderIndex() != null) {
+            lesson.setOrderIndex(request.getOrderIndex());
         }
-
-        lesson.getAudioReferences().clear();
-        if (request.getAudioUrls() != null) {
-            List<AudioReferences> audios = request.getAudioUrls().stream()
-                    .map(url -> AudioReferences.builder()
-                            .lesson(lesson)
-                            .audioUrl(url)
-                            .build())
-                    .collect(Collectors.toList());
-            lesson.getAudioReferences().addAll(audios);
-        }
-
-        lesson.getExercises().clear();
-        if (request.getExercises() != null) {
-            List<Exercises> exercises = request.getExercises().stream()
-                    .map(title -> Exercises.builder()
-                            .lesson(lesson)
-                            .title(title)
-                            .build())
-                    .collect(Collectors.toList());
-            lesson.getExercises().addAll(exercises);
-        }
+        lesson.setSkillLevel(skillLevel);
+        lesson.setUpdatedAt(LocalDateTime.now());
 
         Lessons updated = lessonsRepository.save(lesson);
         return mapToResponse(updated);
     }
 
+    // =========================================================
+    // DELETE /api/lessons/{id}
+    // =========================================================
     @Override
     @Transactional
     public void deleteLesson(Long id, String userEmail) {
@@ -210,13 +220,100 @@ public class LessonServiceImpl implements ILessonService {
         lessonsRepository.delete(lesson);
     }
 
+    // =========================================================
+    // PUT /api/lessons/{id}/status
+    // - INSTRUCTOR: chỉ được đặt PENDING (nộp bài duyệt)
+    // - ADMIN: được đặt APPROVED hoặc REJECTED (kèm comment)
+    // Sau khi thay đổi: ghi content_reviews + gửi notification cho người tạo
+    // =========================================================
+    @Override
+    @Transactional
+    public LessonStatusResponse updateLessonStatus(Long id, LessonStatusRequest request, String userEmail) {
+        // Validate status value
+        String newStatus = request.getStatus().toUpperCase();
+        if (!VALID_STATUSES.contains(newStatus)) {
+            throw new AppException(ErrorCode.INVALID_LESSON_STATUS);
+        }
+
+        Lessons lesson = lessonsRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        Users actor = usersRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        boolean isAdmin = "ADMIN".equals(actor.getRole());
+        boolean isInstructor = "INSTRUCTOR".equals(actor.getRole());
+
+        // INSTRUCTOR: chỉ được chuyển thành PENDING (để nộp bài duyệt)
+        if (isInstructor) {
+            if (!"PENDING".equals(newStatus)) {
+                throw new AppException(ErrorCode.LESSON_STATUS_FORBIDDEN);
+            }
+            // Chỉ được nộp bài học của chính mình
+            if (lesson.getCreatedBy() == null || !lesson.getCreatedBy().getEmail().equals(userEmail)) {
+                throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
+            }
+        }
+
+        // ADMIN mới được APPROVED hoặc REJECTED
+        if (!isAdmin && !isInstructor) {
+            throw new AppException(ErrorCode.LESSON_STATUS_FORBIDDEN);
+        }
+
+        // Cập nhật status bài học
+        lesson.setStatus(newStatus);
+        lesson.setUpdatedAt(LocalDateTime.now());
+        lessonsRepository.save(lesson);
+
+        // Ghi content_reviews nếu là ADMIN duyệt/từ chối
+        if (isAdmin && ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus))) {
+            ContentReviews review = ContentReviews.builder()
+                    .lesson(lesson)
+                    .reviewer(actor)
+                    .status(newStatus)
+                    .comment(request.getComment())
+                    .reviewedAt(LocalDateTime.now())
+                    .build();
+            contentReviewsRepository.save(review);
+
+            // Gửi notification cho người tạo bài học
+            if (lesson.getCreatedBy() != null) {
+                String title = "APPROVED".equals(newStatus)
+                        ? "Bài học đã được duyệt"
+                        : "Bài học bị từ chối";
+                String message = "APPROVED".equals(newStatus)
+                        ? "Bài học \"" + lesson.getTitle() + "\" của bạn đã được ADMIN duyệt và công bố."
+                        : "Bài học \"" + lesson.getTitle() + "\" của bạn bị từ chối. Lý do: "
+                          + (request.getComment() != null ? request.getComment() : "Không có ghi chú.");
+
+                notificationsRepository.save(Notifications.builder()
+                        .user(lesson.getCreatedBy())
+                        .title(title)
+                        .message(message)
+                        .notificationType("FEEDBACK")
+                        .isRead(false)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build());
+            }
+        }
+
+        return LessonStatusResponse.builder()
+                .id(lesson.getId())
+                .status(lesson.getStatus())
+                .build();
+    }
+
+    // =========================================================
+    // Helpers
+    // =========================================================
+
+    /** Kiểm tra quyền: ADMIN toàn quyền, INSTRUCTOR chỉ được sửa bài của mình */
     private void checkLessonPermission(Lessons lesson, String userEmail) {
         Users user = usersRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        if ("ADMIN".equals(user.getRole())) {
-            return;
-        }
+        if ("ADMIN".equals(user.getRole())) return;
 
         if (lesson.getCreatedBy() == null || !lesson.getCreatedBy().getEmail().equals(userEmail)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
@@ -227,10 +324,20 @@ public class LessonServiceImpl implements ILessonService {
         return LessonResponse.builder()
                 .id(lesson.getId())
                 .title(lesson.getTitle())
-                .difficulty(lesson.getDifficulty())
+                .description(lesson.getDescription())
+                .status(lesson.getStatus())
+                .orderIndex(lesson.getOrderIndex())
+                .createdAt(lesson.getCreatedAt())
+                .updatedAt(lesson.getUpdatedAt())
+                // v2.0: skillLevel thay vì difficulty string
+                .skillLevel(lesson.getSkillLevel() != null ? LessonResponse.SkillLevelInfo.builder()
+                        .id(lesson.getSkillLevel().getId())
+                        .levelName(lesson.getSkillLevel().getLevelName())
+                        .build() : null)
                 .instrument(lesson.getInstrument() != null ? LessonResponse.InstrumentInfo.builder()
                         .id(lesson.getInstrument().getId())
                         .name(lesson.getInstrument().getName())
+                        .iconUrl(lesson.getInstrument().getIconUrl())
                         .build() : null)
                 .createdBy(lesson.getCreatedBy() != null ? LessonResponse.CreatorInfo.builder()
                         .id(lesson.getCreatedBy().getId())
@@ -241,24 +348,33 @@ public class LessonServiceImpl implements ILessonService {
                         .map(t -> LessonResponse.TechniqueInfo.builder()
                                 .id(t.getId())
                                 .name(t.getName())
+                                .guideUrl(t.getGuideUrl())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
                 .contents(lesson.getLessonContents() != null ? lesson.getLessonContents().stream()
                         .map(c -> LessonResponse.ContentInfo.builder()
                                 .id(c.getId())
                                 .contentText(c.getContentText())
+                                .orderIndex(c.getOrderIndex())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
-                .audioReferences(lesson.getAudioReferences() != null ? lesson.getAudioReferences().stream()
-                        .map(a -> LessonResponse.AudioInfo.builder()
+                // v2.0: lessonAssets thay vì audioReferences
+                .lessonAssets(lesson.getLessonAssets() != null ? lesson.getLessonAssets().stream()
+                        .map(a -> LessonResponse.AssetInfo.builder()
                                 .id(a.getId())
-                                .audioUrl(a.getAudioUrl())
+                                .assetType(a.getAssetType())
+                                .assetUrl(a.getAssetUrl())
+                                .tempoBpm(a.getTempoBpm())
+                                .durationSec(a.getDurationSec())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
                 .exercises(lesson.getExercises() != null ? lesson.getExercises().stream()
                         .map(e -> LessonResponse.ExerciseInfo.builder()
                                 .id(e.getId())
                                 .title(e.getTitle())
+                                .description(e.getDescription())
+                                .passThreshold(e.getPassThreshold())
+                                .orderIndex(e.getOrderIndex())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
                 .build();

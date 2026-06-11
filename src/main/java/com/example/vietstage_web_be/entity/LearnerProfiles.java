@@ -3,6 +3,9 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -26,6 +29,23 @@ public class LearnerProfiles {
 
     @Column(name = "total_practice_minutes")
     private Long totalPracticeMinutes;
+
+    // Streak system
+    @Column(name = "current_streak")
+    private Integer currentStreak;
+
+    @Column(name = "longest_streak")
+    private Integer longestStreak;
+
+    @Column(name = "last_practice_date")
+    private LocalDate lastPracticeDate;
+
+    // Adaptive difficulty
+    @Column(name = "adaptive_difficulty")
+    private String adaptiveDifficulty;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToOne
     @MapsId

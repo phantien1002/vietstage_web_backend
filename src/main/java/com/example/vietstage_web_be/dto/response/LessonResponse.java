@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -14,13 +16,27 @@ import java.util.List;
 public class LessonResponse {
     private Long id;
     private String title;
-    private String difficulty;
+    private String description;
+    private String status;
+    private Integer orderIndex;
+    private SkillLevelInfo skillLevel;
     private InstrumentInfo instrument;
     private CreatorInfo createdBy;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private List<TechniqueInfo> techniques;
     private List<ContentInfo> contents;
-    private List<AudioInfo> audioReferences;
+    private List<AssetInfo> lessonAssets;
     private List<ExerciseInfo> exercises;
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SkillLevelInfo {
+        private Long id;
+        private String levelName;
+    }
 
     @Data
     @Builder
@@ -29,6 +45,7 @@ public class LessonResponse {
     public static class InstrumentInfo {
         private Long id;
         private String name;
+        private String iconUrl;
     }
 
     @Data
@@ -48,6 +65,7 @@ public class LessonResponse {
     public static class TechniqueInfo {
         private Long id;
         private String name;
+        private String guideUrl;
     }
 
     @Data
@@ -57,15 +75,19 @@ public class LessonResponse {
     public static class ContentInfo {
         private Long id;
         private String contentText;
+        private Integer orderIndex;
     }
 
     @Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class AudioInfo {
+    public static class AssetInfo {
         private Long id;
-        private String audioUrl;
+        private String assetType;
+        private String assetUrl;
+        private Integer tempoBpm;
+        private BigDecimal durationSec;
     }
 
     @Data
@@ -75,5 +97,8 @@ public class LessonResponse {
     public static class ExerciseInfo {
         private Long id;
         private String title;
+        private String description;
+        private BigDecimal passThreshold;
+        private Integer orderIndex;
     }
 }

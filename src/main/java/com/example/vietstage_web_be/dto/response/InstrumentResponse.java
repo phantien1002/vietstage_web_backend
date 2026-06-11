@@ -13,4 +13,5 @@ public class InstrumentResponse {
     private Long id;
     private String name;
     private String description;
+    private String iconUrl;
 }

@@ -1,5 +1,7 @@
 package com.example.vietstage_web_be.service.impl;
 
+import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
+import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.UserResponse;
 import com.example.vietstage_web_be.entity.Users;
@@ -50,23 +52,28 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public PageResponse<UserResponse> getLearners(
-            String keyword, Boolean isActive,
-            int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
-
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortDescending);
-        Specification<Users> spec = UserSpecification.filter(keyword, "LEARNER", isActive);
-        return toPageResponse(usersRepository.findAll(spec, pageable));
+    public UserResponse getMyProfile(String email) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với email: " + email));
+        return toUserResponse(user);
     }
 
     @Override
-    public PageResponse<UserResponse> getInstructors(
-            String keyword, Boolean isActive,
-            int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
+    public UserResponse updateMyProfile(String email, UpdateProfileRequest request) {
+        Users user = usersRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với email: " + email));
+        user.setFullName(request.getFullName());
+        Users savedUser = usersRepository.save(user);
+        return toUserResponse(savedUser);
+    }
 
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortDescending);
-        Specification<Users> spec = UserSpecification.filter(keyword, "INSTRUCTOR", isActive);
-        return toPageResponse(usersRepository.findAll(spec, pageable));
+    @Override
+    public UserResponse updateUserStatus(Long id, UpdateUserStatusRequest request) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với id: " + id));
+        user.setActive(request.getActive());
+        Users savedUser = usersRepository.save(user);
+        return toUserResponse(savedUser);
     }
 
     // ============================================================

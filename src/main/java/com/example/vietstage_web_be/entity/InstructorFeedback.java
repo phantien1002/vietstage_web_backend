@@ -3,6 +3,8 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -27,4 +29,7 @@ public class InstructorFeedback {
     @ManyToOne
     @JoinColumn(name = "attempt_id")
     private PracticeAttempts practiceAttempt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

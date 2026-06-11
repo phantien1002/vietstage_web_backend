@@ -3,6 +3,8 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -19,6 +21,9 @@ public class Leaderboards {
 
     @Column(name = "total_points")
     private Long totalPoints;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToOne
     @MapsId

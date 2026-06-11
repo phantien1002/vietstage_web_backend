@@ -3,6 +3,8 @@ package com.example.vietstage_web_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -30,4 +32,7 @@ public class InstructorProfiles {
     @MapsId
     @JoinColumn(name = "user_id")
     private Users user;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

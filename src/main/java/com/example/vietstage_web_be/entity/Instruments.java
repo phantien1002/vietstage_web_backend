@@ -25,6 +25,9 @@ public class Instruments {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "icon_url")
+    private String iconUrl;
+
     @OneToMany(mappedBy = "instrument", cascade = CascadeType.ALL)
     private List<Techniques> techniques;
 

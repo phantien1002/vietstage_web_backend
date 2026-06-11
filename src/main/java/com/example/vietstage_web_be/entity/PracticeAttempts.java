@@ -22,6 +22,10 @@ public class PracticeAttempts {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "session_id")
+    private PracticeSessions session;
+
+    @ManyToOne
     @JoinColumn(name = "learner_id")
     private Users learner;
 
@@ -35,8 +39,20 @@ public class PracticeAttempts {
     @Column(name = "rhythm_score")
     private BigDecimal rhythmScore;
 
+    @Column(name = "dynamics_score")
+    private BigDecimal dynamicsScore;
+
+    @Column(name = "tonal_quality_score")
+    private BigDecimal tonalQualityScore;
+
+    @Column(name = "breath_score")
+    private BigDecimal breathScore;
+
     @Column(name = "total_score")
     private BigDecimal totalScore;
+
+    @Column(name = "sync_status")
+    private String syncStatus; // SYNCED | PENDING_SYNC | CONFLICT
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
