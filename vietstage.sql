@@ -1,4 +1,3 @@
-
 -- =========================================================
 -- VIETSTAGE POSTGRESQL SCRIPT v2.0
 -- Nâng cấp từ bản gốc — kết hợp góp ý review + phân tích proposal
@@ -188,6 +187,7 @@ CREATE TABLE lesson_contents (
 
 -- [4] lesson_assets thay thế audio_references — gộp tất cả media vào 1 bảng
 --     Hỗ trợ: REFERENCE_AUDIO, SHEET_IMAGE, TECHNIQUE_VIDEO, BEAT_MAP
+--     (proposal: instructor upload sheet notation, technique video, reference audio)
 CREATE TABLE lesson_assets (
     id           BIGSERIAL PRIMARY KEY,
     lesson_id    BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
@@ -209,20 +209,27 @@ CREATE TABLE exercises (
     lesson_id         BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
     title             VARCHAR(200) NOT NULL,
     description       TEXT,
+    -- Liên kết beat map cho rhythm evaluation
+    -- (proposal: onset timing vs reference beat map)
     beat_map_asset_id BIGINT REFERENCES lesson_assets(id) ON DELETE SET NULL,  -- [5]
+    -- Ngưỡng điểm tối thiểu để pass
+    -- (proposal: instructor sets scoring thresholds)
     pass_threshold    NUMERIC(5,2) DEFAULT 60.00,  -- [5]
     order_index       INT DEFAULT 0
 );
 
 
 -- =========================================================
--- 10. Session luyện tập [MỚI]
+-- 10. Session luyện tập
+--     [MỚI] Track phiên học, phục vụ analytics & offline sync
+--     (proposal: session duration, retention metrics, offline mode)
 -- =========================================================
 CREATE TABLE practice_sessions (
     id          BIGSERIAL PRIMARY KEY,
     learner_id  BIGINT REFERENCES users(id) ON DELETE CASCADE,
     started_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at    TIMESTAMP,
+    -- Offline sync (proposal: cached lessons, sync when reconnected)
     sync_status VARCHAR(20) DEFAULT 'SYNCED'
                     CHECK (sync_status IN ('SYNCED','PENDING_SYNC','CONFLICT'))
 );
@@ -231,6 +238,7 @@ CREATE TABLE practice_sessions (
 -- =========================================================
 -- 11. Kết quả thực hiện bài tập
 --     [6] Bổ sung 3 AI metrics mới + session_id + sync_status
+--     (proposal: 5 scoring dimensions từ GDExtension C++)
 -- =========================================================
 CREATE TABLE practice_attempts (
     id                  BIGSERIAL PRIMARY KEY,
@@ -238,18 +246,21 @@ CREATE TABLE practice_attempts (
     learner_id          BIGINT REFERENCES users(id) ON DELETE CASCADE,
     exercise_id         BIGINT REFERENCES exercises(id) ON DELETE CASCADE,
 
+    -- AI scoring (proposal: pitch, rhythm, dynamics, tonal quality, breath pattern)
     pitch_score         NUMERIC(5,2),
     rhythm_score        NUMERIC(5,2),
-    dynamics_score      NUMERIC(5,2),        -- [6]
-    tonal_quality_score NUMERIC(5,2),        -- [6]
-    breath_score        NUMERIC(5,2),        -- [6]
-    total_score         NUMERIC(5,2),
+    dynamics_score      NUMERIC(5,2),        -- [6] Proposal: dynamics metric
+    tonal_quality_score NUMERIC(5,2),        -- [6] Proposal: spectral centroid (string)
+    breath_score        NUMERIC(5,2),        -- [6] Proposal: breath pattern (sáo trúc)
+    total_score         NUMERIC(5,2),        -- Composite từ scoring engine
 
+    -- Offline sync
     sync_status         VARCHAR(20) DEFAULT 'SYNCED'
                             CHECK (sync_status IN ('SYNCED','PENDING_SYNC','CONFLICT')),
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Đánh giá chuyên sâu từ Instructor
 CREATE TABLE instructor_feedback (
     id            BIGSERIAL PRIMARY KEY,
     attempt_id    BIGINT REFERENCES practice_attempts(id) ON DELETE CASCADE,
@@ -266,7 +277,7 @@ CREATE TABLE learner_feedback (
     rating     INT CHECK (rating BETWEEN 1 AND 5),
     comment    TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (learner_id, lesson_id)
+    UNIQUE (learner_id, lesson_id)  -- Mỗi learner chỉ feedback 1 lần/bài
 );
 
 
@@ -288,6 +299,7 @@ CREATE TABLE learner_progress (
 );
 
 -- [MỚI] Content approval workflow
+-- (proposal: admin review & approve lessons trước khi publish)
 CREATE TABLE content_reviews (
     id          BIGSERIAL PRIMARY KEY,
     lesson_id   BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
@@ -306,91 +318,106 @@ CREATE TABLE achievements (
     name           VARCHAR(100) NOT NULL,
     description    TEXT,
     icon_url       TEXT,
+    -- Điều kiện unlock dạng JSON để linh hoạt mở rộng sau
+    -- Ví dụ: {"type":"STREAK_DAYS","threshold":7}
     condition_json TEXT
 );
 
 CREATE TABLE learner_achievements (
     learner_id     BIGINT REFERENCES users(id) ON DELETE CASCADE,
     achievement_id BIGINT REFERENCES achievements(id) ON DELETE CASCADE,
-    earned_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    earned_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- [10]
     PRIMARY KEY (learner_id, achievement_id)
 );
 
 
 -- =========================================================
--- 14. Cosmetic Items [MỚI]
+-- 14. Cosmetic Items — Virtual Room Customization
+--     [MỚI] (proposal: unlock cosmetic rewards for virtual room)
 -- =========================================================
 CREATE TABLE cosmetic_items (
     id           BIGSERIAL PRIMARY KEY,
     name         VARCHAR(100) NOT NULL,
+    -- ROOM_DECOR | AVATAR_SKIN | INSTRUMENT_SKIN
     item_type    VARCHAR(50)  NOT NULL,
     asset_url    TEXT,
+    -- Điều kiện mở khoá: ACHIEVEMENT | STARS | POINTS | DEFAULT
     unlock_type  VARCHAR(30) CHECK (unlock_type IN ('ACHIEVEMENT','STARS','POINTS','DEFAULT')),
-    unlock_value INT DEFAULT 0
+    unlock_value INT DEFAULT 0  -- Ngưỡng số sao/điểm cần đạt
 );
 
 CREATE TABLE learner_cosmetics (
     learner_id       BIGINT REFERENCES users(id) ON DELETE CASCADE,
     cosmetic_item_id BIGINT REFERENCES cosmetic_items(id) ON DELETE CASCADE,
     unlocked_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_equipped      BOOLEAN DEFAULT FALSE,
+    is_equipped      BOOLEAN DEFAULT FALSE,  -- Đang trang bị hay chỉ sở hữu
     PRIMARY KEY (learner_id, cosmetic_item_id)
 );
 
 
 -- =========================================================
 -- 15. Mini Games
+--     [MỚI] lesson_mini_games: bảng trung gian N-N Lesson ↔ Mini Game
+--     [8]   mini_game_results: played_at → started_at + completed_at
 -- =========================================================
 CREATE TABLE mini_games (
     id         BIGSERIAL PRIMARY KEY,
     name       VARCHAR(120) NOT NULL,
+    -- RHYTHM_MATCH | NOTE_QUIZ | MELODY_COMPLETE
     game_type  VARCHAR(50),
     difficulty VARCHAR(20) CHECK (difficulty IN ('EASY','MEDIUM','HARD')),
     max_score  INT     DEFAULT 100,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- [MỚI] Bảng trung gian N-N Lesson ↔ Mini Game
 CREATE TABLE lesson_mini_games (
     lesson_id    BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
     mini_game_id BIGINT REFERENCES mini_games(id) ON DELETE CASCADE,
     PRIMARY KEY (lesson_id, mini_game_id)
 );
 
+-- [8] Bổ sung started_at + completed_at thay cho played_at
 CREATE TABLE mini_game_results (
     id           BIGSERIAL PRIMARY KEY,
     learner_id   BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     mini_game_id BIGINT NOT NULL REFERENCES mini_games(id) ON DELETE CASCADE,
     score        INT DEFAULT 0,
     stars_earned INT CHECK (stars_earned BETWEEN 0 AND 3),
-    started_at   TIMESTAMP,
-    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    started_at   TIMESTAMP,                              -- [8]
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- [8]
     sync_status  VARCHAR(20) DEFAULT 'SYNCED'
                      CHECK (sync_status IN ('SYNCED','PENDING_SYNC','CONFLICT')),
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP    -- [10]
 );
 
 
 -- =========================================================
 -- 16. Hệ thống điểm số & Xếp hạng
+--     [MỚI] point_transactions: audit log mọi nguồn điểm
 -- =========================================================
+
+-- Log nguồn điểm — tránh corruption leaderboard, hỗ trợ audit
+-- source_type: PRACTICE | MINI_GAME | ACHIEVEMENT | DAILY_CHALLENGE | STREAK_BONUS
 CREATE TABLE point_transactions (
     id          BIGSERIAL PRIMARY KEY,
     learner_id  BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     source_type VARCHAR(30) NOT NULL,
-    source_id   BIGINT,
+    source_id   BIGINT,   -- FK logic tới bảng tương ứng (không enforce FK cứng vì đa nguồn)
     points      INT NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Bảng xếp hạng — aggregate từ point_transactions
 CREATE TABLE leaderboards (
     learner_id   BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     total_points INT     DEFAULT 0,
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
 );
 
 
 -- =========================================================
--- 17. Thử thách hằng ngày
+-- 17. Thử thách hằng ngày (Daily Challenges)
 -- =========================================================
 CREATE TABLE daily_challenges (
     id             BIGSERIAL PRIMARY KEY,
@@ -411,7 +438,9 @@ CREATE TABLE learner_daily_challenges (
 
 
 -- =========================================================
--- 18. Cấu hình hệ thống [MỚI]
+-- 18. Cấu hình hệ thống
+--     [MỚI] Feature toggles & scoring parameters
+--     (proposal: admin configures scoring weights, difficulty curves)
 -- =========================================================
 CREATE TABLE app_configs (
     id           BIGSERIAL PRIMARY KEY,
@@ -426,29 +455,37 @@ CREATE TABLE app_configs (
 -- =========================================================
 -- INDEX TỐI ƯU TRUY VẤN
 -- =========================================================
+-- Core
 CREATE INDEX idx_users_email             ON users(email);
 CREATE INDEX idx_users_role              ON users(role);
+-- Lessons
 CREATE INDEX idx_lessons_instrument      ON lessons(instrument_id);
 CREATE INDEX idx_lessons_skill_level     ON lessons(skill_level_id);
 CREATE INDEX idx_lessons_status          ON lessons(status);
+-- Exercises & Assets
 CREATE INDEX idx_exercises_lesson        ON exercises(lesson_id);
 CREATE INDEX idx_lesson_assets_lesson    ON lesson_assets(lesson_id);
 CREATE INDEX idx_lesson_assets_type      ON lesson_assets(asset_type);
+-- Practice
 CREATE INDEX idx_sessions_learner        ON practice_sessions(learner_id);
 CREATE INDEX idx_attempts_learner        ON practice_attempts(learner_id);
 CREATE INDEX idx_attempts_exercise       ON practice_attempts(exercise_id);
 CREATE INDEX idx_attempts_session        ON practice_attempts(session_id);
+-- Offline sync (partial index — chỉ index record chưa sync)
 CREATE INDEX idx_progress_sync           ON learner_progress(sync_status)
     WHERE sync_status != 'SYNCED';
 CREATE INDEX idx_attempts_sync           ON practice_attempts(sync_status)
     WHERE sync_status != 'SYNCED';
+-- Progress & Leaderboard
 CREATE INDEX idx_progress_learner        ON learner_progress(learner_id);
 CREATE INDEX idx_progress_lesson         ON learner_progress(lesson_id);
 CREATE INDEX idx_leaderboards_points     ON leaderboards(total_points DESC);
 CREATE INDEX idx_point_tx_learner        ON point_transactions(learner_id);
+-- Notifications
 CREATE INDEX idx_notifications_user      ON notifications(user_id);
 CREATE INDEX idx_notifications_unread    ON notifications(user_id)
     WHERE is_read = FALSE;
+-- Mini games & Daily challenges
 CREATE INDEX idx_mini_results_learner    ON mini_game_results(learner_id);
 CREATE INDEX idx_daily_challenge_date    ON daily_challenges(challenge_date);
 
@@ -460,6 +497,7 @@ CREATE INDEX idx_daily_challenge_date    ON daily_challenges(challenge_date);
 INSERT INTO skill_levels (level_name) VALUES
     ('BEGINNER'), ('INTERMEDIATE'), ('ADVANCED');
 
+-- Password thực tế: Admin@123 / Instruc@123 / Learner@123
 INSERT INTO users (email, password_hash, full_name, role, is_active) VALUES
 ('admin@vietstage.com',
  '$2a$10$Ep6jP15pbui3U5SqytWFYOI/8Rzf76NbZwA91DZM51H2FL5FlQOsS',
@@ -541,16 +579,17 @@ INSERT INTO daily_challenges (title, description, instrument_id, reward_points, 
 ('Practice 10 Minutes on Dan Tranh', 'Complete any Dan Tranh exercise for at least 10 minutes', 1, 15, CURRENT_DATE),
 ('3-Star Run',                       'Earn 3 stars on any lesson today',                        NULL, 20, CURRENT_DATE);
 
+-- Config scoring weights (proposal: admin configures scoring parameters)
 INSERT INTO app_configs (config_key, config_value, description, updated_by) VALUES
-('scoring.pitch_weight',        '0.35',  'Weight of pitch score in composite total',          1),
-('scoring.rhythm_weight',       '0.25',  'Weight of rhythm score in composite total',         1),
-('scoring.dynamics_weight',     '0.15',  'Weight of dynamics score in composite total',       1),
-('scoring.tonal_weight',        '0.15',  'Weight of tonal quality score (string instruments)', 1),
-('scoring.breath_weight',       '0.10',  'Weight of breath score (wind instruments only)',    1),
-('feature.mini_games_enabled',  'true',  'Toggle mini-game feature globally',                 1),
-('feature.adaptive_difficulty', 'true',  'Enable adaptive difficulty adjustment',             1),
-('difficulty.adaptive_window',  '10',    'Number of recent attempts for adaptive difficulty', 1),
-('offline.max_cached_lessons',  '20',    'Maximum lessons cached for offline play',           1);
+('scoring.pitch_weight',        '0.35',  'Weight of pitch score in composite total',         1),
+('scoring.rhythm_weight',       '0.25',  'Weight of rhythm score in composite total',        1),
+('scoring.dynamics_weight',     '0.15',  'Weight of dynamics score in composite total',      1),
+('scoring.tonal_weight',        '0.15',  'Weight of tonal quality score (string instruments)',1),
+('scoring.breath_weight',       '0.10',  'Weight of breath score (wind instruments only)',   1),
+('feature.mini_games_enabled',  'true',  'Toggle mini-game feature globally',                1),
+('feature.adaptive_difficulty', 'true',  'Enable adaptive difficulty adjustment',            1),
+('difficulty.adaptive_window',  '10',    'Number of recent attempts for adaptive difficulty',1),
+('offline.max_cached_lessons',  '20',    'Maximum lessons cached for offline play',          1);
 
 INSERT INTO notifications (user_id, title, message, notification_type) VALUES
 (3, 'Welcome to VietStage!',
@@ -575,11 +614,18 @@ CREATE TABLE instructor_requests (
     reviewer_note    TEXT,
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Mỗi user chỉ có 1 request PENDING tại một thời điểm
     CONSTRAINT uq_user_pending UNIQUE (user_id, status)
 );
 
 CREATE INDEX idx_instructor_requests_status ON instructor_requests(status);
 CREATE INDEX idx_instructor_requests_user   ON instructor_requests(user_id);
 
+-- =========================================================
+-- SỬA: users — bỏ role khỏi INSERT seed, register = LEARNER only
+-- Ghi chú: POST /api/auth/register hardcode role=LEARNER ở backend
+-- =========================================================
+
+-- Seed mẫu: learner nộp đơn xin dạy
 INSERT INTO instructor_requests (user_id, specialization, biography, years_experience, status)
 VALUES (3, 'Dan Tranh', 'Học viên muốn trở thành giảng viên Dan Tranh', 2, 'PENDING');

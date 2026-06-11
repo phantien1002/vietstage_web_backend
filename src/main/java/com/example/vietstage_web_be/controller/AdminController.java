@@ -23,15 +23,15 @@ public class AdminController {
     }
 
     @PostMapping("/create-instructor")
-    public ResponseEntity<ApiResponse<CreateInstructorResponse>> createInstructor(
-            @RequestBody @Valid CreateInstructorRequest request) {
-        CreateInstructorResponse data = instructorService.createInstructorAccount(request);
+    public ResponseEntity<ApiResponse<CreateInstructorResponse>> createInstructorByAdmin(
+            @Valid @RequestBody CreateInstructorRequest request) {
+        CreateInstructorResponse response = instructorService.createInstructor(request);
 
-        ApiResponse<CreateInstructorResponse> response = ApiResponse.<CreateInstructorResponse>builder()
-                .message("Instructor created successfully")
-                .data(data)
-                .build();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.<CreateInstructorResponse>builder()
+                        .message("Instructor created successfully")
+                        .data(response)
+                        .build()
+        );
     }
 }

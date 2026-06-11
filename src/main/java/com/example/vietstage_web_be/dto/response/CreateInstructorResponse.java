@@ -10,12 +10,11 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class CreateInstructorResponse {
+    private Long userId;
     private String email;
     private String role;
     private String fullName;
-    private String generatedPassword;
     private String specialization;
+    private Long yearsExperience;
     private LocalDateTime createdAt;
-
-    private String message;
 }

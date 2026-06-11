@@ -75,4 +75,7 @@ public class Users {
             inverseJoinColumns = @JoinColumn(name = "challenge_id")
     )
     private Set<DailyChallenges> dailyChallenges;
+
+    @OneToMany(mappedBy = "learner")
+    private List<MiniGameResults> miniGameResults;
 }
