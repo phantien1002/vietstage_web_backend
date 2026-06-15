@@ -24,7 +24,7 @@ public class PointTransactions {
     private Users learner;
 
     @Column(name = "source_type", nullable = false)
-    private String sourceType; // LESSON | MINI_GAME | DAILY_CHALLENGE | ACHIEVEMENT
+    private String sourceType; // PRACTICE_ATTEMPT | MINI_GAME_RESULT | ACHIEVEMENT | DAILY_CHALLENGE | STREAK_BONUS
 
     @Column(name = "source_id")
     private Long sourceId;
