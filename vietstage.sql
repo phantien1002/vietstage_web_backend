@@ -1,25 +1,27 @@
 -- =========================================================
--- VIETSTAGE POSTGRESQL SCRIPT v2.0
--- Nâng cấp từ bản gốc — kết hợp góp ý review + phân tích proposal
--- Thay đổi chính:
---   [1]  skill_levels nối lessons (thay enum difficulty)
---   [2]  learner_profiles bổ sung streak & adaptive difficulty
---   [3]  lessons bổ sung status, order_index, description, updated_at
---   [4]  audio_references → lesson_assets (gộp + mở rộng type)
---   [5]  exercises bổ sung beat_map, pass_threshold
---   [6]  practice_attempts bổ sung 3 AI metrics + session_id
---   [7]  learner_progress bổ sung started_at, completed_at, sync_status
---   [8]  mini_game_results đổi played_at → started_at + completed_at
---   [9]  Bảng mới: practice_sessions, lesson_mini_games, learner_feedback,
---                  content_reviews, cosmetic_items, learner_cosmetics,
---                  point_transactions, app_configs
---   [10] updated_at cho toàn bộ bảng tương tác với user
---   [11] Seed data đầy đủ hơn cho tất cả bảng mới
+-- VIETSTAGE POSTGRESQL SCRIPT v2.1
+-- Nâng cấp từ v2.0 — review lại theo proposal + entity analysis
+-- Thay đổi chính so với v2.0:
+--   [A] Bỏ bảng learner_feedback (không có cơ sở trong proposal gốc)
+--   [B] Sửa instructor_requests: bỏ UNIQUE(user_id, status) — cho phép
+--       1 user có nhiều request ở các status khác nhau theo thời gian,
+--       logic "chỉ 1 PENDING tại 1 thời điểm" xử lý ở application layer
+--   [C] Bổ sung seed data còn thiếu để demo đầy đủ luồng nghiệp vụ:
+--       practice_sessions, practice_attempts, instructor_feedback,
+--       learner_progress, learner_achievements, learner_cosmetics,
+--       mini_game_results, point_transactions, learner_daily_challenges
+--   [D] learner_profiles: bổ sung current_streak/longest_streak/last_practice_date
+--       cho seed data, khớp với achievement "Week Warrior" và point_transactions
+--       nguồn STREAK_BONUS
 -- =========================================================
 
 -- =========================================================
 -- DROP TABLES (theo thứ tự dependency)
 -- =========================================================
+-- Xóa bảng learner_feedback còn sót lại từ script v2.0 (nếu đã chạy trước đó)
+DROP TABLE IF EXISTS learner_feedback CASCADE;
+
+DROP TABLE IF EXISTS instructor_requests CASCADE;
 DROP TABLE IF EXISTS app_configs CASCADE;
 DROP TABLE IF EXISTS content_reviews CASCADE;
 DROP TABLE IF EXISTS point_transactions CASCADE;
@@ -31,16 +33,15 @@ DROP TABLE IF EXISTS leaderboards CASCADE;
 DROP TABLE IF EXISTS learner_achievements CASCADE;
 DROP TABLE IF EXISTS achievements CASCADE;
 DROP TABLE IF EXISTS mini_game_results CASCADE;
-DROP TABLE IF EXISTS lesson_mini_games CASCADE;          -- [MỚI]
+DROP TABLE IF EXISTS lesson_mini_games CASCADE;
 DROP TABLE IF EXISTS mini_games CASCADE;
 DROP TABLE IF EXISTS learner_progress CASCADE;
-DROP TABLE IF EXISTS learner_feedback CASCADE;           -- [MỚI]
 DROP TABLE IF EXISTS instructor_feedback CASCADE;
 DROP TABLE IF EXISTS practice_attempts CASCADE;
-DROP TABLE IF EXISTS practice_sessions CASCADE;          -- [MỚI]
+DROP TABLE IF EXISTS practice_sessions CASCADE;
 DROP TABLE IF EXISTS exercises CASCADE;
-DROP TABLE IF EXISTS lesson_assets CASCADE;              -- [MỚI] thay audio_references
-DROP TABLE IF EXISTS audio_references CASCADE;           -- giữ lại DROP phòng migration cũ
+DROP TABLE IF EXISTS lesson_assets CASCADE;
+DROP TABLE IF EXISTS audio_references CASCADE;
 DROP TABLE IF EXISTS lesson_contents CASCADE;
 DROP TABLE IF EXISTS lesson_techniques CASCADE;
 DROP TABLE IF EXISTS lessons CASCADE;
@@ -51,6 +52,7 @@ DROP TABLE IF EXISTS learner_profiles CASCADE;
 DROP TABLE IF EXISTS instructor_profiles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS skill_levels CASCADE;
+-- [A] learner_feedback đã bị xóa khỏi schema, không còn DROP riêng
 
 
 -- =========================================================
@@ -73,13 +75,13 @@ CREATE TABLE users (
     role          VARCHAR(20)  NOT NULL CHECK (role IN ('ADMIN','INSTRUCTOR','LEARNER')),
     is_active     BOOLEAN   DEFAULT TRUE,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
 -- =========================================================
 -- 3. Hồ sơ Học viên
---    [2] Bổ sung: streak system + adaptive difficulty
+--    Streak system + adaptive difficulty
 -- =========================================================
 CREATE TABLE learner_profiles (
     user_id                BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -96,7 +98,7 @@ CREATE TABLE learner_profiles (
     adaptive_difficulty    VARCHAR(20) DEFAULT 'BEGINNER'
                                CHECK (adaptive_difficulty IN ('BEGINNER','INTERMEDIATE','ADVANCED')),
 
-    updated_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
+    updated_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -108,7 +110,7 @@ CREATE TABLE instructor_profiles (
     specialization   VARCHAR(200),
     biography        TEXT,
     years_experience INT     DEFAULT 0,
-    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
+    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -124,7 +126,7 @@ CREATE TABLE notifications (
     notification_type VARCHAR(50),
     is_read           BOOLEAN   DEFAULT FALSE,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -149,22 +151,20 @@ CREATE TABLE techniques (
 
 -- =========================================================
 -- 7. Bài học giáo trình
---    [1] difficulty enum → FK skill_level_id
---    [3] Bổ sung: status (approval workflow), order_index, description, updated_at
 -- =========================================================
 CREATE TABLE lessons (
     id             BIGSERIAL PRIMARY KEY,
     instrument_id  BIGINT REFERENCES instruments(id) ON DELETE CASCADE,
-    skill_level_id BIGINT REFERENCES skill_levels(id) ON DELETE SET NULL,  -- [1]
+    skill_level_id BIGINT REFERENCES skill_levels(id) ON DELETE SET NULL,
     title          VARCHAR(200) NOT NULL,
-    description    TEXT,                                                    -- [3]
+    description    TEXT,
     -- Content approval workflow (proposal: admin review & approve)
     status         VARCHAR(20) DEFAULT 'DRAFT'
-                       CHECK (status IN ('DRAFT','PENDING','APPROVED','REJECTED')),  -- [3]
-    order_index    INT     DEFAULT 0,   -- Thứ tự trong curriculum              [3]
+                       CHECK (status IN ('DRAFT','PENDING','APPROVED','REJECTED')),
+    order_index    INT     DEFAULT 0,   -- Thứ tự trong curriculum
     created_by     BIGINT REFERENCES users(id) ON DELETE SET NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Bảng trung gian N-N giữa Lesson và Technique
@@ -185,9 +185,8 @@ CREATE TABLE lesson_contents (
     order_index  INT DEFAULT 0
 );
 
--- [4] lesson_assets thay thế audio_references — gộp tất cả media vào 1 bảng
---     Hỗ trợ: REFERENCE_AUDIO, SHEET_IMAGE, TECHNIQUE_VIDEO, BEAT_MAP
---     (proposal: instructor upload sheet notation, technique video, reference audio)
+-- lesson_assets — gộp tất cả media vào 1 bảng
+-- Hỗ trợ: REFERENCE_AUDIO, SHEET_IMAGE, TECHNIQUE_VIDEO, BEAT_MAP
 CREATE TABLE lesson_assets (
     id           BIGSERIAL PRIMARY KEY,
     lesson_id    BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
@@ -202,7 +201,6 @@ CREATE TABLE lesson_assets (
 
 -- =========================================================
 -- 9. Bài tập thực hành
---    [5] Bổ sung: beat_map_asset_id, pass_threshold, order_index
 -- =========================================================
 CREATE TABLE exercises (
     id                BIGSERIAL PRIMARY KEY,
@@ -210,19 +208,16 @@ CREATE TABLE exercises (
     title             VARCHAR(200) NOT NULL,
     description       TEXT,
     -- Liên kết beat map cho rhythm evaluation
-    -- (proposal: onset timing vs reference beat map)
-    beat_map_asset_id BIGINT REFERENCES lesson_assets(id) ON DELETE SET NULL,  -- [5]
+    beat_map_asset_id BIGINT REFERENCES lesson_assets(id) ON DELETE SET NULL,
     -- Ngưỡng điểm tối thiểu để pass
-    -- (proposal: instructor sets scoring thresholds)
-    pass_threshold    NUMERIC(5,2) DEFAULT 60.00,  -- [5]
+    pass_threshold    NUMERIC(5,2) DEFAULT 60.00,
     order_index       INT DEFAULT 0
 );
 
 
 -- =========================================================
 -- 10. Session luyện tập
---     [MỚI] Track phiên học, phục vụ analytics & offline sync
---     (proposal: session duration, retention metrics, offline mode)
+--     Track phiên học, phục vụ analytics & offline sync
 -- =========================================================
 CREATE TABLE practice_sessions (
     id          BIGSERIAL PRIMARY KEY,
@@ -237,22 +232,21 @@ CREATE TABLE practice_sessions (
 
 -- =========================================================
 -- 11. Kết quả thực hiện bài tập
---     [6] Bổ sung 3 AI metrics mới + session_id + sync_status
---     (proposal: 5 scoring dimensions từ GDExtension C++)
+--     5 AI metrics (proposal: GDExtension C++)
 -- =========================================================
 CREATE TABLE practice_attempts (
     id                  BIGSERIAL PRIMARY KEY,
-    session_id          BIGINT REFERENCES practice_sessions(id) ON DELETE SET NULL,  -- [6]
+    session_id          BIGINT REFERENCES practice_sessions(id) ON DELETE SET NULL,
     learner_id          BIGINT REFERENCES users(id) ON DELETE CASCADE,
     exercise_id         BIGINT REFERENCES exercises(id) ON DELETE CASCADE,
 
     -- AI scoring (proposal: pitch, rhythm, dynamics, tonal quality, breath pattern)
     pitch_score         NUMERIC(5,2),
     rhythm_score        NUMERIC(5,2),
-    dynamics_score      NUMERIC(5,2),        -- [6] Proposal: dynamics metric
-    tonal_quality_score NUMERIC(5,2),        -- [6] Proposal: spectral centroid (string)
-    breath_score        NUMERIC(5,2),        -- [6] Proposal: breath pattern (sáo trúc)
-    total_score         NUMERIC(5,2),        -- Composite từ scoring engine
+    dynamics_score      NUMERIC(5,2),
+    tonal_quality_score NUMERIC(5,2),       -- string instruments (spectral centroid)
+    breath_score        NUMERIC(5,2),       -- wind instruments (sáo trúc)
+    total_score         NUMERIC(5,2),       -- Composite từ scoring engine
 
     -- Offline sync
     sync_status         VARCHAR(20) DEFAULT 'SYNCED'
@@ -269,36 +263,26 @@ CREATE TABLE instructor_feedback (
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- [MỚI] Feedback của Learner cho Bài học
-CREATE TABLE learner_feedback (
-    id         BIGSERIAL PRIMARY KEY,
-    learner_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    lesson_id  BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
-    rating     INT CHECK (rating BETWEEN 1 AND 5),
-    comment    TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (learner_id, lesson_id)  -- Mỗi learner chỉ feedback 1 lần/bài
-);
+-- [A] Bảng learner_feedback đã bị loại bỏ — không có cơ sở trong proposal gốc
 
 
 -- =========================================================
 -- 12. Tiến độ học viên
---     [7] Bổ sung: started_at, completed_at, sync_status, updated_at
 -- =========================================================
 CREATE TABLE learner_progress (
     learner_id   BIGINT REFERENCES users(id) ON DELETE CASCADE,
     lesson_id    BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
     stars        INT     DEFAULT 0 CHECK (stars BETWEEN 0 AND 3),
     completed    BOOLEAN DEFAULT FALSE,
-    started_at   TIMESTAMP,                                  -- [7]
-    completed_at TIMESTAMP,                                  -- [7]
+    started_at   TIMESTAMP,
+    completed_at TIMESTAMP,
     sync_status  VARCHAR(20) DEFAULT 'SYNCED'
-                     CHECK (sync_status IN ('SYNCED','PENDING_SYNC','CONFLICT')),  -- [7]
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,        -- [10]
+                     CHECK (sync_status IN ('SYNCED','PENDING_SYNC','CONFLICT')),
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (learner_id, lesson_id)
 );
 
--- [MỚI] Content approval workflow
+-- Content approval workflow
 -- (proposal: admin review & approve lessons trước khi publish)
 CREATE TABLE content_reviews (
     id          BIGSERIAL PRIMARY KEY,
@@ -326,14 +310,14 @@ CREATE TABLE achievements (
 CREATE TABLE learner_achievements (
     learner_id     BIGINT REFERENCES users(id) ON DELETE CASCADE,
     achievement_id BIGINT REFERENCES achievements(id) ON DELETE CASCADE,
-    earned_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- [10]
+    earned_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (learner_id, achievement_id)
 );
 
 
 -- =========================================================
 -- 14. Cosmetic Items — Virtual Room Customization
---     [MỚI] (proposal: unlock cosmetic rewards for virtual room)
+--     (proposal: unlock cosmetic rewards for virtual room)
 -- =========================================================
 CREATE TABLE cosmetic_items (
     id           BIGSERIAL PRIMARY KEY,
@@ -357,8 +341,6 @@ CREATE TABLE learner_cosmetics (
 
 -- =========================================================
 -- 15. Mini Games
---     [MỚI] lesson_mini_games: bảng trung gian N-N Lesson ↔ Mini Game
---     [8]   mini_game_results: played_at → started_at + completed_at
 -- =========================================================
 CREATE TABLE mini_games (
     id         BIGSERIAL PRIMARY KEY,
@@ -370,35 +352,34 @@ CREATE TABLE mini_games (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- [MỚI] Bảng trung gian N-N Lesson ↔ Mini Game
+-- Bảng trung gian N-N Lesson ↔ Mini Game
 CREATE TABLE lesson_mini_games (
     lesson_id    BIGINT REFERENCES lessons(id) ON DELETE CASCADE,
     mini_game_id BIGINT REFERENCES mini_games(id) ON DELETE CASCADE,
     PRIMARY KEY (lesson_id, mini_game_id)
 );
 
--- [8] Bổ sung started_at + completed_at thay cho played_at
 CREATE TABLE mini_game_results (
     id           BIGSERIAL PRIMARY KEY,
     learner_id   BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     mini_game_id BIGINT NOT NULL REFERENCES mini_games(id) ON DELETE CASCADE,
     score        INT DEFAULT 0,
     stars_earned INT CHECK (stars_earned BETWEEN 0 AND 3),
-    started_at   TIMESTAMP,                              -- [8]
-    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- [8]
+    started_at   TIMESTAMP,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     sync_status  VARCHAR(20) DEFAULT 'SYNCED'
                      CHECK (sync_status IN ('SYNCED','PENDING_SYNC','CONFLICT')),
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP    -- [10]
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
 -- =========================================================
 -- 16. Hệ thống điểm số & Xếp hạng
---     [MỚI] point_transactions: audit log mọi nguồn điểm
+--     point_transactions: audit log mọi nguồn điểm
 -- =========================================================
 
 -- Log nguồn điểm — tránh corruption leaderboard, hỗ trợ audit
--- source_type: PRACTICE | MINI_GAME | ACHIEVEMENT | DAILY_CHALLENGE | STREAK_BONUS
+-- source_type: PRACTICE_ATTEMPT | MINI_GAME_RESULT | ACHIEVEMENT | DAILY_CHALLENGE | STREAK_BONUS
 CREATE TABLE point_transactions (
     id          BIGSERIAL PRIMARY KEY,
     learner_id  BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -412,7 +393,7 @@ CREATE TABLE point_transactions (
 CREATE TABLE leaderboards (
     learner_id   BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     total_points INT     DEFAULT 0,
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- [10]
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -439,7 +420,7 @@ CREATE TABLE learner_daily_challenges (
 
 -- =========================================================
 -- 18. Cấu hình hệ thống
---     [MỚI] Feature toggles & scoring parameters
+--     Feature toggles & scoring parameters
 --     (proposal: admin configures scoring weights, difficulty curves)
 -- =========================================================
 CREATE TABLE app_configs (
@@ -449,6 +430,28 @@ CREATE TABLE app_configs (
     description  TEXT,
     updated_by   BIGINT REFERENCES users(id) ON DELETE SET NULL,
     updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- =========================================================
+-- 19. Yêu cầu nâng cấp lên Instructor
+--     Flow: Learner nộp đơn → Admin duyệt → upgrade role INSTRUCTOR
+--     (proposal: Admin Panel - role assignment)
+--     [B] Bỏ UNIQUE(user_id, status) so với v2.0 — xử lý "chỉ 1 PENDING
+--         tại 1 thời điểm" ở application layer thay vì DB constraint
+-- =========================================================
+CREATE TABLE instructor_requests (
+    id               BIGSERIAL PRIMARY KEY,
+    user_id          BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    specialization   VARCHAR(200) NOT NULL,
+    biography        TEXT,
+    years_experience INT DEFAULT 0,
+    status           VARCHAR(20) DEFAULT 'PENDING'
+                         CHECK (status IN ('PENDING','APPROVED','REJECTED')),
+    reviewer_id      BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    reviewer_note    TEXT,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -488,6 +491,9 @@ CREATE INDEX idx_notifications_unread    ON notifications(user_id)
 -- Mini games & Daily challenges
 CREATE INDEX idx_mini_results_learner    ON mini_game_results(learner_id);
 CREATE INDEX idx_daily_challenge_date    ON daily_challenges(challenge_date);
+-- Instructor requests
+CREATE INDEX idx_instructor_requests_status ON instructor_requests(status);
+CREATE INDEX idx_instructor_requests_user   ON instructor_requests(user_id);
 
 
 -- =========================================================
@@ -512,8 +518,13 @@ INSERT INTO users (email, password_hash, full_name, role, is_active) VALUES
 INSERT INTO instructor_profiles (user_id, specialization, biography, years_experience)
 VALUES (2, 'Dan Tranh', 'Traditional music instructor specializing in Vietnamese zither', 5);
 
-INSERT INTO learner_profiles (user_id, skill_level_id, favorite_instrument, total_practice_minutes)
-VALUES (3, 1, 'Dan Tranh', 120);
+-- [D] Bổ sung current_streak, longest_streak, last_practice_date
+-- (khớp với achievement "Week Warrior" và point_transactions nguồn STREAK_BONUS)
+INSERT INTO learner_profiles
+    (user_id, skill_level_id, favorite_instrument, total_practice_minutes,
+     current_streak, longest_streak, last_practice_date)
+VALUES
+    (3, 1, 'Dan Tranh', 120, 7, 7, CURRENT_DATE);
 
 INSERT INTO leaderboards (learner_id, total_points)
 VALUES (3, 250);
@@ -596,36 +607,63 @@ INSERT INTO notifications (user_id, title, message, notification_type) VALUES
     'Start your journey with Vietnamese traditional instruments. Your first lesson is ready!',
     'SYSTEM');
 
--- =========================================================
--- BỔ SUNG: instructor_requests
--- Flow: Learner nộp đơn → Admin duyệt → upgrade role INSTRUCTOR
--- =========================================================
-DROP TABLE IF EXISTS instructor_requests CASCADE;
-
-CREATE TABLE instructor_requests (
-    id               BIGSERIAL PRIMARY KEY,
-    user_id          BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    specialization   VARCHAR(200) NOT NULL,
-    biography        TEXT,
-    years_experience INT DEFAULT 0,
-    status           VARCHAR(20) DEFAULT 'PENDING'
-                         CHECK (status IN ('PENDING','APPROVED','REJECTED')),
-    reviewer_id      BIGINT REFERENCES users(id) ON DELETE SET NULL,
-    reviewer_note    TEXT,
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    -- Mỗi user chỉ có 1 request PENDING tại một thời điểm
-    CONSTRAINT uq_user_pending UNIQUE (user_id, status)
-);
-
-CREATE INDEX idx_instructor_requests_status ON instructor_requests(status);
-CREATE INDEX idx_instructor_requests_user   ON instructor_requests(user_id);
-
--- =========================================================
--- SỬA: users — bỏ role khỏi INSERT seed, register = LEARNER only
--- Ghi chú: POST /api/auth/register hardcode role=LEARNER ở backend
--- =========================================================
-
 -- Seed mẫu: learner nộp đơn xin dạy
 INSERT INTO instructor_requests (user_id, specialization, biography, years_experience, status)
-VALUES (3, 'Dan Tranh', 'Học viên muốn trở thành giảng viên Dan Tranh', 2, 'PENDING');
+VALUES (3, 'Dan Tranh', 'Hoc vien muon tro thanh giang vien Dan Tranh', 2, 'PENDING');
+
+
+-- =========================================================
+-- [C] SEED DATA BỔ SUNG — demo đầy đủ luồng Practice → Progress → Gamification
+-- =========================================================
+
+-- Practice sessions (Learner Tran Thi B, id=3)
+INSERT INTO practice_sessions (learner_id, started_at, ended_at) VALUES
+(3, '2026-06-10 08:00:00', '2026-06-10 08:25:00'),
+(3, '2026-06-12 19:00:00', '2026-06-12 19:30:00');
+
+-- Practice attempts (gắn với session + exercise tương ứng)
+-- session_id=1 -> exercise 1 (String Identification Quiz, pass_threshold=60)
+-- session_id=2 -> exercise 2 (Picking Pattern Practice, pass_threshold=70)
+INSERT INTO practice_attempts
+    (session_id, learner_id, exercise_id, pitch_score, rhythm_score, dynamics_score, tonal_quality_score, total_score) VALUES
+(1, 3, 1, 75.50, 70.00, 68.00, 72.00, 71.50),
+(1, 3, 1, 82.00, 78.50, 75.00, 80.00, 79.10),
+(2, 3, 2, 65.00, 60.00, 62.00, 64.00, 62.90);
+
+-- Instructor feedback cho 1 attempt cụ thể
+INSERT INTO instructor_feedback (attempt_id, instructor_id, comment) VALUES
+(2, 2, 'Great improvement on string identification! Keep practicing the lower strings.');
+
+-- Learner progress (lesson 1 hoàn thành 3 sao, lesson 2 hoàn thành 2 sao)
+INSERT INTO learner_progress (learner_id, lesson_id, stars, completed, started_at, completed_at) VALUES
+(3, 1, 3, TRUE, '2026-06-10 08:00:00', '2026-06-10 08:25:00'),
+(3, 2, 2, TRUE, '2026-06-12 19:00:00', '2026-06-12 19:30:00');
+
+-- Learner achievements (First Lesson + Hat-trick)
+INSERT INTO learner_achievements (learner_id, achievement_id) VALUES
+(3, 1),
+(3, 2);
+
+-- Learner cosmetics (Default Avatar đang trang bị, Bamboo Wallpaper đã unlock)
+INSERT INTO learner_cosmetics (learner_id, cosmetic_item_id, is_equipped) VALUES
+(3, 4, TRUE),
+(3, 1, FALSE);
+
+-- Mini game result (Note Guesser, 3 sao)
+INSERT INTO mini_game_results (learner_id, mini_game_id, score, stars_earned, started_at, completed_at) VALUES
+(3, 1, 85, 3, '2026-06-10 08:25:00', '2026-06-10 08:28:00');
+
+-- Point transactions — tổng = 250, khớp leaderboards.total_points
+INSERT INTO point_transactions (learner_id, source_type, source_id, points) VALUES
+(3, 'PRACTICE_ATTEMPT', 1, 10),
+(3, 'PRACTICE_ATTEMPT', 2, 15),
+(3, 'MINI_GAME_RESULT', 1, 25),
+(3, 'ACHIEVEMENT', 1, 50),
+(3, 'ACHIEVEMENT', 2, 50),
+(3, 'PRACTICE_ATTEMPT', 3, 10),
+(3, 'STREAK_BONUS', NULL, 90);
+
+-- Learner daily challenges completed today
+INSERT INTO learner_daily_challenges (learner_id, challenge_id, completed, completed_at) VALUES
+(3, 1, TRUE, '2026-06-10 08:25:00'),
+(3, 2, TRUE, '2026-06-10 08:25:00');
