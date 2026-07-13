@@ -102,7 +102,7 @@ public class UserServiceImpl implements IUserService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
-                .role(user.getRole())
+                .role(user.getRole().getName())
                 .active(user.getActive())
                 .createdAt(user.getCreatedAt())
                 .build();

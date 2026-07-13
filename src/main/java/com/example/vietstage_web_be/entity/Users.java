@@ -30,8 +30,9 @@ public class Users {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(name = "role", nullable = false)
-    private String role;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Roles role;
 
     @Column(name = "is_active")
     private Boolean active;
@@ -77,5 +78,11 @@ public class Users {
     private Set<DailyChallenges> dailyChallenges;
 
     @OneToMany(mappedBy = "learner")
-    private List<MiniGameResults> miniGameResults;
+    private List<MinigameAttempts> minigameAttempts;
+    
+    @OneToMany(mappedBy = "learner")
+    private List<QuizAttempts> quizAttempts;
+    
+    @OneToMany(mappedBy = "learner")
+    private List<LessonCompletions> lessonCompletions;
 }

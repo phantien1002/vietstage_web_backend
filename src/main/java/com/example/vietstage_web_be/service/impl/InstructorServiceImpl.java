@@ -6,6 +6,8 @@ import com.example.vietstage_web_be.entity.InstructorProfiles;
 import com.example.vietstage_web_be.entity.Users;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
+import com.example.vietstage_web_be.repository.RolesRepository;
+import com.example.vietstage_web_be.entity.Roles;
 import com.example.vietstage_web_be.repository.InstructorsRepository;
 import com.example.vietstage_web_be.repository.UsersRepository;
 import com.example.vietstage_web_be.service.IInstructorService;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class InstructorServiceImpl implements IInstructorService {
     private final InstructorsRepository instructorsRepository;
     private final UsersRepository usersRepository;
+    private final RolesRepository rolesRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -28,6 +31,9 @@ public class InstructorServiceImpl implements IInstructorService {
         if (usersRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email already exist");
         }
+
+        Roles instructorRole = rolesRepository.findByName("INSTRUCTOR")
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Role INSTRUCTOR not found"));
 
         String generatedPassword =
                 UUID.randomUUID()
@@ -39,7 +45,7 @@ public class InstructorServiceImpl implements IInstructorService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(generatedPassword))
                 .fullName(request.getFullName())
-                .role("INSTRUCTOR")
+                .role(instructorRole)
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -55,7 +61,7 @@ public class InstructorServiceImpl implements IInstructorService {
         return CreateInstructorResponse.builder()
                 .userId(user.getId())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .role(user.getRole().getName())
                 .fullName(user.getFullName())
                 .specialization(profiles.getSpecialization())
                 .yearsExperience(profiles.getYearsExperience())

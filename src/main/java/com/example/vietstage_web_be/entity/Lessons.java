@@ -68,11 +68,12 @@ public class Lessons {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Exercises> exercises;
 
-    @ManyToMany
-    @JoinTable(
-            name = "lesson_mini_games",
-            joinColumns = @JoinColumn(name = "lesson_id"),
-            inverseJoinColumns = @JoinColumn(name = "mini_game_id")
-    )
-    private Set<MiniGames> miniGames;
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Quizzes> quizzes;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MinigameChallenges> minigameChallenges;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LessonCompletions> completions;
 }

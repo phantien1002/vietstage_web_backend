@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "mini_game_results")
-public class MiniGameResults {
+@Table(name = "minigame_attempts")
+public class MinigameAttempts {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,8 +24,8 @@ public class MiniGameResults {
     private Users learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mini_game_id", nullable = false)
-    private MiniGames miniGame;
+    @JoinColumn(name = "minigame_challenge_id", nullable = false)
+    private MinigameChallenges challenge;
 
     @Column(name = "score")
     private Integer score;
@@ -33,7 +33,6 @@ public class MiniGameResults {
     @Column(name = "stars_earned")
     private Integer starsEarned;
 
-    // v2.0: played_at → started_at + completed_at
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
@@ -41,8 +40,5 @@ public class MiniGameResults {
     private LocalDateTime completedAt;
 
     @Column(name = "sync_status")
-    private String syncStatus; // SYNCED | PENDING_SYNC | CONFLICT
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private String syncStatus;
 }

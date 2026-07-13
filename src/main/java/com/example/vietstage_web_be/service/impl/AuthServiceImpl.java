@@ -9,8 +9,11 @@ import com.example.vietstage_web_be.entity.Users;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.UsersRepository;
+import com.example.vietstage_web_be.repository.RolesRepository;
+import com.example.vietstage_web_be.entity.Roles;
 import com.example.vietstage_web_be.security.JwtTokenProvider;
 import com.example.vietstage_web_be.service.IAuthService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements IAuthService {
     private final UsersRepository usersRepository;
+    private final RolesRepository rolesRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider  jwtTokenProvider;
 
@@ -37,11 +41,14 @@ public class AuthServiceImpl implements IAuthService {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email exist");
         }
 
+        Roles learnerRole = rolesRepository.findByName("LEARNER")
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Role LEARNER not found"));
+
         Users user = Users.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
-                .role("LEARNER")
+                .role(learnerRole)
                 .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -64,12 +71,13 @@ public class AuthServiceImpl implements IAuthService {
             throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Account locked");
         }
 
-        String token = jwtTokenProvider.generateLoginToken(user.getEmail(), user.getRole());
+        String roleName = user.getRole().getName();
+        String token = jwtTokenProvider.generateLoginToken(user.getEmail(), roleName);
 
         return AuthResponse.builder()
                 .message("Login successfully")
                 .token(token)
-                .role(user.getRole())
+                .role(roleName)
                 .build();
     }
 

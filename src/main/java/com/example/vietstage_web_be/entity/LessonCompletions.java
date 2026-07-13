@@ -11,23 +11,25 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "learner_progress")
-public class LearnerProgress {
+@Table(name = "lesson_completions")
+public class LessonCompletions {
+
     @EmbeddedId
-    private LearnerProgressId id = new LearnerProgressId();
+    @Builder.Default
+    private LessonCompletionsId id = new LessonCompletionsId();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("learnerId")
-    @JoinColumn(name = "learner_id", foreignKey = @ForeignKey(name = "fk_progress_learner"))
+    @JoinColumn(name = "learner_id")
     private Users learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("lessonId")
-    @JoinColumn(name = "lesson_id", foreignKey = @ForeignKey(name = "fk_progress_lesson"))
+    @JoinColumn(name = "lesson_id")
     private Lessons lesson;
 
     @Column(name = "stars")
-    private Integer stars;
+    private Integer stars; // 0 to 3
 
     @Column(name = "completed")
     private Boolean completed;
@@ -39,7 +41,7 @@ public class LearnerProgress {
     private LocalDateTime completedAt;
 
     @Column(name = "sync_status")
-    private String syncStatus; // SYNCED | PENDING_SYNC | CONFLICT
+    private String syncStatus;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

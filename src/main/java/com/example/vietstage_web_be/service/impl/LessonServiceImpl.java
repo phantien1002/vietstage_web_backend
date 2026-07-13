@@ -241,8 +241,8 @@ public class LessonServiceImpl implements ILessonService {
         Users actor = usersRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        boolean isAdmin = "ADMIN".equals(actor.getRole());
-        boolean isInstructor = "INSTRUCTOR".equals(actor.getRole());
+        boolean isAdmin = "ADMIN".equals(actor.getRole().getName());
+        boolean isInstructor = "INSTRUCTOR".equals(actor.getRole().getName());
 
         // INSTRUCTOR: chỉ được chuyển thành PENDING (để nộp bài duyệt)
         if (isInstructor) {
@@ -313,7 +313,7 @@ public class LessonServiceImpl implements ILessonService {
         Users user = usersRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        if ("ADMIN".equals(user.getRole())) return;
+        if ("ADMIN".equals(user.getRole().getName())) return;
 
         if (lesson.getCreatedBy() == null || !lesson.getCreatedBy().getEmail().equals(userEmail)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
@@ -342,7 +342,7 @@ public class LessonServiceImpl implements ILessonService {
                 .createdBy(lesson.getCreatedBy() != null ? LessonResponse.CreatorInfo.builder()
                         .id(lesson.getCreatedBy().getId())
                         .fullName(lesson.getCreatedBy().getFullName())
-                        .role(lesson.getCreatedBy().getRole())
+                        .role(lesson.getCreatedBy().getRole().getName())
                         .build() : null)
                 .techniques(lesson.getTechniques() != null ? lesson.getTechniques().stream()
                         .map(t -> LessonResponse.TechniqueInfo.builder()

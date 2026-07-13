@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class LearnerCosmetics {
 
     @EmbeddedId
+    @Builder.Default
     private LearnerCosmeticsId id = new LearnerCosmeticsId();
 
     @ManyToOne(fetch = FetchType.LAZY)

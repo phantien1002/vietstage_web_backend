@@ -28,6 +28,9 @@ public class Instruments {
     @Column(name = "icon_url")
     private String iconUrl;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
     @OneToMany(mappedBy = "instrument", cascade = CascadeType.ALL)
     private List<Techniques> techniques;
 
