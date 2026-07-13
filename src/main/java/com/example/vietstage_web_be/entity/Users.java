@@ -31,7 +31,7 @@ public class Users {
     private String fullName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(name = "role_id")
     private Roles role;
 
     @Column(name = "is_active")
