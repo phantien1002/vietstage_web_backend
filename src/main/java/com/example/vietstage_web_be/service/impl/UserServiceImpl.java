@@ -1,8 +1,10 @@
 package com.example.vietstage_web_be.service.impl;
 
+import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
 import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
+import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
 import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.UserResponse;
@@ -15,6 +17,7 @@ import com.example.vietstage_web_be.repository.RolesRepository;
 import com.example.vietstage_web_be.repository.UsersRepository;
 import com.example.vietstage_web_be.service.IUserService;
 import com.example.vietstage_web_be.specification.UserSpecification;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -86,6 +89,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Transactional
     public InstructorCreateResponse createInstructor(InstructorCreateRequest request) {
         if (usersRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email đã tồn tại");
@@ -123,6 +127,36 @@ public class UserServiceImpl implements IUserService {
                 .specialization(savedUser.getInstructorProfile().getSpecialization())
                 .biography(savedUser.getInstructorProfile().getBiography())
                 .yearsExperience(savedUser.getInstructorProfile().getYearsExperience())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AdminCreateResponse createAdmin(AdminCreateRequest request) {
+        if (usersRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email đã tồn tại");
+        }
+
+        Roles role = rolesRepository.findByName("ADMIN")
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, "Vai trò ADMIN không tồn tại"));
+
+        Users user = new Users();
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFullName(request.getFullName());
+        user.setRole(role);
+        user.setActive(true);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+
+        Users savedUser = usersRepository.save(user);
+        return AdminCreateResponse.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .fullName(savedUser.getFullName())
+                .roleName(role.getName())
+                .isActive(savedUser.getActive())
+                .createdAt(savedUser.getCreatedAt())
                 .build();
     }
 
