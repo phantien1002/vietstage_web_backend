@@ -1,7 +1,9 @@
 package com.example.vietstage_web_be.service;
 
+import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
 import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
+import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.UserResponse;
 
@@ -42,5 +44,11 @@ public interface IUserService {
      * Cập nhật trạng thái kích hoạt/vô hiệu hóa của user theo ID.
      */
     UserResponse updateUserStatus(Long id, UpdateUserStatusRequest request);
+
+
+    /**
+     * Admin tạo Instructor Account.
+     */
+    InstructorCreateResponse createInstructor(InstructorCreateRequest request);
 }
 

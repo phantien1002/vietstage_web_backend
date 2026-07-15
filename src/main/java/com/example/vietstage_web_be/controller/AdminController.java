@@ -1,9 +1,9 @@
 package com.example.vietstage_web_be.controller;
 
-import com.example.vietstage_web_be.dto.request.CreateInstructorRequest;
+import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
-import com.example.vietstage_web_be.dto.response.CreateInstructorResponse;
-import com.example.vietstage_web_be.service.IInstructorService;
+import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
+import com.example.vietstage_web_be.service.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Admin")
 public class AdminController {
-    private final IInstructorService instructorService;
+    private final IUserService userService;
 
     @GetMapping("/dashboard")
     public ResponseEntity<String> getDashboard() {
@@ -23,15 +23,12 @@ public class AdminController {
     }
 
     @PostMapping("/create-instructor")
-    public ResponseEntity<ApiResponse<CreateInstructorResponse>> createInstructorByAdmin(
-            @Valid @RequestBody CreateInstructorRequest request) {
-        CreateInstructorResponse response = instructorService.createInstructor(request);
-
-        return ResponseEntity.ok(
-                ApiResponse.<CreateInstructorResponse>builder()
-                        .message("Instructor created successfully")
-                        .data(response)
-                        .build()
-        );
+    public ApiResponse<InstructorCreateResponse> createInstructor(
+            @Valid @RequestBody InstructorCreateRequest request
+    ){
+        return ApiResponse.<InstructorCreateResponse>builder()
+                .message("Successfully created instructor")
+                .data(userService.createInstructor(request))
+                .build();
     }
 }

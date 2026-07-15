@@ -1,12 +1,17 @@
 package com.example.vietstage_web_be.service.impl;
 
+import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
 import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
+import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
 import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.UserResponse;
+import com.example.vietstage_web_be.entity.InstructorProfiles;
+import com.example.vietstage_web_be.entity.Roles;
 import com.example.vietstage_web_be.entity.Users;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
+import com.example.vietstage_web_be.repository.RolesRepository;
 import com.example.vietstage_web_be.repository.UsersRepository;
 import com.example.vietstage_web_be.service.IUserService;
 import com.example.vietstage_web_be.specification.UserSpecification;
@@ -16,8 +21,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +40,8 @@ public class UserServiceImpl implements IUserService {
     );
 
     private final UsersRepository usersRepository;
+    private final RolesRepository rolesRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse getUserById(Long id) {
@@ -74,6 +83,47 @@ public class UserServiceImpl implements IUserService {
         user.setActive(request.getActive());
         Users savedUser = usersRepository.save(user);
         return toUserResponse(savedUser);
+    }
+
+    @Override
+    public InstructorCreateResponse createInstructor(InstructorCreateRequest request) {
+        if (usersRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email đã tồn tại");
+        }
+
+        Roles role = rolesRepository.findByName("INSTRUCTOR")
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, "Vai trò không tồn tại"));
+
+        Users user = new Users();
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword())); // Mã hóa bảo mật
+        user.setFullName(request.getFullName());
+        user.setActive(true);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+
+        InstructorProfiles profile = new InstructorProfiles();
+        profile.setUser(user);
+        profile.setSpecialization(request.getSpecialization());
+        profile.setBiography(request.getBiography());
+        profile.setYearsExperience(request.getYearsExperience() != null ? request.getYearsExperience() : 0);
+        profile.setUpdatedAt(LocalDateTime.now());
+
+        user.setInstructorProfile(profile);
+
+        Users savedUser = usersRepository.save(user);
+
+        return InstructorCreateResponse.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .fullName(savedUser.getFullName())
+                .roleName(role.getName())
+                .isActive(savedUser.getActive())
+                .createdAt(savedUser.getCreatedAt())
+                .specialization(savedUser.getInstructorProfile().getSpecialization())
+                .biography(savedUser.getInstructorProfile().getBiography())
+                .yearsExperience(savedUser.getInstructorProfile().getYearsExperience())
+                .build();
     }
 
     // ============================================================
