@@ -1,6 +1,8 @@
 package com.example.vietstage_web_be.controller;
 
+import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
+import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
 import com.example.vietstage_web_be.service.IUserService;
@@ -29,6 +31,16 @@ public class AdminController {
         return ApiResponse.<InstructorCreateResponse>builder()
                 .message("Successfully created instructor")
                 .data(userService.createInstructor(request))
+                .build();
+    }
+
+    @PostMapping("/create-admin")
+    public ApiResponse<AdminCreateResponse> createAdmin(
+            @Valid @RequestBody AdminCreateRequest request) {
+
+        return ApiResponse.<AdminCreateResponse>builder()
+                .message("Tạo tài khoản Admin thành công")
+                .data(userService.createAdmin(request))
                 .build();
     }
 }
