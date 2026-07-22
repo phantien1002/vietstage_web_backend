@@ -15,6 +15,7 @@ public enum ErrorCode {
     INVALID_ROLE(1008, "Vai trò không hợp lệ", HttpStatus.BAD_REQUEST),
     ACCOUNT_LOCKED(1009, "Tài khoản đã bị khóa", HttpStatus.FORBIDDEN),
     INVALID_VERIFICATION_CODE(1010, "Mã xác thực không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+    UNAUTHENTICATED(1011, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     LESSON_NOT_FOUND(2001, "Bài học không tồn tại", HttpStatus.NOT_FOUND),
     INSTRUMENT_NOT_FOUND(2002, "Nhạc cụ không tồn tại", HttpStatus.NOT_FOUND),
     TECHNIQUE_NOT_FOUND(2003, "Kỹ thuật không tồn tại", HttpStatus.NOT_FOUND),

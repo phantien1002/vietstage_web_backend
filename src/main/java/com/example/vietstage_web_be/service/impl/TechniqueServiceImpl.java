@@ -3,12 +3,12 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.request.TechniqueRequest;
 import com.example.vietstage_web_be.dto.request.UpdateTechniqueRequest;
 import com.example.vietstage_web_be.dto.response.TechniqueResponse;
-import com.example.vietstage_web_be.entity.Instruments;
-import com.example.vietstage_web_be.entity.Techniques;
+import com.example.vietstage_web_be.entity.Instrument;
+import com.example.vietstage_web_be.entity.Technique;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
-import com.example.vietstage_web_be.repository.InstrumentsRepository;
-import com.example.vietstage_web_be.repository.TechniquesRepository;
+import com.example.vietstage_web_be.repository.InstrumentRepository;
+import com.example.vietstage_web_be.repository.TechniqueRepository;
 import com.example.vietstage_web_be.service.ITechniqueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,27 +21,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TechniqueServiceImpl implements ITechniqueService {
 
-    private final TechniquesRepository techniquesRepository;
-    private final InstrumentsRepository instrumentsRepository;
+    private final TechniqueRepository techniquesRepository;
+    private final InstrumentRepository instrumentsRepository;
 
     @Override
     @Transactional
     public TechniqueResponse createTechnique(TechniqueRequest request) {
-        Instruments instrument = instrumentsRepository.findById(request.getInstrumentId())
+        Instrument instrument = instrumentsRepository.findById(request.getInstrumentId())
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
 
         if (techniquesRepository.existsByNameIgnoreCaseAndInstrumentId(request.getName(), request.getInstrumentId())) {
             throw new AppException(ErrorCode.TECHNIQUE_ALREADY_EXIST);
         }
 
-        Techniques technique = Techniques.builder()
+        Technique technique = Technique.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .guideUrl(request.getGuideUrl())
                 .instrument(instrument)
                 .build();
 
-        Techniques saved = techniquesRepository.save(technique);
+        Technique saved = techniquesRepository.save(technique);
         return mapToResponse(saved);
     }
 
@@ -67,7 +67,7 @@ public class TechniqueServiceImpl implements ITechniqueService {
     @Override
     @Transactional(readOnly = true)
     public TechniqueResponse getTechniqueById(Long id) {
-        Techniques technique = techniquesRepository.findById(id)
+        Technique technique = techniquesRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.TECHNIQUE_NOT_FOUND));
         return mapToResponse(technique);
     }
@@ -75,7 +75,7 @@ public class TechniqueServiceImpl implements ITechniqueService {
     @Override
     @Transactional
     public TechniqueResponse updateTechnique(Long id, UpdateTechniqueRequest request) {
-        Techniques technique = techniquesRepository.findById(id)
+        Technique technique = techniquesRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.TECHNIQUE_NOT_FOUND));
 
         // Kiểm tra trùng tên trong cùng nhạc cụ (instrument giữ nguyên, không đổi)
@@ -93,19 +93,19 @@ public class TechniqueServiceImpl implements ITechniqueService {
         technique.setDescription(request.getDescription());
         technique.setGuideUrl(request.getGuideUrl());
 
-        Techniques updated = techniquesRepository.save(technique);
+        Technique updated = techniquesRepository.save(technique);
         return mapToResponse(updated);
     }
 
     @Override
     @Transactional
     public void deleteTechnique(Long id) {
-        Techniques technique = techniquesRepository.findById(id)
+        Technique technique = techniquesRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.TECHNIQUE_NOT_FOUND));
         techniquesRepository.delete(technique);
     }
 
-    private TechniqueResponse mapToResponse(Techniques technique) {
+    private TechniqueResponse mapToResponse(Technique technique) {
         return TechniqueResponse.builder()
                 .id(technique.getId())
                 .name(technique.getName())

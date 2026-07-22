@@ -9,6 +9,8 @@ import com.example.vietstage_web_be.dto.response.AuthResponse;
 public interface IAuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
+    AuthResponse refresh(String sessionId, String refreshToken);
+    void logout(String sessionId);
     String forgotPassword(ForgotPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);
 }

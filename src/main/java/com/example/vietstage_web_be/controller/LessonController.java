@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/lessons")
 @RequiredArgsConstructor
-@Tag(name = "Lessons")
+@Tag(name = "Lesson")
 public class LessonController {
 
     private final ILessonService lessonService;

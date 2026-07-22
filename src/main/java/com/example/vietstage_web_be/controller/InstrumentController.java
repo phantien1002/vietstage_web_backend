@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/instruments")
 @RequiredArgsConstructor
-@Tag(name = "Instruments")
+@Tag(name = "Instrument")
 public class InstrumentController {
 
     private final IInstrumentService instrumentService;

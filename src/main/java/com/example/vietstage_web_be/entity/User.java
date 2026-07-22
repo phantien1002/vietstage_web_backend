@@ -1,0 +1,82 @@
+package com.example.vietstage_web_be.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+
+@Entity
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id", nullable = false)
+    private Long id;
+
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id")
+    private Role role;
+
+    @Column(name = "is_active")
+    private Boolean active;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private InstructorProfile instructorProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private LearnerProfile learnerProfile;
+
+    @OneToMany(mappedBy = "createdBy")
+    private List<Lesson> createdLessons;
+
+    @OneToMany(mappedBy = "learner")
+    private List<PracticeAttempt> practiceAttempts;
+
+    @OneToMany(mappedBy = "instructor")
+    private List<InstructorFeedback> givenFeedbacks;
+
+    @ManyToMany
+    @JoinTable(
+            name = "learner_achievements",
+            joinColumns = @JoinColumn(name = "learner_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "achievement_id")
+    )
+    private Set<Achievement> achievements;
+
+    @ManyToMany
+    @JoinTable(
+            name = "learner_daily_challenges",
+            joinColumns = @JoinColumn(name = "learner_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "challenge_id")
+    )
+    private Set<DailyChallenge> dailyChallenges;
+
+    @OneToMany(mappedBy = "learner")
+    private List<MinigameAttempt> minigameAttempts;
+    
+    @OneToMany(mappedBy = "learner")
+    private List<QuizAttempt> quizAttempts;
+}

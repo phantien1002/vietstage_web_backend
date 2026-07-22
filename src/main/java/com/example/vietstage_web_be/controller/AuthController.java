@@ -1,20 +1,24 @@
 package com.example.vietstage_web_be.controller;
 
-import com.example.vietstage_web_be.dto.request.ForgotPasswordRequest;
-import com.example.vietstage_web_be.dto.request.LoginRequest;
-import com.example.vietstage_web_be.dto.request.RegisterRequest;
-import com.example.vietstage_web_be.dto.request.ResetPasswordRequest;
+import com.example.vietstage_web_be.dto.BaseResponse;
+import com.example.vietstage_web_be.dto.request.*;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.AuthResponse;
+import com.example.vietstage_web_be.dto.response.UserResponse;
+import com.example.vietstage_web_be.entity.User;
+import com.example.vietstage_web_be.repository.UserRepository;
+import com.example.vietstage_web_be.security.JwtTokenProvider;
 import com.example.vietstage_web_be.service.IAuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,25 +26,82 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Authentication")
 public class AuthController {
     private final IAuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository UserRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request){
+    public ResponseEntity<BaseResponse<AuthResponse>> register(@RequestBody @Valid RegisterRequest request){
         AuthResponse response = authService.register(request);
-        if (response.getMessage().contains("successfully")) {
-            return ResponseEntity.ok(response);
-        }
-
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                .success(true)
+                .message("Register successfully")
+                .data(response)
+                .build());
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request){
+    public ResponseEntity<BaseResponse<AuthResponse>> login(@RequestBody @Valid LoginRequest request){
         AuthResponse response = authService.login(request);
-        if (response.getToken() != null){
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                .success(true)
+                .message("Login successfully")
+                .data(response)
+                .build());
+    }
 
-        return ResponseEntity.status(401).body(response);
+    @PostMapping("/refresh")
+    public ResponseEntity<BaseResponse<AuthResponse>> refresh(@RequestBody @Valid RefreshRequest request){
+        AuthResponse response = authService.refresh(request.getSessionId(), request.getRefreshToken());
+        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                .success(true)
+                .message("Token refreshed successfully")
+                .data(response)
+                .build());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<Void>> logout(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        if (token != null) {
+            String sessionId = jwtTokenProvider.getSessionIdFromToken(token);
+            if (sessionId != null) {
+                authService.logout(sessionId);
+            }
+        }
+        return ResponseEntity.ok(BaseResponse.<Void>builder()
+                .success(true)
+                .message("Logout successfully")
+                .build());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<BaseResponse<UserResponse>> getMe() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            User user = UserRepository.findByEmail(userDetails.getUsername()).orElse(null);
+            
+            if (user != null) {
+                UserResponse userResponse = UserResponse.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .fullName(user.getFullName())
+                        .role(user.getRole().getName())
+                        .active(user.getActive())
+                        .createdAt(user.getCreatedAt())
+                        .build();
+
+                return ResponseEntity.ok(BaseResponse.<UserResponse>builder()
+                        .success(true)
+                        .message("Current user info")
+                        .data(userResponse)
+                        .build());
+            }
+        }
+        return ResponseEntity.status(401).body(BaseResponse.<UserResponse>builder()
+                .success(false)
+                .message("Not authenticated")
+                .build());
     }
 
     @PostMapping("/forgot-password")
@@ -64,5 +125,13 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }

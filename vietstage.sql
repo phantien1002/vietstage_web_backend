@@ -607,7 +607,209 @@ COMMIT;
 --   leaderboard:{scope}
 --   member = learner_user_id
 --   score  = ranking score calculated by application rules
+    completed_at    TIMESTAMPTZ,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (learner_user_id, challenge_id),
+    CONSTRAINT ck_daily_progress_status
+        CHECK (status IN ('IN_PROGRESS', 'COMPLETED')),
+    CONSTRAINT ck_daily_progress_value CHECK (progress_value >= 0)
+);
+
+-- =========================================================
+-- 11. CONTENT MODERATION
+-- Each review targets exactly one lesson OR one media asset.
+-- =========================================================
+CREATE TABLE content_reviews (
+    review_id         BIGSERIAL PRIMARY KEY,
+    reviewer_user_id  BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    lesson_id         BIGINT REFERENCES lessons(lesson_id) ON DELETE RESTRICT,
+    media_asset_id    BIGINT REFERENCES media_assets(asset_id) ON DELETE RESTRICT,
+    status            VARCHAR(30) NOT NULL,
+    comment           TEXT,
+    reviewed_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_content_review_target
+        CHECK (
+            (lesson_id IS NOT NULL AND media_asset_id IS NULL)
+            OR
+            (lesson_id IS NULL AND media_asset_id IS NOT NULL)
+        ),
+    CONSTRAINT ck_content_review_status
+        CHECK (status IN ('APPROVED', 'REJECTED', 'REVISION_REQUIRED'))
+);
+
+-- =========================================================
+-- 12. SYSTEM ANALYTICS
+-- This is usage telemetry for active users/session duration/retention.
+-- It is NOT the Redis authentication session store.
+-- =========================================================
+CREATE TABLE usage_sessions (
+    usage_session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id          BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    platform         VARCHAR(20) NOT NULL,
+    started_at       TIMESTAMPTZ NOT NULL,
+    ended_at         TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_usage_platform
+        CHECK (platform IN ('WINDOWS', 'ANDROID', 'IOS', 'WEB')),
+    CONSTRAINT ck_usage_time CHECK (ended_at IS NULL OR ended_at >= started_at)
+);
+
+-- =========================================================
+-- 13. APPLICATION CONFIGURATION
+-- =========================================================
+CREATE TABLE app_configs (
+    config_id          BIGSERIAL PRIMARY KEY,
+    config_key         VARCHAR(120) NOT NULL UNIQUE,
+    config_value       JSONB NOT NULL,
+    description        TEXT,
+    updated_by_user_id BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+    updated_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================================================
+-- UPDATED_AT TRIGGER
+-- =========================================================
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_users_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_learner_profiles_updated_at
+BEFORE UPDATE ON learner_profiles
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_instructor_profiles_updated_at
+BEFORE UPDATE ON instructor_profiles
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_instruments_updated_at
+BEFORE UPDATE ON instruments
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_techniques_updated_at
+BEFORE UPDATE ON techniques
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_lessons_updated_at
+BEFORE UPDATE ON lessons
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_exercises_updated_at
+BEFORE UPDATE ON exercises
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_quizzes_updated_at
+BEFORE UPDATE ON quizzes
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_minigames_updated_at
+BEFORE UPDATE ON minigame_challenges
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_lesson_progress_updated_at
+BEFORE UPDATE ON learner_lesson_progress
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_daily_progress_updated_at
+BEFORE UPDATE ON learner_daily_challenges
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_app_configs_updated_at
+BEFORE UPDATE ON app_configs
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- =========================================================
+-- INDEXES
+-- =========================================================
+CREATE INDEX idx_users_role ON users(role_id);
+CREATE INDEX idx_learner_instruments_instrument ON learner_instruments(instrument_id);
+CREATE INDEX idx_instructor_instruments_instrument ON instructor_instruments(instrument_id);
+CREATE INDEX idx_techniques_instrument ON techniques(instrument_id);
+CREATE INDEX idx_lessons_instrument_level_status
+    ON lessons(instrument_id, skill_level_id, status, order_index);
+CREATE INDEX idx_media_assets_lesson_type ON media_assets(lesson_id, asset_type);
+CREATE INDEX idx_exercises_lesson ON exercises(lesson_id);
+CREATE INDEX idx_practice_attempts_learner_time
+    ON practice_attempts(learner_user_id, completed_at DESC);
+CREATE INDEX idx_practice_attempts_exercise ON practice_attempts(exercise_id);
+CREATE INDEX idx_feedback_attempt ON instructor_feedback(attempt_id);
+CREATE INDEX idx_feedback_instructor ON instructor_feedback(instructor_user_id);
+CREATE INDEX idx_quizzes_lesson ON quizzes(lesson_id);
+CREATE INDEX idx_quiz_attempts_learner_time
+    ON quiz_attempts(learner_user_id, completed_at DESC);
+CREATE INDEX idx_minigames_lesson ON minigame_challenges(lesson_id);
+CREATE INDEX idx_minigame_attempts_learner_time
+    ON minigame_attempts(learner_user_id, completed_at DESC);
+CREATE INDEX idx_progress_lesson ON learner_lesson_progress(lesson_id);
+CREATE INDEX idx_daily_challenges_date ON daily_challenges(challenge_date);
+CREATE INDEX idx_content_reviews_lesson ON content_reviews(lesson_id)
+    WHERE lesson_id IS NOT NULL;
+CREATE INDEX idx_content_reviews_asset ON content_reviews(media_asset_id)
+    WHERE media_asset_id IS NOT NULL;
+CREATE INDEX idx_usage_sessions_user_start
+    ON usage_sessions(user_id, started_at DESC);
+
+-- =========================================================
+-- REFERENCE SEED DATA ONLY
+-- No sample credentials or hard-coded user IDs.
+-- =========================================================
+INSERT INTO roles (role_name) VALUES
+    ('ADMIN'),
+    ('INSTRUCTOR'),
+    ('LEARNER')
+ON CONFLICT (role_name) DO NOTHING;
+
+INSERT INTO skill_levels (level_code, level_name, order_index) VALUES
+    ('BEGINNER', 'Beginner', 1),
+    ('INTERMEDIATE', 'Intermediate', 2),
+    ('ADVANCED', 'Advanced', 3)
+ON CONFLICT (level_code) DO NOTHING;
+
+INSERT INTO instruments (name, description) VALUES
+    ('Dan Tranh', 'Vietnamese 16-string zither'),
+    ('Dan Bau',   'Vietnamese monochord'),
+    ('Sao Truc',  'Vietnamese bamboo flute'),
+    ('Trong',     'Vietnamese traditional drum')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO app_configs (config_key, config_value, description) VALUES
+    ('scoring.pitch_weight',        '0.35'::jsonb, 'Pitch contribution to the composite score'),
+    ('scoring.rhythm_weight',       '0.25'::jsonb, 'Rhythm contribution to the composite score'),
+    ('scoring.tonal_weight',        '0.15'::jsonb, 'Tonal-quality contribution where applicable'),
+    ('scoring.breath_weight',       '0.10'::jsonb, 'Breath contribution for wind instruments'),
+    ('scoring.dynamics_weight',     '0.15'::jsonb, 'Dynamics contribution to the composite score'),
+    ('feature.minigame_enabled',    'true'::jsonb, 'Global mini-game feature toggle'),
+    ('feature.adaptive_difficulty', 'true'::jsonb, 'Adaptive difficulty feature toggle'),
+    ('difficulty.rolling_window',   '10'::jsonb, 'Number of recent attempts used for adaptation')
+ON CONFLICT (config_key) DO NOTHING;
+
+COMMIT;
+
+-- =========================================================
+-- REDIS (NOT POSTGRESQL TABLES)
+-- =========================================================
+-- Auth refresh sessions:
+--   auth:session:{session_id}
+--
+-- Leaderboard cache (Sorted Set):
+--   leaderboard:{scope}
+--   member = learner_user_id
+--   score  = ranking score calculated by application rules
 --
 -- PostgreSQL remains the source of truth for attempts, progress,
 -- achievements and daily-challenge completion.
 -- =========================================================
+
+-- Seed Admin and Instructor accounts (Mật khẩu cho cả 2 là: 123456)
+INSERT INTO users (email, password_hash, full_name, role_id, is_active, created_at, updated_at)
+VALUES 
+('admin@vietstage.com', '$2a$10$FPCXHRtYgKFc9yLiKREjdO88E8P2lyEbphhTLi7T/Z7OfQYtuyOim', 'System Admin', (SELECT role_id FROM roles WHERE role_name = 'ADMIN'), true, NOW(), NOW()),
+('instructor@vietstage.com', '$2a$10$FPCXHRtYgKFc9yLiKREjdO88E8P2lyEbphhTLi7T/Z7OfQYtuyOim', 'Master Instructor', (SELECT role_id FROM roles WHERE role_name = 'INSTRUCTOR'), true, NOW(), NOW())
+ON CONFLICT (email) DO NOTHING;

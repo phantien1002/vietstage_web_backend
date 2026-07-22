@@ -2,6 +2,7 @@ package com.example.vietstage_web_be.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -10,26 +11,36 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private final String JWT_SECRET = "vietstage_secret_key_fixed_length_for_hmac_sha256_must_be_long_enough";
-    private final Key key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
-    private static final long LOGIN_TOKEN_EXPIRY_MS = 86400000L;   // 24 giờ
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${app.jwt.access-token-expiration-ms:3600000}")
+    private long accessTokenExpiryMs;
+
     private static final long RESET_TOKEN_EXPIRY_MS  = 900000L;    // 15 phút
 
-    // ─── Login token ──────────────────────────────────────────────────────────
+    private Key getKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
-    public String generateLoginToken(String email, String role) {
+    public String generateAccessToken(String email, String role, String sessionId) {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("role", role)
+                .claim("sid", sessionId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + LOGIN_TOKEN_EXPIRY_MS))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiryMs))
+                .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String generateRefreshToken() {
+        return java.util.UUID.randomUUID().toString() + "-" + new java.security.SecureRandom().nextLong();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -44,6 +55,10 @@ public class JwtTokenProvider {
         return parseClaims(token).get("role", String.class);
     }
 
+    public String getSessionIdFromToken(String token) {
+        return parseClaims(token).get("sid", String.class);
+    }
+
     // ─── Reset-password token ─────────────────────────────────────────────────
 
     public String generateResetPasswordToken(String email) {
@@ -51,7 +66,7 @@ public class JwtTokenProvider {
                 .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + RESET_TOKEN_EXPIRY_MS))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -63,7 +78,7 @@ public class JwtTokenProvider {
 
     private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(getKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

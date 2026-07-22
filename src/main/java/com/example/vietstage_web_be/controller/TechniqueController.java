@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/techniques")
 @RequiredArgsConstructor
-@Tag(name = "Techniques")
+@Tag(name = "Technique")
 public class TechniqueController {
 
     private final ITechniqueService techniqueService;

@@ -26,10 +26,10 @@ public class OpenAPIConfig {
                 // Định nghĩa thứ tự hiển thị của các tags trên Swagger UI
                 .tags(List.of(
                         new Tag().name("Authentication").description("Các API liên quan đến Xác thực tài khoản"),
-                        new Tag().name("Users").description("Các API liên quan đến Quản lý người dùng"),
-                        new Tag().name("Lessons").description("Các API liên quan đến Quản lý bài học"),
-                        new Tag().name("Instruments").description("Các API liên quan đến Quản lý nhạc cụ"),
-                        new Tag().name("Techniques").description("Các API liên quan đến Quản lý kỹ thuật"),
+                        new Tag().name("User").description("Các API liên quan đến Quản lý người dùng"),
+                        new Tag().name("Lesson").description("Các API liên quan đến Quản lý bài học"),
+                        new Tag().name("Instrument").description("Các API liên quan đến Quản lý nhạc cụ"),
+                        new Tag().name("Technique").description("Các API liên quan đến Quản lý kỹ thuật"),
                         new Tag().name("Admin").description("Các API quản trị hệ thống")
                 ))
                 // Thêm nút Authorize 🔒 trên Swagger UI
