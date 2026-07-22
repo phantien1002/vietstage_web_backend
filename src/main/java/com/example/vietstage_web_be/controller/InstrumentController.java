@@ -68,5 +68,21 @@ public class InstrumentController {
                 .build();
         return ResponseEntity.ok(response);
     }
-}
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<InstrumentResponse>> getInstrumentById(@PathVariable Long id) {
+        InstrumentResponse data = instrumentService.getInstrumentById(id);
+        ApiResponse<InstrumentResponse> response = ApiResponse.<InstrumentResponse>builder()
+                .message("Get instrument successfully")
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteInstrument(@PathVariable Long id) {
+        instrumentService.deleteInstrument(id);
+        return ResponseEntity.noContent().build();
+    }
+}

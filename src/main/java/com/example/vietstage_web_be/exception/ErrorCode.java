@@ -24,7 +24,10 @@ public enum ErrorCode {
     TECHNIQUE_ALREADY_EXIST(2006, "Kỹ thuật đã tồn tại trong nhạc cụ này", HttpStatus.CONFLICT),
     LESSON_ALREADY_EXIST(2007, "Tiêu đề bài học đã tồn tại trong nhạc cụ này", HttpStatus.CONFLICT),
     INVALID_LESSON_STATUS(2008, "Trạng thái bài học không hợp lệ", HttpStatus.BAD_REQUEST),
-    LESSON_STATUS_FORBIDDEN(2009, "Chỉ ADMIN mới có quyền duyệt/từ chối bài học", HttpStatus.FORBIDDEN);
+    LESSON_STATUS_FORBIDDEN(2009, "Chỉ ADMIN mới có quyền duyệt/từ chối bài học", HttpStatus.FORBIDDEN),
+    SKILL_LEVEL_NOT_FOUND(2010, "Trình độ không tồn tại", HttpStatus.NOT_FOUND),
+    SKILL_LEVEL_CODE_ALREADY_EXIST(2011, "Mã trình độ đã tồn tại", HttpStatus.CONFLICT),
+    SKILL_LEVEL_ORDER_ALREADY_EXIST(2012, "Thứ tự trình độ đã tồn tại", HttpStatus.CONFLICT);
 
     private final int code;
     private final String message;

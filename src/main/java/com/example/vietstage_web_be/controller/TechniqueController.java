@@ -91,4 +91,18 @@ public class TechniqueController {
         techniqueService.deleteTechnique(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * GET /api/techniques/{id}
+     * PUBLIC — trả về chi tiết kỹ thuật
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "Chi tiết kỹ thuật (PUBLIC)")
+    public ResponseEntity<ApiResponse<TechniqueResponse>> getTechniqueById(@PathVariable Long id) {
+        TechniqueResponse data = techniqueService.getTechniqueById(id);
+        return ResponseEntity.ok(ApiResponse.<TechniqueResponse>builder()
+                .message("Get technique successfully")
+                .data(data)
+                .build());
+    }
 }

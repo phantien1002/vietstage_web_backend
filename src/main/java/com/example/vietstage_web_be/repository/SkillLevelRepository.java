@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SkillLevelRepository extends JpaRepository<SkillLevel, Long> {
+    boolean existsByLevelCodeIgnoreCase(String levelCode);
+    boolean existsByOrderIndex(Short orderIndex);
 }
