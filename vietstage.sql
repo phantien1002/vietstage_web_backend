@@ -91,7 +91,8 @@ CREATE TABLE skill_levels (
 -- =========================================================
 CREATE TABLE users (
     user_id        BIGSERIAL PRIMARY KEY,
-    role_id        BIGINT NOT NULL REFERENCES roles(role_id) ON DELETE RESTRICT,
+      user_code      VARCHAR(50) UNIQUE,
+      role_id        BIGINT NOT NULL REFERENCES roles(role_id) ON DELETE RESTRICT,
     email          VARCHAR(150) NOT NULL UNIQUE,
     password_hash  VARCHAR(255) NOT NULL,
     full_name      VARCHAR(150) NOT NULL,
@@ -810,6 +811,6 @@ COMMIT;
 -- Seed Admin and Instructor accounts (Mật khẩu cho cả 2 là: 123456)
 INSERT INTO users (email, password_hash, full_name, role_id, is_active, created_at, updated_at)
 VALUES 
-('admin@vietstage.com', '$2a$10$FPCXHRtYgKFc9yLiKREjdO88E8P2lyEbphhTLi7T/Z7OfQYtuyOim', 'System Admin', (SELECT role_id FROM roles WHERE role_name = 'ADMIN'), true, NOW(), NOW()),
+('VS-2024-001', 'admin@vietstage.com', '$2a$10$FPCXHRtYgKFc9yLiKREjdO88E8P2lyEbphhTLi7T/Z7OfQYtuyOim', 'System Admin', (SELECT role_id FROM roles WHERE role_name = 'ADMIN'), true, NOW(), NOW()),
 ('instructor@vietstage.com', '$2a$10$FPCXHRtYgKFc9yLiKREjdO88E8P2lyEbphhTLi7T/Z7OfQYtuyOim', 'Master Instructor', (SELECT role_id FROM roles WHERE role_name = 'INSTRUCTOR'), true, NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;

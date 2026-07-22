@@ -22,6 +22,9 @@ public class Instrument {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "instrument_code", unique = true)
+    private String instrumentCode;
+
     @Column(name = "description")
     private String description;
 

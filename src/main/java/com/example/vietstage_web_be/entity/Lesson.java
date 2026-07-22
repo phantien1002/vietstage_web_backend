@@ -21,6 +21,9 @@ public class Lesson {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Column(name = "lesson_code", unique = true)
+    private String lessonCode;
+
     @ManyToOne
     @JoinColumn(name = "instrument_id")
     private Instrument instrument;
@@ -42,7 +45,7 @@ public class Lesson {
     private Integer orderIndex;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by_user_id")
     private User createdBy;
 
     @Column(name = "created_at")
@@ -67,4 +70,7 @@ public class Lesson {
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MinigameChallenge> minigameChallenges;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MediaAsset> mediaAssets;
 }

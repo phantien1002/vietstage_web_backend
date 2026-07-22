@@ -27,7 +27,11 @@ public class InstrumentServiceImpl implements IInstrumentService {
             throw new AppException(ErrorCode.INSTRUMENT_ALREADY_EXIST);
         }
 
+        Long nextId = instrumentsRepository.findTopByOrderByIdDesc().map(com.example.vietstage_web_be.entity.Instrument::getId).orElse(0L) + 1;
+        String insCode = "INS-" + request.getName().substring(0, Math.min(2, request.getName().length())).toUpperCase() + "-" + String.format("%03d", nextId);
+
         Instrument instrument = Instrument.builder()
+                .instrumentCode(insCode)
                 .name(request.getName())
                 .description(request.getDescription())
                 .iconUrl(request.getIconUrl())
@@ -83,6 +87,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
     private InstrumentResponse mapToResponse(Instrument instrument) {
         return InstrumentResponse.builder()
                 .id(instrument.getId())
+                .instrumentCode(instrument.getInstrumentCode())
                 .name(instrument.getName())
                 .description(instrument.getDescription())
                 .iconUrl(instrument.getIconUrl())

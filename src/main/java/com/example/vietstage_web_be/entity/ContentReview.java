@@ -24,7 +24,7 @@ public class ContentReview {
     private Lesson lesson;
 
     @ManyToOne
-    @JoinColumn(name = "reviewer_id")
+    @JoinColumn(name = "reviewer_user_id")
     private User reviewer;
 
     @Column(name = "status", nullable = false)

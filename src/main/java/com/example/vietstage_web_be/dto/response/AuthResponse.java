@@ -13,6 +13,8 @@ public class AuthResponse {
     private String token;
     private String refreshToken;
     private String sessionId;
+    private String userCode;
+
     private String role;
     private String message;
 }

@@ -5,9 +5,12 @@ import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
+import com.example.vietstage_web_be.dto.response.AdminUserResponse;
+import com.example.vietstage_web_be.service.IAdminUserService;
 import com.example.vietstage_web_be.service.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +21,15 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Admin")
 public class AdminController {
     private final IUserService userService;
+    private final IAdminUserService adminUserService;
+
+    @GetMapping("/users")
+    public ApiResponse<List<AdminUserResponse>> getAllUsers() {
+        return ApiResponse.<List<AdminUserResponse>>builder()
+                .message("Successfully fetched all users")
+                .data(adminUserService.getAllUsers())
+                .build();
+    }
 
     @GetMapping("/dashboard")
     public ResponseEntity<String> getDashboard() {

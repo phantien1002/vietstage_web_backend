@@ -21,6 +21,9 @@ public class User {
     @Column(name = "user_id", nullable = false)
     private Long id;
 
+    @Column(name = "user_code", unique = true)
+    private String userCode;
+
     @Column(name = "email", nullable = false)
     private String email;
 
@@ -29,6 +32,9 @@ public class User {
 
     @Column(name = "full_name", nullable = false)
     private String fullName;
+
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    private String avatarUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")

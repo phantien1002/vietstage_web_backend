@@ -65,11 +65,19 @@ public class LessonServiceImpl implements ILessonService {
             techniques.addAll(techniqueRepository.findAllById(request.getTechniqueIds()));
         }
 
+        // Auto-generate lesson code
+        String insCode = instrument.getInstrumentCode() != null ? instrument.getInstrumentCode() : "INS";
+        String lvlCode = skillLevel != null && skillLevel.getLevelCode() != null ? skillLevel.getLevelCode() : "U";
+        int order = request.getOrderIndex() != null ? request.getOrderIndex() : 0;
+        Long nextId = lessonRepository.findTopByOrderByIdDesc().map(Lesson::getId).orElse(0L) + 1;
+        String generatedLessonCode = String.format("LSN-%s-%s-%03d", insCode.replace("INS-", ""), lvlCode, nextId);
+
         Lesson lesson = Lesson.builder()
+                .lessonCode(generatedLessonCode)
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .status("DRAFT")                            // Spec: POST luôn tạo với status=DRAFT
-                .orderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0)
+                .orderIndex(order)
                 .skillLevel(skillLevel)
                 .instrument(instrument)
                 .createdBy(creator)
@@ -77,7 +85,20 @@ public class LessonServiceImpl implements ILessonService {
                 .updatedAt(LocalDateTime.now())
                 .techniques(techniques)
                 .exercises(new ArrayList<>())
+                .mediaAssets(new ArrayList<>())
                 .build();
+
+        if (request.getAssets() != null) {
+            List<MediaAsset> assets = request.getAssets().stream().map(a -> MediaAsset.builder()
+                    .lesson(lesson)
+                    .assetType(a.getAssetType())
+                    .assetUrl(a.getAssetUrl())
+                    .tempoBpm(a.getTempoBpm())
+                    .durationSec(a.getDurationSec())
+                    .createdAt(LocalDateTime.now())
+                    .build()).collect(Collectors.toList());
+            lesson.getMediaAssets().addAll(assets);
+        }
 
         if (request.getExercises() != null) {
             List<Exercise> exercises = new ArrayList<>();
@@ -85,6 +106,7 @@ public class LessonServiceImpl implements ILessonService {
                 exercises.add(Exercise.builder()
                         .lesson(lesson)
                         .title(request.getExercises().get(i))
+                        .passThreshold(new java.math.BigDecimal("60.00"))
                         .orderIndex(i + 1)
                         .build());
             }
@@ -272,6 +294,7 @@ public class LessonServiceImpl implements ILessonService {
     private LessonResponse mapToResponse(Lesson lesson) {
         return LessonResponse.builder()
                 .id(lesson.getId())
+                .lessonCode(lesson.getLessonCode())
                 .title(lesson.getTitle())
                 .description(lesson.getDescription())
                 .status(lesson.getStatus())
@@ -285,11 +308,13 @@ public class LessonServiceImpl implements ILessonService {
                         .build() : null)
                 .instrument(lesson.getInstrument() != null ? LessonResponse.InstrumentInfo.builder()
                         .id(lesson.getInstrument().getId())
+                        .instrumentCode(lesson.getInstrument().getInstrumentCode())
                         .name(lesson.getInstrument().getName())
                         .iconUrl(lesson.getInstrument().getIconUrl())
                         .build() : null)
                 .createdBy(lesson.getCreatedBy() != null ? LessonResponse.CreatorInfo.builder()
                         .id(lesson.getCreatedBy().getId())
+
                         .fullName(lesson.getCreatedBy().getFullName())
                         .role(lesson.getCreatedBy().getRole().getName())
                         .build() : null)
@@ -298,6 +323,15 @@ public class LessonServiceImpl implements ILessonService {
                                 .id(t.getId())
                                 .name(t.getName())
                                 .guideUrl(t.getGuideUrl())
+                                .build())
+                        .collect(Collectors.toList()) : List.of())
+                .lessonAssets(lesson.getMediaAssets() != null ? lesson.getMediaAssets().stream()
+                        .map(a -> LessonResponse.AssetInfo.builder()
+                                .id(a.getId())
+                                .assetType(a.getAssetType())
+                                .assetUrl(a.getAssetUrl())
+                                .tempoBpm(a.getTempoBpm())
+                                .durationSec(a.getDurationSec())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
                 .exercises(lesson.getExercises() != null ? lesson.getExercises().stream()

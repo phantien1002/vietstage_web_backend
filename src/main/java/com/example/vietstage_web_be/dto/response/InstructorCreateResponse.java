@@ -2,7 +2,6 @@ package com.example.vietstage_web_be.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -10,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Builder
 public class InstructorCreateResponse {
     private Long id;
+    private String userCode;
+
     private String email;
     private String fullName;
     private String roleName;

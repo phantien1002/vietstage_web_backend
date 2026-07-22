@@ -98,7 +98,11 @@ public class UserServiceImpl implements IUserService {
         Role role = RoleRepository.findByName("INSTRUCTOR")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, "Vai trò không tồn tại"));
 
+        Long nextId = UserRepository.findTopByOrderByIdDesc().map(User::getId).orElse(0L) + 1;
+        String generatedUserCode = String.format("GV-%04d", nextId);
+
         User user = new User();
+        user.setUserCode(generatedUserCode);
         user.setRole(role);
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword())); // Mã hóa bảo mật
@@ -183,6 +187,7 @@ public class UserServiceImpl implements IUserService {
     private UserResponse toUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
+
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().getName())

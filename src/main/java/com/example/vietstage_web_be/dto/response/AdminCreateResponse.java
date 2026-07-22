@@ -10,6 +10,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Builder
 public class AdminCreateResponse {
     private Long id;
+    private String userCode;
+
+
 
     private String email;
 

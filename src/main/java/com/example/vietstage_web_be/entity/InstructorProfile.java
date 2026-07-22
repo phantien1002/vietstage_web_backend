@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -31,4 +32,12 @@ public class InstructorProfile {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @ManyToMany
+    @JoinTable(
+            name = "instructor_instruments",
+            joinColumns = @JoinColumn(name = "instructor_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "instrument_id")
+    )
+    private Set<Instrument> instruments;
 }

@@ -84,6 +84,8 @@ public class AuthController {
             if (user != null) {
                 UserResponse userResponse = UserResponse.builder()
                         .id(user.getId())
+                        .userCode(user.getUserCode())
+
                         .email(user.getEmail())
                         .fullName(user.getFullName())
                         .role(user.getRole().getName())

@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class UserResponse {
     private Long id;
+    private String userCode;
+
     private String email;
     private String fullName;
     private String role;

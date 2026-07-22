@@ -15,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 public class LessonResponse {
     private Long id;
+    private String lessonCode;
     private String title;
     private String description;
     private String status;
@@ -25,7 +26,6 @@ public class LessonResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<TechniqueInfo> techniques;
-    private List<ContentInfo> contents;
     private List<AssetInfo> lessonAssets;
     private List<ExerciseInfo> exercises;
 
@@ -44,6 +44,7 @@ public class LessonResponse {
     @NoArgsConstructor
     public static class InstrumentInfo {
         private Long id;
+        private String instrumentCode;
         private String name;
         private String iconUrl;
     }
@@ -54,6 +55,7 @@ public class LessonResponse {
     @NoArgsConstructor
     public static class CreatorInfo {
         private Long id;
+
         private String fullName;
         private String role;
     }
@@ -68,15 +70,6 @@ public class LessonResponse {
         private String guideUrl;
     }
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ContentInfo {
-        private Long id;
-        private String contentText;
-        private Integer orderIndex;
-    }
 
     @Data
     @Builder

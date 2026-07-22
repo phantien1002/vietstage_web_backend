@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface InstrumentRepository extends JpaRepository<Instrument, Long> {
     boolean existsByNameIgnoreCase(String name);
+    java.util.Optional<Instrument> findTopByOrderByIdDesc();
 }

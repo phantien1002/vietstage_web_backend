@@ -46,7 +46,13 @@ public class AuthServiceImpl implements IAuthService {
         Role learnerRole = RoleRepository.findByName("LEARNER")
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Role LEARNER not found"));
 
+        String prefix = "HV"; // LEARNER
+        Long nextId = UserRepository.findTopByOrderByIdDesc().map(User::getId).orElse(0L) + 1;
+        String generatedUserCode = String.format("%s-%04d", prefix, nextId);
+
         User user = User.builder()
+                .userCode(generatedUserCode)
+
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
@@ -58,7 +64,11 @@ public class AuthServiceImpl implements IAuthService {
 
         UserRepository.save(user);
 
-        return AuthResponse.builder().message("Register successfully!").build();
+        return AuthResponse.builder()
+                .message("Register successfully!")
+                .userCode(user.getUserCode())
+
+                .build();
     }
 
     @Override
@@ -87,6 +97,8 @@ public class AuthServiceImpl implements IAuthService {
                 .token(accessToken)
                 .refreshToken(refreshToken)
                 .sessionId(sessionId)
+                .userCode(user.getUserCode())
+
                 .role(roleName)
                 .build();
     }
@@ -124,6 +136,8 @@ public class AuthServiceImpl implements IAuthService {
                 .token(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .sessionId(newSessionId)
+                .userCode(user.getUserCode())
+
                 .role(roleName)
                 .build();
     }

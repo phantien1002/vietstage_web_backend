@@ -19,8 +19,6 @@ public class LearnerProfile {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "avatar_url", columnDefinition = "TEXT")
-    private String avatarUrl;
 
     @Column(name = "total_practice_seconds", nullable = false)
     private Long totalPracticeSeconds = 0L;
