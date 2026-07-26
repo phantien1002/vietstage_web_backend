@@ -15,9 +15,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/User")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Tag(name = "User")
+@Tag(name = "Users", description = "Các API liên quan đến tài khoản cá nhân")
 public class UserController {
 
     private final IUserService userService;
@@ -44,44 +44,5 @@ public class UserController {
                 .build());
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
-        UserResponse data = userService.getUserById(id);
-        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
-                .message("User retrieved successfully")
-                .data(data)
-                .build());
-    }
-
-    @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UserResponse>> updateUserStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateUserStatusRequest request) {
-        UserResponse data = userService.updateUserStatus(id, request);
-        return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
-                .message("User status updated successfully")
-                .data(data)
-                .build());
-    }
-
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getUsers(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) Boolean isActive,
-            @RequestParam(defaultValue = "1") int pageNumber,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "false") boolean sortDescending) {
-        PageResponse<UserResponse> data = userService.getUsers(
-                keyword, role, isActive, pageNumber, pageSize, sortBy, sortDescending);
-        return ResponseEntity.ok(ApiResponse.<PageResponse<UserResponse>>builder()
-                .message("User list retrieved successfully")
-                .data(data)
-                .build());
-    }
 }
 

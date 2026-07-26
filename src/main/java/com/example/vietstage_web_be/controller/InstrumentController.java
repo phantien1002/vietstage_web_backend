@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/instruments")
 @RequiredArgsConstructor
-@Tag(name = "Instrument")
+@Tag(name = "Instruments", description = "Các API quản lý Nhạc cụ")
 public class InstrumentController {
 
     private final IInstrumentService instrumentService;
@@ -29,6 +29,16 @@ public class InstrumentController {
         List<InstrumentResponse> data = instrumentService.getAllInstruments();
         ApiResponse<List<InstrumentResponse>> response = ApiResponse.<List<InstrumentResponse>>builder()
                 .message("Get all instruments successfully")
+                .data(data)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<InstrumentResponse>> getInstrumentById(@PathVariable Long id) {
+        InstrumentResponse data = instrumentService.getInstrumentById(id);
+        ApiResponse<InstrumentResponse> response = ApiResponse.<InstrumentResponse>builder()
+                .message("Get instrument successfully")
                 .data(data)
                 .build();
         return ResponseEntity.ok(response);
@@ -64,16 +74,6 @@ public class InstrumentController {
         InstrumentResponse data = instrumentService.updateInstrument(id, request);
         ApiResponse<InstrumentResponse> response = ApiResponse.<InstrumentResponse>builder()
                 .message("Instrument updated successfully")
-                .data(data)
-                .build();
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<InstrumentResponse>> getInstrumentById(@PathVariable Long id) {
-        InstrumentResponse data = instrumentService.getInstrumentById(id);
-        ApiResponse<InstrumentResponse> response = ApiResponse.<InstrumentResponse>builder()
-                .message("Get instrument successfully")
                 .data(data)
                 .build();
         return ResponseEntity.ok(response);

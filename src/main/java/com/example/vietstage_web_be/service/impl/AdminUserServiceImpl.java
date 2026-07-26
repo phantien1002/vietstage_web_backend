@@ -10,9 +10,13 @@ import com.example.vietstage_web_be.repository.AuditLogRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
 import com.example.vietstage_web_be.service.IAdminUserService;
+import com.example.vietstage_web_be.exception.AppException;
+import com.example.vietstage_web_be.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,7 +92,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                     .build()).collect(Collectors.toList());
 
             return AdminUserResponse.builder()
-                    .id(user.getUserCode())
+                    .id(user.getId())
                     .name(user.getFullName())
                     .email(user.getEmail())
                     .role(displayRole)
@@ -115,5 +119,38 @@ public class AdminUserServiceImpl implements IAdminUserService {
         String first = parts[0].substring(0, 1).toUpperCase();
         String last = parts[parts.length - 1].substring(0, 1).toUpperCase();
         return first + last;
+    }
+
+    @Override
+    @Transactional
+    public void updateUserStatus(Long id, String status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
+
+        if ("locked".equalsIgnoreCase(status)) {
+            user.setActive(false);
+            AuditLog log = AuditLog.builder()
+                    .user(user)
+                    .actionType("UPDATE_STATUS")
+                    .entityType("USER")
+                    .entityId(user.getId().toString())
+                    .description("Tài khoản bị khóa bởi Admin")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            auditLogRepository.save(log);
+        } else {
+            user.setActive(true);
+            AuditLog log = AuditLog.builder()
+                    .user(user)
+                    .actionType("UPDATE_STATUS")
+                    .entityType("USER")
+                    .entityId(user.getId().toString())
+                    .description("Tài khoản được mở khóa bởi Admin")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            auditLogRepository.save(log);
+        }
+        
+        userRepository.save(user);
     }
 }

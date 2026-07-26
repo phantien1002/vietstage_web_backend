@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @Builder
 public class AdminUserResponse {
-    private String id;
+    private Long id;
     private String name;
     private String email;
     private String role;

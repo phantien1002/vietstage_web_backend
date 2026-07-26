@@ -35,33 +35,9 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
 
-    private static final int MAX_PAGE_SIZE = 100;
-
-    // Field hợp lệ để sắp xếp, tránh lỗi runtime
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
-            "id", "email", "fullName", "role", "active", "createdAt"
-    );
-
     private final UserRepository UserRepository;
     private final RoleRepository RoleRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Override
-    public UserResponse getUserById(Long id) {
-        User user = UserRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "User not found with id: " + id));
-        return toUserResponse(user);
-    }
-
-    @Override
-    public PageResponse<UserResponse> getUsers(
-            String keyword, String role, Boolean isActive,
-            int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
-
-        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortDescending);
-        Specification<User> spec = UserSpecification.filter(keyword, role, isActive);
-        return toPageResponse(UserRepository.findAll(spec, pageable));
-    }
 
     @Override
     public UserResponse getMyProfile(String email) {
@@ -75,15 +51,6 @@ public class UserServiceImpl implements IUserService {
         User user = UserRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với email: " + email));
         user.setFullName(request.getFullName());
-        User savedUser = UserRepository.save(user);
-        return toUserResponse(savedUser);
-    }
-
-    @Override
-    public UserResponse updateUserStatus(Long id, UpdateUserStatusRequest request) {
-        User user = UserRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với id: " + id));
-        user.setActive(request.getActive());
         User savedUser = UserRepository.save(user);
         return toUserResponse(savedUser);
     }
@@ -167,23 +134,6 @@ public class UserServiceImpl implements IUserService {
     //  Private helpers
     // ============================================================
 
-    private Pageable buildPageable(int pageNumber, int pageSize, String sortBy, boolean sortDescending) {
-        // pageNumber bắt đầu từ 1 (frontend) → chuyển sang 0-indexed cho Spring
-        int zeroBasedPage = Math.max(pageNumber - 1, 0);
-
-        // Giới hạn pageSize trong khoảng [1, 100]
-        int clampedSize = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE);
-
-        // Validate sort field
-        String validSortBy = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "id";
-
-        Sort sort = sortDescending
-                ? Sort.by(validSortBy).descending()
-                : Sort.by(validSortBy).ascending();
-
-        return PageRequest.of(zeroBasedPage, clampedSize, sort);
-    }
-
     private UserResponse toUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
@@ -196,19 +146,5 @@ public class UserServiceImpl implements IUserService {
                 .build();
     }
 
-    private PageResponse<UserResponse> toPageResponse(Page<User> usersPage) {
-        List<UserResponse> content = usersPage.getContent()
-                .stream()
-                .map(this::toUserResponse)
-                .toList();
-
-        return PageResponse.<UserResponse>builder()
-                .content(content)
-                .page(usersPage.getNumber() + 1)   // trả về 1-indexed cho frontend
-                .size(usersPage.getSize())
-                .totalElements(usersPage.getTotalElements())
-                .totalPages(usersPage.getTotalPages())
-                .last(usersPage.isLast())
-                .build();
-    }
 }
+

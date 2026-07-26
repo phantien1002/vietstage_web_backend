@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/techniques")
 @RequiredArgsConstructor
-@Tag(name = "Technique")
+@Tag(name = "Techniques", description = "Các API quản lý Kỹ thuật nhạc cụ")
 public class TechniqueController {
 
     private final ITechniqueService techniqueService;
@@ -39,6 +39,20 @@ public class TechniqueController {
 
         return ResponseEntity.ok(ApiResponse.<List<TechniqueResponse>>builder()
                 .message("Get techniques successfully")
+                .data(data)
+                .build());
+    }
+
+    /**
+     * GET /api/techniques/{id}
+     * PUBLIC — trả về chi tiết kỹ thuật
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "Chi tiết kỹ thuật (PUBLIC)")
+    public ResponseEntity<ApiResponse<TechniqueResponse>> getTechniqueById(@PathVariable Long id) {
+        TechniqueResponse data = techniqueService.getTechniqueById(id);
+        return ResponseEntity.ok(ApiResponse.<TechniqueResponse>builder()
+                .message("Get technique successfully")
                 .data(data)
                 .build());
     }
@@ -90,19 +104,5 @@ public class TechniqueController {
     public ResponseEntity<Void> deleteTechnique(@PathVariable Long id) {
         techniqueService.deleteTechnique(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * GET /api/techniques/{id}
-     * PUBLIC — trả về chi tiết kỹ thuật
-     */
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết kỹ thuật (PUBLIC)")
-    public ResponseEntity<ApiResponse<TechniqueResponse>> getTechniqueById(@PathVariable Long id) {
-        TechniqueResponse data = techniqueService.getTechniqueById(id);
-        return ResponseEntity.ok(ApiResponse.<TechniqueResponse>builder()
-                .message("Get technique successfully")
-                .data(data)
-                .build());
     }
 }

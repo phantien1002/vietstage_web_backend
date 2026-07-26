@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface IAdminUserService {
     List<AdminUserResponse> getAllUsers();
+    void updateUserStatus(Long id, String status);
 }

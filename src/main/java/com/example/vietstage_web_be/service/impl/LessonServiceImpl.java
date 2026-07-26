@@ -72,11 +72,16 @@ public class LessonServiceImpl implements ILessonService {
         Long nextId = lessonRepository.findTopByOrderByIdDesc().map(Lesson::getId).orElse(0L) + 1;
         String generatedLessonCode = String.format("LSN-%s-%s-%03d", insCode.replace("INS-", ""), lvlCode, nextId);
 
+        String initialStatus = "DRAFT";
+        if ("PENDING".equalsIgnoreCase(request.getStatus())) {
+            initialStatus = "PENDING";
+        }
+
         Lesson lesson = Lesson.builder()
                 .lessonCode(generatedLessonCode)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .status("DRAFT")                            // Spec: POST luôn tạo với status=DRAFT
+                .status(initialStatus)
                 .orderIndex(order)
                 .skillLevel(skillLevel)
                 .instrument(instrument)
@@ -233,23 +238,19 @@ public class LessonServiceImpl implements ILessonService {
         User actor = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        boolean isAdmin = "ADMIN".equals(actor.getRole().getName());
         boolean isInstructor = "INSTRUCTOR".equals(actor.getRole().getName());
 
-        // INSTRUCTOR: chỉ được chuyển thành PENDING (để nộp bài duyệt)
-        if (isInstructor) {
-            if (!"PENDING".equals(newStatus)) {
-                throw new AppException(ErrorCode.LESSON_STATUS_FORBIDDEN);
-            }
-            // Chỉ được nộp bài học của chính mình
-            if (lesson.getCreatedBy() == null || !lesson.getCreatedBy().getEmail().equals(userEmail)) {
-                throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
-            }
+        if (!isInstructor) {
+            throw new AppException(ErrorCode.LESSON_STATUS_FORBIDDEN);
         }
 
-        // ADMIN mới được APPROVED hoặc REJECTED
-        if (!isAdmin && !isInstructor) {
+        if (!"PENDING".equals(newStatus) && !"DRAFT".equals(newStatus)) {
             throw new AppException(ErrorCode.LESSON_STATUS_FORBIDDEN);
+        }
+
+        // Chỉ được nộp bài học của chính mình
+        if (lesson.getCreatedBy() == null || !lesson.getCreatedBy().getEmail().equals(userEmail)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
         }
 
         // Cập nhật status bài học
@@ -257,18 +258,7 @@ public class LessonServiceImpl implements ILessonService {
         lesson.setUpdatedAt(LocalDateTime.now());
         lessonRepository.save(lesson);
 
-        // Ghi content_reviews nếu là ADMIN duyệt/từ chối
-        if (isAdmin && ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus))) {
-            ContentReview review = ContentReview.builder()
-                    .lesson(lesson)
-                    .reviewer(actor)
-                    .status(newStatus)
-                    .comment(request.getComment())
-                    .reviewedAt(LocalDateTime.now())
-                    .build();
-            contentReviewRepository.save(review);
-        }
-
+        // TODO: Gửi notification cho Instructor (Nếu cần)
         return LessonStatusResponse.builder()
                 .id(lesson.getId())
                 .status(lesson.getStatus())

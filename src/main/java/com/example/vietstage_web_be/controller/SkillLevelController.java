@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/skill-levels")
 @RequiredArgsConstructor
-@Tag(name = "Skill Level")
+@Tag(name = "Skill Levels", description = "Các API quản lý Trình độ bài học")
 public class SkillLevelController {
 
     private final ISkillLevelService skillLevelService;

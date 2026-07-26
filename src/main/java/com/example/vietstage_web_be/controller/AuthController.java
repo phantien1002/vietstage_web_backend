@@ -74,37 +74,6 @@ public class AuthController {
                 .build());
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<BaseResponse<UserResponse>> getMe() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            User user = UserRepository.findByEmail(userDetails.getUsername()).orElse(null);
-            
-            if (user != null) {
-                UserResponse userResponse = UserResponse.builder()
-                        .id(user.getId())
-                        .userCode(user.getUserCode())
-
-                        .email(user.getEmail())
-                        .fullName(user.getFullName())
-                        .role(user.getRole().getName())
-                        .active(user.getActive())
-                        .createdAt(user.getCreatedAt())
-                        .build();
-
-                return ResponseEntity.ok(BaseResponse.<UserResponse>builder()
-                        .success(true)
-                        .message("Current user info")
-                        .data(userResponse)
-                        .build());
-            }
-        }
-        return ResponseEntity.status(401).body(BaseResponse.<UserResponse>builder()
-                .success(false)
-                .message("Not authenticated")
-                .build());
-    }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request){

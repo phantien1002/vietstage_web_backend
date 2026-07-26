@@ -56,3 +56,11 @@ INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id, descriptio
 ((SELECT user_id FROM users WHERE email = 'admin@vietstage.com'), 'APPROVE_LESSON', 'LESSON', '1', 'Phê duyệt bài giảng của giảng viên Trần Thị Thu Thủy', NOW() - INTERVAL '4 hours'),
 ((SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), 'UPDATE_PROFILE', 'USER', '4', 'Cập nhật ảnh đại diện mới', NOW() - INTERVAL '1 day'),
 ((SELECT user_id FROM users WHERE email = 'quang@vietstage.com'), 'CREATE_USER', 'USER', '3', 'Tạo tài khoản cho giảng viên Trần Thị Thu Thủy', NOW() - INTERVAL '10 days');
+
+-- 7. TECHNIQUES
+INSERT INTO techniques (instrument_id, name, description, difficulty, guide_url) VALUES
+((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), 'Rung', 'Ky thuat rung day co ban', 'EASY', 'http://example.com/rung'),
+((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), 'Mo', 'Ky thuat mo day', 'MEDIUM', 'http://example.com/mo'),
+((SELECT instrument_id FROM instruments WHERE name = 'Sao Truc'), 'Vuot', 'Ky thuat vuot nhip', 'EASY', 'http://example.com/vuot')
+ON CONFLICT DO NOTHING;
+
