@@ -3,11 +3,13 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.response.ActivityDto;
 import com.example.vietstage_web_be.dto.response.AdminUserResponse;
 import com.example.vietstage_web_be.dto.response.UserStatsDto;
+import com.example.vietstage_web_be.dto.request.AdminUserUpdateRequest;
 import com.example.vietstage_web_be.entity.AuditLog;
 import com.example.vietstage_web_be.entity.Instrument;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.repository.AuditLogRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
+import com.example.vietstage_web_be.repository.InstrumentRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
 import com.example.vietstage_web_be.service.IAdminUserService;
 import com.example.vietstage_web_be.exception.AppException;
@@ -27,6 +29,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
     private final UserRepository userRepository;
     private final AuditLogRepository auditLogRepository;
     private final LessonRepository lessonRepository;
+    private final InstrumentRepository instrumentRepository;
 
     @Override
     public List<AdminUserResponse> getAllUsers() {
@@ -119,6 +122,27 @@ public class AdminUserServiceImpl implements IAdminUserService {
         String first = parts[0].substring(0, 1).toUpperCase();
         String last = parts[parts.length - 1].substring(0, 1).toUpperCase();
         return first + last;
+    }
+
+    @Override
+    @Transactional
+    public void updateUser(Long id, AdminUserUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (userRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST);
+        }
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setUpdatedAt(LocalDateTime.now());
+
+        if (user.getInstructorProfile() != null && request.getInstrumentIds() != null) {
+            user.getInstructorProfile().setInstruments(
+                    new java.util.HashSet<>(instrumentRepository.findAllById(request.getInstrumentIds())));
+            user.getInstructorProfile().setUpdatedAt(LocalDateTime.now());
+        }
+        userRepository.save(user);
     }
 
     @Override

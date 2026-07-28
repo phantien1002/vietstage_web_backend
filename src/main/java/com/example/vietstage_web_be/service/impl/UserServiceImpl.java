@@ -15,6 +15,7 @@ import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.RoleRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
+import com.example.vietstage_web_be.repository.InstrumentRepository;
 import com.example.vietstage_web_be.service.IUserService;
 import com.example.vietstage_web_be.specification.UserSpecification;
 import jakarta.transaction.Transactional;
@@ -38,6 +39,7 @@ public class UserServiceImpl implements IUserService {
     private final UserRepository UserRepository;
     private final RoleRepository RoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final InstrumentRepository instrumentRepository;
 
     @Override
     public UserResponse getMyProfile(String email) {
@@ -83,6 +85,12 @@ public class UserServiceImpl implements IUserService {
         profile.setBiography(request.getBiography());
         profile.setYearsExperience(request.getYearsExperience() != null ? request.getYearsExperience() : 0);
         profile.setUpdatedAt(LocalDateTime.now());
+        if (request.getInstrumentIds() != null && !request.getInstrumentIds().isEmpty()) {
+            profile.setInstruments(new java.util.HashSet<>(
+                    instrumentRepository.findAllById(request.getInstrumentIds())));
+        } else {
+            profile.setInstruments(new java.util.HashSet<>());
+        }
 
         user.setInstructorProfile(profile);
 

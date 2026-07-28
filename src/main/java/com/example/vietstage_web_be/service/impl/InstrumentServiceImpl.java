@@ -35,6 +35,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
                 .name(request.getName())
                 .description(request.getDescription())
                 .iconUrl(request.getIconUrl())
+                .isActive(true)
                 .build();
 
         Instrument saved = instrumentsRepository.save(instrument);

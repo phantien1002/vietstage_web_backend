@@ -9,7 +9,7 @@ import java.util.List;
 
 public class LessonSpecification {
 
-    public static Specification<Lesson> filter(String search, Long instrumentId, Long skillLevelId, String status) {
+    public static Specification<Lesson> filter(String search, Long instrumentId, Long skillLevelId, String status, String creatorEmail) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -26,6 +26,12 @@ public class LessonSpecification {
             // v2.0: filter by skillLevelId (FK) instead of difficulty string
             if (skillLevelId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("skillLevel").get("id"), skillLevelId));
+            }
+
+            if (creatorEmail != null && !creatorEmail.isBlank()) {
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(root.get("createdBy").get("email")),
+                        creatorEmail.toLowerCase()));
             }
 
             // Filter by status: DRAFT | PENDING | APPROVED | REJECTED

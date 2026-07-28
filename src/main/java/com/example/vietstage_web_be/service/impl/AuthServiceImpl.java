@@ -67,7 +67,9 @@ public class AuthServiceImpl implements IAuthService {
         return AuthResponse.builder()
                 .message("Register successfully!")
                 .userCode(user.getUserCode())
-
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(learnerRole.getName())
                 .build();
     }
 
@@ -98,7 +100,8 @@ public class AuthServiceImpl implements IAuthService {
                 .refreshToken(refreshToken)
                 .sessionId(sessionId)
                 .userCode(user.getUserCode())
-
+                .email(user.getEmail())
+                .fullName(user.getFullName())
                 .role(roleName)
                 .build();
     }
@@ -137,7 +140,8 @@ public class AuthServiceImpl implements IAuthService {
                 .refreshToken(newRefreshToken)
                 .sessionId(newSessionId)
                 .userCode(user.getUserCode())
-
+                .email(user.getEmail())
+                .fullName(user.getFullName())
                 .role(roleName)
                 .build();
     }

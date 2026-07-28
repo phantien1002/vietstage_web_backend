@@ -111,7 +111,9 @@ public class LessonServiceImpl implements ILessonService {
                 exercises.add(Exercise.builder()
                         .lesson(lesson)
                         .title(request.getExercises().get(i))
-                        .passThreshold(new java.math.BigDecimal("60.00"))
+                        .passThreshold(request.getPassThreshold() != null
+                                ? request.getPassThreshold()
+                                : new java.math.BigDecimal("60.00"))
                         .orderIndex(i + 1)
                         .build());
             }
@@ -128,13 +130,13 @@ public class LessonServiceImpl implements ILessonService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<LessonResponse> getLessons(String search, Long instrumentId, Long skillLevelId,
-                                                   String status,
+                                                   String status, String creatorEmail,
                                                    int pageNumber, int pageSize) {
         int zeroBasedPage = Math.max(pageNumber - 1, 0);
         int size = Math.min(Math.max(pageSize, 1), 100);
 
         Pageable pageable = PageRequest.of(zeroBasedPage, size, Sort.by("orderIndex").ascending());
-        Specification<Lesson> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status);
+        Specification<Lesson> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status, creatorEmail);
 
         Page<Lesson> lessonsPage = lessonRepository.findAll(spec, pageable);
 
@@ -197,6 +199,19 @@ public class LessonServiceImpl implements ILessonService {
             lesson.setOrderIndex(request.getOrderIndex());
         }
         lesson.setSkillLevel(skillLevel);
+        if (request.getExercises() != null) {
+            lesson.getExercises().clear();
+            for (int i = 0; i < request.getExercises().size(); i++) {
+                lesson.getExercises().add(Exercise.builder()
+                        .lesson(lesson)
+                        .title(request.getExercises().get(i))
+                        .passThreshold(request.getPassThreshold() != null
+                                ? request.getPassThreshold()
+                                : new java.math.BigDecimal("60.00"))
+                        .orderIndex(i + 1)
+                        .build());
+            }
+        }
         lesson.setUpdatedAt(LocalDateTime.now());
 
         Lesson updated = lessonRepository.save(lesson);

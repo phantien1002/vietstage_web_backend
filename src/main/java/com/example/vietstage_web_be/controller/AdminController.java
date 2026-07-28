@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.controller;
 
 import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
+import com.example.vietstage_web_be.dto.request.AdminUserUpdateRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.ReviewActionRequest;
 import com.example.vietstage_web_be.dto.request.UserStatusUpdateRequest;
@@ -14,11 +15,16 @@ import com.example.vietstage_web_be.service.IAdminUserService;
 import com.example.vietstage_web_be.service.IAdminReviewService;
 import com.example.vietstage_web_be.service.IAdminDashboardService;
 import com.example.vietstage_web_be.service.IUserService;
+import com.example.vietstage_web_be.entity.User;
+import com.example.vietstage_web_be.exception.AppException;
+import com.example.vietstage_web_be.exception.ErrorCode;
+import com.example.vietstage_web_be.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -31,6 +37,7 @@ public class AdminController {
     private final IAdminUserService adminUserService;
     private final IAdminReviewService adminReviewService;
     private final IAdminDashboardService adminDashboardService;
+    private final UserRepository userRepository;
 
     @GetMapping("/dashboard")
     public ApiResponse<DashboardStatsResponse> getDashboard() {
@@ -59,6 +66,17 @@ public class AdminController {
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully updated user status")
+                .build();
+    }
+
+    @PutMapping("/users/{id}")
+    public ApiResponse<Void> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUserUpdateRequest request) {
+        adminUserService.updateUser(id, request);
+        return ApiResponse.<Void>builder()
+                .success(true)
+                .message("Successfully updated user")
                 .build();
     }
 
@@ -93,10 +111,19 @@ public class AdminController {
 
     @PostMapping("/reviews/{id}/approve")
     public ApiResponse<Void> approveReview(@PathVariable Long id) {
-        adminReviewService.approveReview(id, 1L); // Assuming adminId = 1L for now
+        adminReviewService.approveReview(id, getCurrentAdminId());
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully approved review")
+                .build();
+    }
+
+    @PostMapping("/reviews/{id}/pending")
+    public ApiResponse<Void> resetReview(@PathVariable Long id) {
+        adminReviewService.resetReview(id);
+        return ApiResponse.<Void>builder()
+                .success(true)
+                .message("Successfully reset review to pending")
                 .build();
     }
 
@@ -104,10 +131,17 @@ public class AdminController {
     public ApiResponse<Void> rejectReview(
             @PathVariable Long id, 
             @RequestBody ReviewActionRequest request) {
-        adminReviewService.rejectReview(id, request.getFeedback(), 1L);
+        adminReviewService.rejectReview(id, request.getFeedback(), getCurrentAdminId());
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully rejected review")
                 .build();
+    }
+
+    private Long getCurrentAdminId() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .map(User::getId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 }

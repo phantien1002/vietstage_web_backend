@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ContentReviewRepository extends JpaRepository<ContentReview, Long> {
+    java.util.Optional<ContentReview> findTopByLessonIdOrderByReviewedAtDesc(Long lessonId);
 }

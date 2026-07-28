@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 public class InstructorCreateRequest {
     @NotBlank(message = "Email không được để trống")
@@ -23,4 +25,5 @@ public class InstructorCreateRequest {
     // Các thông tin bổ sung cho Instructor Profile
     private String biography;
     private Integer yearsExperience;
+    private Set<Long> instrumentIds;
 }

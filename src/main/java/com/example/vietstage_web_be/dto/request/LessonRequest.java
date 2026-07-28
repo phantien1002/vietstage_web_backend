@@ -35,6 +35,7 @@ public class LessonRequest {
 
     // Danh sách bài tập (tiêu đề đơn giản)
     private List<String> exercises;
+    private BigDecimal passThreshold;
 
     @Getter
     @Setter

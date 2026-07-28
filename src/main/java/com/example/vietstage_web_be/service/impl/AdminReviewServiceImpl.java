@@ -32,7 +32,9 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
     @Override
     public List<ReviewItemResponse> getAllReviews() {
         List<Lesson> lessons = lessonRepository.findAll();
-        return lessons.stream().map(lesson -> {
+        return lessons.stream()
+                .filter(lesson -> !"DRAFT".equalsIgnoreCase(lesson.getStatus()))
+                .map(lesson -> {
             String sheetUrl = "";
             String audioUrl = "";
             String duration = "00:00";
@@ -59,6 +61,10 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
             String instructorName = lesson.getCreatedBy() != null ? lesson.getCreatedBy().getFullName() : "Unknown";
             String inst = lesson.getInstrument() != null ? lesson.getInstrument().getName() : "Unknown";
 
+            ContentReview latestReview = contentReviewRepository
+                    .findTopByLessonIdOrderByReviewedAtDesc(lesson.getId())
+                    .orElse(null);
+
             return ReviewItemResponse.builder()
                     .id(lesson.getId())
                     .title(lesson.getTitle())
@@ -70,6 +76,12 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .duration(duration)
                     .description(lesson.getDescription())
                     .status(lesson.getStatus() != null ? lesson.getStatus().toLowerCase() : "pending")
+                    .feedback(latestReview != null ? latestReview.getComment() : null)
+                    .approvedBy(latestReview != null && latestReview.getReviewer() != null
+                            ? latestReview.getReviewer().getFullName() : null)
+                    .approvedAt(latestReview != null && latestReview.getReviewedAt() != null
+                            ? latestReview.getReviewedAt().format(
+                                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : null)
                     .build();
         }).collect(Collectors.toList());
     }
@@ -94,6 +106,15 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                 .reviewedAt(LocalDateTime.now())
                 .build();
         contentReviewRepository.save(review);
+    }
+
+    @Override
+    @Transactional
+    public void resetReview(Long id) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+        lesson.setStatus("PENDING");
+        lessonRepository.save(lesson);
     }
 
     @Override

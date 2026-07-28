@@ -24,7 +24,7 @@ services:
     build: .
     container_name: vietstage_web_be_container
     ports:
-      - "8080:8080"
+      - "9191:9191"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/vietstage_db
       - SPRING_DATASOURCE_USERNAME=postgres

@@ -7,4 +7,5 @@ public interface IAdminReviewService {
     List<ReviewItemResponse> getAllReviews();
     void approveReview(Long id, Long adminId);
     void rejectReview(Long id, String feedback, Long adminId);
+    void resetReview(Long id);
 }

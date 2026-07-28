@@ -38,11 +38,15 @@ public class LessonController {
             @RequestParam(value = "instrument_id", required = false) Long instrumentId,
             @RequestParam(value = "skill_level_id", required = false) Long skillLevelId,
             @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "false") boolean mine,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
+        String creatorEmail = mine
+                ? SecurityContextHolder.getContext().getAuthentication().getName()
+                : null;
         PageResponse<LessonResponse> data = lessonService.getLessons(
-                search, instrumentId, skillLevelId, status, page, size);
+                search, instrumentId, skillLevelId, status, creatorEmail, page, size);
 
         return ResponseEntity.ok(ApiResponse.<PageResponse<LessonResponse>>builder()
                 .message("Get lessons successfully")
