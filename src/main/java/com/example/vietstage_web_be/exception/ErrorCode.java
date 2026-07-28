@@ -27,7 +27,9 @@ public enum ErrorCode {
     LESSON_STATUS_FORBIDDEN(2009, "Chỉ ADMIN mới có quyền duyệt/từ chối bài học", HttpStatus.FORBIDDEN),
     SKILL_LEVEL_NOT_FOUND(2010, "Trình độ không tồn tại", HttpStatus.NOT_FOUND),
     SKILL_LEVEL_CODE_ALREADY_EXIST(2011, "Mã trình độ đã tồn tại", HttpStatus.CONFLICT),
-    SKILL_LEVEL_ORDER_ALREADY_EXIST(2012, "Thứ tự trình độ đã tồn tại", HttpStatus.CONFLICT);
+    SKILL_LEVEL_ORDER_ALREADY_EXIST(2012, "Thứ tự trình độ đã tồn tại", HttpStatus.CONFLICT),
+    UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
+    EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int code;
     private final String message;

@@ -1,0 +1,314 @@
+=== Overview ===
+VietStage REST API  —  98 Endpoints
+Base URL: https://api.vietstage.com   |   Auth: Bearer JWT access token ngắn hạn + Redis refresh/auth session   |   Format: application/json   |   Methods: GET / POST / PUT / DELETE
+NHÓM API	SỐ ENDPOINT		METHOD	SỐ LƯỢNG	MÔ TẢ
+ACHIEVEMENTS	5		DELETE	10
+ADMIN	8		GET	38
+APP CONFIGS	3		POST	30
+AUTH	8		PUT	20
+COSMETICS	3
+DAILY CHALLENGES	5
+EXERCISES	4
+FEEDBACK	2
+INSTRUMENTS	5
+LEADERBOARDS	3
+LESSON ASSETS	4
+LESSON CONTENTS	4
+LESSON TECHNIQUES	2
+LESSONS	6
+MINI GAMES	6
+NOTIFICATIONS	3
+PRACTICE	8
+PROGRESS	3
+QUIZZES	6
+SKILL LEVELS	1
+TECHNIQUES	4
+USERS	5
+TỔNG	98
+=== All APIs ===
+VietStage — All APIs  (98 endpoints)  |  GET / POST / PUT / DELETE only
+#	Nhóm	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB liên quan	Trạng thái	Assignee	Ghi chú
+  ▸  AUTH
+1	AUTH	POST	/api/auth/register	Đăng ký tài khoản	email, password, full_name, role, instrument_id, skill_level_id	201 → {user_id, access_token, refresh_token, expires_in}	PUBLIC	users, learner_profiles / instructor_profiles, learner_instruments	BCrypt hash password; learner chọn nhạc cụ và trình độ bằng FK; không tạo auth session/leaderboard trong PostgreSQL		BCrypt hash password; learner chọn nhạc cụ và trình độ bằng FK; không tạo auth session/leaderboard trong PostgreSQL
+2	AUTH	POST	/api/auth/login	Đăng nhập	email, password	200 → {access_token, refresh_token, expires_in, user}	PUBLIC	users	Access JWT ngắn hạn; tạo refresh/auth session trong Redis: session_id/jti, refresh_token_hash, expires_at, revoked		Access JWT ngắn hạn; tạo refresh/auth session trong Redis: session_id/jti, refresh_token_hash, expires_at, revoked
+3	AUTH	POST	/api/auth/logout	Đăng xuất	Header: Authorization Bearer {token}	200 → {message}	ALL	—	Thu hồi refresh/auth session trong Redis; access token gắn với session_id/jti đã revoke bị từ chối		Thu hồi refresh/auth session trong Redis; access token gắn với session_id/jti đã revoke bị từ chối
+4	AUTH	POST	/api/auth/refresh	Làm mới access token	refresh_token	200 → {access_token, expires_in}	ALL	—	Xác minh refresh/auth session trong Redis; cấp access JWT mới; rotate refresh token nếu áp dụng		Xác minh refresh/auth session trong Redis; cấp access JWT mới; rotate refresh token nếu áp dụng
+5	AUTH	POST	/api/auth/forgot-password	Yêu cầu reset mật khẩu qua email	email	200 → {message}	PUBLIC	users	Gửi email OTP/link reset; lưu token reset trong Redis		Gửi email OTP/link reset; lưu token reset trong Redis
+6	AUTH	POST	/api/auth/reset-password	Đặt lại mật khẩu mới	reset_token, new_password	200 → {message}	PUBLIC	users	Verify reset_token; update password_hash		Verify reset_token; update password_hash
+7	AUTH	POST	/api/auth/change-password	Đổi mật khẩu khi đã đăng nhập	current_password, new_password	200 → {message}	ALL	users	Verify current_password trước khi update		Verify current_password trước khi update
+8	AUTH	POST	/api/auth/first-time-change-password	Instructor đổi mật khẩu ở lần đầu đăng nhập	—	200 → message	INSTRUCTOR	users	Yeu cau doi mat khau sau khi duoc Admin cap tai khoan Instructor
+  ▸  USERS
+9	USERS	GET	/api/users	Danh sách tất cả user	Query: role, is_active, page, size	200 → {data: [users], total, page}	ADMIN	users			'me' alias — không cần biết id của chính mình
+10	USERS	GET	/api/users/me	Thông tin tài khoản hiện tại	—	200 → user + profile	ALL	users, learner_profiles, instructor_profiles	'me' alias — không cần biết id của chính mình
+11	USERS	PUT	/api/users/me	Cập nhật hồ sơ cá nhân	full_name, biography, years_experience, instrument_id, skill_level_id	200 → updated profile	ALL	users, learner_profiles, instructor_profiles, learner_instruments, instructor_instruments	Nhạc cụ và trình độ lưu bằng FK; không dùng favorite_instrument hoặc specialization dạng text		Nhạc cụ và trình độ lưu bằng FK; không dùng favorite_instrument hoặc specialization dạng text
+12	USERS	GET	/api/users/{id}	Chi tiết một user	—	200 → user + profile	ADMIN	users, learner_profiles, instructor_profiles			Soft-disable — không xoá dữ liệu
+13	USERS	PUT	/api/users/{id}/status	Kích hoạt / vô hiệu hoá tài khoản	is_active: true | false	200 → {id, is_active}	ADMIN	users	Soft-disable — không xoá dữ liệu
+  ▸  SKILL LEVELS
+14	SKILL LEVELS	GET	/api/skill-levels	Danh sách trình độ học viên	—	200 → [{id, level_name}]	PUBLIC	skill_levels	BEGINNER / INTERMEDIATE / ADVANCED
+  ▸  INSTRUMENTS
+15	INSTRUMENTS	GET	/api/instruments	Danh sách nhạc cụ	—	200 → [{id, name, description, icon_url}]	PUBLIC	instruments	Dan Tranh, Dan Bau, Sao Truc, Trong
+16	INSTRUMENTS	POST	/api/instruments	Thêm nhạc cụ mới	name, description, icon_url	201 → instrument	ADMIN	instruments
+17	INSTRUMENTS	PUT	/api/instruments/{id}	Cập nhật nhạc cụ	name, description, icon_url	200 → instrument	ADMIN	instruments
+18	INSTRUMENTS	GET	/api/instruments/{id}/techniques	Kỹ thuật của một nhạc cụ	—	200 → [{id, name, description, guide_url}]	PUBLIC	techniques
+19	INSTRUMENTS	PUT	/api/instruments/{id}/status	Bật/tắt nhạc cụ (soft-disable)	is_active: true | false	200 → {id, is_active}	ADMIN	instruments	Soft-disable — không xoá, tránh cascade phá huỷ lessons/techniques liên quan		Soft-disable — không xoá, tránh cascade phá huỷ lessons/techniques liên quan
+  ▸  TECHNIQUES
+20	TECHNIQUES	GET	/api/techniques	Danh sách kỹ thuật	Query: instrument_id	200 → [{id, instrument_id, name, description, guide_url}]	PUBLIC	techniques
+21	TECHNIQUES	POST	/api/techniques	Tạo kỹ thuật mới	instrument_id, name, description, guide_url	201 → technique	INSTRUCTOR, ADMIN	techniques
+22	TECHNIQUES	PUT	/api/techniques/{id}	Cập nhật kỹ thuật	name, description, guide_url	200 → technique	INSTRUCTOR, ADMIN	techniques
+23	TECHNIQUES	DELETE	/api/techniques/{id}	Xoá kỹ thuật	—	204 → No Content	ADMIN	techniques
+  ▸  LESSONS
+24	LESSONS	GET	/api/lessons	Danh sách bài học	Query: instrument_id, skill_level_id, status, page, size	200 → {data: [lessons], total, page}	ALL	lessons, skill_levels, instruments	Learner → APPROVED only; Instructor → bài của mình; Admin → tất cả		Auto set created_by; status = DRAFT
+25	LESSONS	POST	/api/lessons	Tạo bài học mới	instrument_id, skill_level_id, title, description, order_index	201 → lesson (status=DRAFT)	INSTRUCTOR	lessons	Auto set created_by; status = DRAFT
+26	LESSONS	GET	/api/lessons/{id}	Chi tiết đầy đủ bài học	—	200 → lesson + contents + assets + exercises + techniques + mini_games	ALL	lessons, lesson_contents, lesson_assets, exercises, lesson_techniques			Chỉ owner hoặc admin
+27	LESSONS	PUT	/api/lessons/{id}	Cập nhật bài học	title, description, order_index, skill_level_id	200 → updated lesson	INSTRUCTOR, ADMIN	lessons	Chỉ owner hoặc admin		Chỉ xoá được DRAFT / REJECTED
+28	LESSONS	DELETE	/api/lessons/{id}	Xoá bài học	—	204 → No Content	INSTRUCTOR, ADMIN	lessons	Chỉ xoá được DRAFT / REJECTED		Instructor set PENDING (submit); Admin set APPROVED/REJECTED; gửi notification
+29	LESSONS	PUT	/api/lessons/{id}/status	Đổi trạng thái bài học	status: PENDING | APPROVED | REJECTED,  comment (nếu REJECTED)	200 → {id, status}	INSTRUCTOR, ADMIN	lessons, content_reviews, notifications	Instructor CHỈ được set PENDING (submit); Admin CHỈ được set APPROVED/REJECTED — validate theo role ở BE; gửi notification		Instructor CHỈ được set PENDING (submit); Admin CHỈ được set APPROVED/REJECTED — validate theo role ở BE; gửi notification
+  ▸  LESSON CONTENTS
+30	LESSON CONTENTS	GET	/api/lessons/{id}/contents	Nội dung văn bản của bài học	—	200 → [{id, content_text, order_index}]	ALL	lesson_contents	Sắp xếp theo order_index
+31	LESSON CONTENTS	POST	/api/lessons/{id}/contents	Thêm đoạn nội dung	content_text, order_index	201 → lesson_content	INSTRUCTOR	lesson_contents
+32	LESSON CONTENTS	PUT	/api/lessons/{lesson_id}/contents/{id}	Sửa đoạn nội dung	content_text, order_index	200 → updated content	INSTRUCTOR	lesson_contents
+33	LESSON CONTENTS	DELETE	/api/lessons/{lesson_id}/contents/{id}	Xoá đoạn nội dung	—	204 → No Content	INSTRUCTOR	lesson_contents
+  ▸  LESSON ASSETS
+34	LESSON ASSETS	GET	/api/lessons/{id}/assets	Danh sách file media của bài học	Query: type (REFERENCE_AUDIO | SHEET_IMAGE | TECHNIQUE_VIDEO | BEAT_MAP)	200 → [{id, type, url, tempo_bpm, duration_sec}]	ALL	lesson_assets			Upload → S3/GCP → lưu URL
+35	LESSON ASSETS	POST	/api/lessons/{id}/assets	Upload file media	multipart/form-data: file, type, tempo_bpm?, duration_sec?	201 → {id, type, url}	INSTRUCTOR	lesson_assets	Upload → S3/GCP → lưu URL		Xoá DB + file S3/GCP
+36	LESSON ASSETS	DELETE	/api/lessons/{lesson_id}/assets/{id}	Xoá file media	—	204 → No Content	INSTRUCTOR, ADMIN	lesson_assets	Xoá DB + file S3/GCP
+37	LESSON ASSETS	PUT	/api/lessons/{lesson_id}/assets/{id}	Cập nhật metadata file media (không đổi file)	tempo_bpm?, duration_sec?	200 → updated asset	INSTRUCTOR	lesson_assets	Chỉ sửa metadata; muốn đổi file phải xoá rồi upload lại		Chỉ sửa metadata; muốn đổi file phải xoá rồi upload lại
+  ▸  EXERCISES
+38	EXERCISES	GET	/api/lessons/{id}/exercises	Danh sách bài tập của bài học	—	200 → [{id, title, description, pass_threshold, order_index}]	ALL	exercises
+39	EXERCISES	POST	/api/lessons/{id}/exercises	Tạo bài tập mới	title, description, beat_map_asset_id, pass_threshold, order_index	201 → exercise	INSTRUCTOR	exercises
+40	EXERCISES	PUT	/api/exercises/{id}	Cập nhật bài tập	title, description, pass_threshold, beat_map_asset_id, order_index	200 → exercise	INSTRUCTOR	exercises			CASCADE xoá practice_attempts
+41	EXERCISES	DELETE	/api/exercises/{id}	Xoá bài tập	—	204 → No Content	INSTRUCTOR, ADMIN	exercises	CASCADE xoá practice_attempts
+  ▸  LESSON TECHNIQUES
+42	LESSON TECHNIQUES	POST	/api/lessons/{id}/techniques	Gắn kỹ thuật vào bài học	technique_id	201 → {lesson_id, technique_id}	INSTRUCTOR	lesson_techniques	Insert bảng trung gian N-N
+43	LESSON TECHNIQUES	DELETE	/api/lessons/{lesson_id}/techniques/{technique_id}	Gỡ kỹ thuật khỏi bài học	—	204 → No Content	INSTRUCTOR	lesson_techniques
+  ▸  PRACTICE
+44	PRACTICE	POST	/api/practice/sessions	Bắt đầu phiên luyện tập	—	201 → {id, started_at}	LEARNER	practice_sessions	INSERT session started_at = NOW()		Tính duration → cộng total_practice_minutes; cập nhật streak
+45	PRACTICE	PUT	/api/practice/sessions/{id}	Kết thúc phiên luyện tập	ended_at (ISO timestamp)	200 → {id, started_at, ended_at, duration_minutes}	LEARNER	practice_sessions, learner_profiles	Tính duration → cộng total_practice_minutes; cập nhật streak
+46	PRACTICE	GET	/api/practice/sessions	Lịch sử phiên luyện tập	Query: page, size	200 → {data: [sessions], total}	LEARNER	practice_sessions			Server tính total_score từ weights app_configs; cập nhật stars; cộng điểm; check achievements
+47	PRACTICE	POST	/api/practice/attempts	Nộp kết quả luyện tập (AI scores)	session_id, exercise_id, pitch_score, rhythm_score, dynamics_score, tonal_quality_score, breath_score	201 → {id, total_score, stars, points_earned}	LEARNER	practice_attempts, learner_lesson_progress, point_transactions	Server tính total_score từ đúng 5 chỉ số trong doc: pitch, rhythm, tonal quality, breath, dynamics; không có technique_score. Leaderboard cập nhật trong Redis từ dữ liệu nguồn.		Server tính total_score từ đúng 5 chỉ số trong doc: pitch, rhythm, tonal quality, breath, dynamics; không có technique_score. Leaderboard cập nhật trong Redis từ dữ liệu nguồn.
+48	PRACTICE	GET	/api/practice/attempts	Lịch sử attempts của learner	Query: exercise_id, page, size	200 → {data: [attempts], total}	LEARNER	practice_attempts
+49	PRACTICE	GET	/api/practice/attempts/{id}	Chi tiết một attempt	—	200 → attempt + feedback list	LEARNER, INSTRUCTOR	practice_attempts, instructor_feedback			Chỉ thấy attempts thuộc lesson mình tạo
+50	PRACTICE	GET	/api/lessons/{id}/attempts	Instructor xem attempts của learner trên bài học	Query: learner_id, page, size	200 → {data: [attempts + learner info], total}	INSTRUCTOR	practice_attempts, exercises	Chỉ thấy attempts thuộc lesson mình tạo		Xử lý offline sync; trả về danh sách conflict nếu có
+51	PRACTICE	POST	/api/practice/attempts/bulk	Nộp nhiều attempts cùng lúc (offline sync)	[{exercise_id, session_id, scores, created_at}]	200 → {created: N, conflicts: [{index, reason}]}	LEARNER	practice_attempts, learner_lesson_progress	Offline sync phải gửi client_uuid/idempotency key để chống ghi trùng khi retry		Offline sync phải gửi client_uuid/idempotency key để chống ghi trùng khi retry
+  ▸  FEEDBACK
+52	FEEDBACK	POST	/api/practice/attempts/{id}/feedback	Instructor gửi feedback cho attempt	comment	201 → instructor_feedback	INSTRUCTOR	instructor_feedback, notifications	Gửi notification FEEDBACK cho learner
+53	FEEDBACK	GET	/api/practice/attempts/{id}/feedback	Danh sách feedback của attempt	—	200 → [{id, instructor_name, comment, created_at}]	LEARNER, INSTRUCTOR	instructor_feedback			Mỗi learner chỉ feedback 1 lần / bài
+  ▸  PROGRESS
+54	PROGRESS	GET	/api/users/me/progress	Tiến độ học tập của learner	Query: instrument_id, skill_level_id	200 → [{lesson_id, title, stars, completed, started_at, completed_at}]	LEARNER	learner_lesson_progress	stars/status lấy từ learner_lesson_progress; skill level tham chiếu skill_levels bằng FK		stars/status lấy từ learner_lesson_progress; skill level tham chiếu skill_levels bằng FK
+55	PROGRESS	GET	/api/users/me/progress/summary	Tóm tắt tiến độ	—	200 → {total_stars, completed_lessons, current_streak, longest_streak, total_points, adaptive_difficulty}	LEARNER	learner_lesson_progress, learner_profiles	Leaderboard đọc từ Redis; PostgreSQL chỉ giữ dữ liệu nguồn		Leaderboard đọc từ Redis; PostgreSQL chỉ giữ dữ liệu nguồn
+56	PROGRESS	GET	/api/lessons/{id}/learners/{learner_id}/progress	Instructor xem tiến độ learner trên bài học	—	200 → progress + attempt stats	INSTRUCTOR	learner_lesson_progress, practice_attempts, quiz_attempts, minigame_attempts	Chỉ thấy lesson của mình		Dashboard overview của learner
+  ▸  QUIZZES
+57	QUIZZES	GET	/api/lessons/{id}/quizzes	Danh sách câu hỏi quiz của bài học	—	200 → [{id, question, options, order_index}]	ALL	quizzes	Không trả correct_answer cho Learner		Không trả correct_answer cho Learner
+58	QUIZZES	POST	/api/lessons/{id}/quizzes	Tạo câu hỏi quiz mới	question, options, correct_answer, order_index	201 → quiz	INSTRUCTOR, ADMIN	quizzes
+59	QUIZZES	PUT	/api/quizzes/{id}	Cập nhật câu hỏi quiz	question, options, correct_answer, order_index	200 → quiz	INSTRUCTOR, ADMIN	quizzes
+60	QUIZZES	DELETE	/api/quizzes/{id}	Xoá câu hỏi quiz	—	204 → No Content	INSTRUCTOR, ADMIN	quizzes	CASCADE xoá quiz_attempts		CASCADE xoá quiz_attempts
+61	QUIZZES	POST	/api/quizzes/{id}/attempts	Nộp câu trả lời	selected_answer	201 → {is_correct, score, points_earned}	LEARNER	quiz_attempts, point_transactions	Server chấm điểm; leaderboard cập nhật trong Redis từ dữ liệu nguồn		Server chấm điểm; leaderboard cập nhật trong Redis từ dữ liệu nguồn
+62	QUIZZES	GET	/api/quizzes/{id}/attempts	Lịch sử trả lời của learner	Query: page, size	200 → {data: [attempts], total}	LEARNER	quiz_attempts
+  ▸  MINI GAMES
+63	MINI GAMES	GET	/api/lessons/{id}/minigames	Mini-game của bài học	—	200 → [{id, title, challenge_type, difficulty, max_score, order_index}]	ALL	minigame_challenges	2 loại: RHYTHM_MATCH / MELODY_COMPLETE		2 loại: RHYTHM_MATCH / MELODY_COMPLETE
+64	MINI GAMES	POST	/api/lessons/{id}/minigames	Tạo mini-game cho bài học	title, challenge_type, reference_asset_id?, content_json?, difficulty, max_score, order_index	201 → minigame_challenge	INSTRUCTOR, ADMIN	minigame_challenges	reference_asset_id dùng khi RHYTHM_MATCH; content_json dùng khi MELODY_COMPLETE		reference_asset_id dùng khi RHYTHM_MATCH; content_json dùng khi MELODY_COMPLETE
+65	MINI GAMES	PUT	/api/minigames/{id}	Cập nhật mini-game	title, difficulty, max_score, order_index	200 → minigame_challenge	INSTRUCTOR, ADMIN	minigame_challenges
+66	MINI GAMES	DELETE	/api/minigames/{id}	Xoá mini-game	—	204 → No Content	INSTRUCTOR, ADMIN	minigame_challenges	CASCADE xoá minigame_attempts		CASCADE xoá minigame_attempts
+67	MINI GAMES	POST	/api/minigames/{id}/attempts	Nộp kết quả chơi mini-game	score, stars_earned, started_at, completed_at	201 → {result, points_earned}	LEARNER	minigame_attempts, point_transactions	Cộng điểm; check achievements/cosmetics; leaderboard cập nhật trong Redis		Cộng điểm; check achievements/cosmetics; leaderboard cập nhật trong Redis
+68	MINI GAMES	GET	/api/minigames/{id}/attempts	Lịch sử kết quả của learner	Query: page, size	200 → {data: [attempts], total}	LEARNER	minigame_attempts
+  ▸  ACHIEVEMENTS
+69	ACHIEVEMENTS	GET	/api/achievements	Tất cả achievements	—	200 → [{id, name, description, icon_url}]	ALL	achievements
+70	ACHIEVEMENTS	POST	/api/achievements	Tạo achievement mới	name, description, icon_url, condition_json	201 → achievement	ADMIN	achievements	condition_json: {type, threshold}
+71	ACHIEVEMENTS	GET	/api/users/me/achievements	Achievements đã đạt và chưa đạt	—	200 → {earned: [{...earned_at}], locked: [{...}]}	LEARNER	achievements, learner_achievements			condition_json: {type, threshold}
+72	ACHIEVEMENTS	PUT	/api/achievements/{id}	Cập nhật achievement	name, description, icon_url, condition_json	200 → achievement	ADMIN	achievements
+73	ACHIEVEMENTS	DELETE	/api/users/{id}/achievements/{achievement_id}	Thu hồi achievement của 1 learner	—	204 → No Content	ADMIN	learner_achievements	Dùng khi phát hiện learner gian lận hoặc trao nhầm		Dùng khi phát hiện learner gian lận hoặc trao nhầm
+  ▸  COSMETICS
+74	COSMETICS	GET	/api/cosmetics	Tất cả cosmetic items	Query: item_type (ROOM_DECOR | AVATAR_SKIN | INSTRUMENT_SKIN)	200 → [{id, name, item_type, unlock_type, unlock_value, asset_url}]	ALL	cosmetic_items
+75	COSMETICS	GET	/api/users/me/cosmetics	Cosmetics của learner: đã sở hữu + locked	—	200 → {owned: [{...is_equipped}], locked: [...]}	LEARNER	cosmetic_items, learner_cosmetics
+76	COSMETICS	PUT	/api/users/me/cosmetics/{cosmetic_id}	Trang bị / gỡ cosmetic item	is_equipped: true | false	200 → {cosmetic_id, is_equipped}	LEARNER	learner_cosmetics	Nếu equip: tự động unequip item cùng loại đang mặc
+  ▸  LEADERBOARDS
+77	LEADERBOARDS	GET	/api/leaderboards	Bảng xếp hạng	Query: top (default 100)	200 → [{rank, learner_name, total_points, current_streak}]	ALL	Redis leaderboard cache; source: point_transactions, users, learner_profiles	Redis Sorted Set; không có bảng leaderboards trong PostgreSQL		Redis Sorted Set; không có bảng leaderboards trong PostgreSQL
+78	LEADERBOARDS	GET	/api/leaderboards/me	Vị trí xếp hạng của learner hiện tại	—	200 → {rank, total_points, percentile}	LEARNER	Redis leaderboard cache	Đọc rank trực tiếp từ Redis Sorted Set		Đọc rank trực tiếp từ Redis Sorted Set
+79	LEADERBOARDS	GET	/api/users/{id}/point-transactions	Lịch sử điểm của learner	Query: source_type, page, size	200 → {data: [transactions], total}	LEARNER, ADMIN	point_transactions	Audit log điểm: PRACTICE / MINI_GAME / ACHIEVEMENT / DAILY_CHALLENGE / STREAK_BONUS		RANK() window function PostgreSQL
+  ▸  DAILY CHALLENGES
+80	DAILY CHALLENGES	GET	/api/daily-challenges	Danh sách thử thách	Query: date (YYYY-MM-DD, mặc định hôm nay)	200 → [{challenge + trạng thái hoàn thành của learner}]	LEARNER	daily_challenges, learner_daily_challenges	?date=today trả về thử thách hôm nay
+81	DAILY CHALLENGES	POST	/api/daily-challenges	Tạo thử thách mới	title, description, instrument_id, reward_points, challenge_date	201 → daily_challenge	ADMIN	daily_challenges	Cron job tự tạo hàng ngày; Admin cũng có thể tạo thủ công		?date=today trả về thử thách hôm nay
+82	DAILY CHALLENGES	POST	/api/daily-challenges/{id}/completions	Hoàn thành thử thách	—	201 → {challenge_id, completed_at, points_earned}	LEARNER	learner_daily_challenges, point_transactions, learner_profiles	Tạo completion record; cộng điểm; cập nhật streak; leaderboard cập nhật trong Redis		Tạo completion record; cộng điểm; cập nhật streak; leaderboard cập nhật trong Redis
+83	DAILY CHALLENGES	PUT	/api/daily-challenges/{id}	Cập nhật thử thách	title, description, instrument_id, reward_points, challenge_date	200 → daily_challenge	ADMIN	daily_challenges
+84	DAILY CHALLENGES	DELETE	/api/daily-challenges/{id}	Xoá thử thách (sửa lỗi tạo nhầm/spam)	—	204 → No Content	ADMIN	daily_challenges	CASCADE xoá learner_daily_challenges liên quan		CASCADE xoá learner_daily_challenges liên quan
+  ▸  NOTIFICATIONS
+85	NOTIFICATIONS	GET	/api/notifications	Danh sách thông báo	Query: is_read (true|false), page, size	200 → {data: [...], unread_count}	ALL	notifications
+86	NOTIFICATIONS	PUT	/api/notifications/{id}	Đánh dấu thông báo đã đọc	is_read: true	200 → {id, is_read}	ALL	notifications
+87	NOTIFICATIONS	PUT	/api/notifications	Đánh dấu tất cả thông báo đã đọc	is_read: true	200 → {updated_count}	ALL	notifications	Bulk update tất cả notification của user hiện tại
+  ▸  ADMIN
+88	ADMIN	GET	/api/admin/dashboard	Tổng quan quản trị hệ thống	—	200 → {totalUsers, activeUsers, learnerCount, instructorCount, pendingReviews, popularInstruments}	ADMIN	users, usage_sessions, content_reviews, learner_instruments, instruments	Dữ liệu tổng hợp cho Admin Dashboard; có thể cache Redis trong thời gian ngắn		Dữ liệu tổng hợp cho Admin Dashboard; có thể cache Redis trong thời gian ngắn
+89	ADMIN	GET	/api/admin/reviews	Danh sách nội dung chờ / đã kiểm duyệt	Query: status, targetType, page, size	200 → {data: [reviews], total, page, size}	ADMIN	content_reviews, lessons, media_assets, users	Admin duyệt lesson hoặc media asset; không trực tiếp sửa nội dung chuyên môn		Admin duyệt lesson hoặc media asset; không trực tiếp sửa nội dung chuyên môn
+90	ADMIN	GET	/api/admin/users	Danh sách tài khoản hệ thống	Query: role, isActive, page, size	200 → {data: [users], total, page, size}	ADMIN	users, roles, learner_profiles, instructor_profiles	Hỗ trợ lọc ADMIN, INSTRUCTOR và LEARNER		Hỗ trợ lọc ADMIN, INSTRUCTOR và LEARNER
+91	ADMIN	POST	/api/admin/create-admin	Admin tạo thêm tài khoản Admin	email, fullName	201 → {userId, email, role, fullName, createdAt}	ADMIN	users	Hệ thống có nhiều Admin; tự sinh mật khẩu tạm và yêu cầu đổi ở lần đăng nhập đầu		Hệ thống có nhiều Admin; tự sinh mật khẩu tạm và yêu cầu đổi ở lần đăng nhập đầu
+92	ADMIN	POST	/api/admin/create-instructor	Admin tạo tài khoản Instructor	email, fullName, temporaryPassword, biography, yearsExperience, instrumentIds	201 → {userId, email, role, fullName, instrumentIds, createdAt}	ADMIN	users, instructor_profiles, instructor_instruments	Chuyên môn Instructor liên kết qua instrumentIds; không lưu specialization dạng text		Chuyên môn Instructor liên kết qua instrumentIds; không lưu specialization dạng text
+93	ADMIN	POST	/api/admin/reviews/{id}/approve	Phê duyệt nội dung	comment (optional)	200 → {reviewId, status: APPROVED, reviewedAt}	ADMIN	content_reviews, lessons, media_assets, audit_logs	Áp dụng cho lesson hoặc media asset được gửi duyệt		Áp dụng cho lesson hoặc media asset được gửi duyệt
+94	ADMIN	POST	/api/admin/reviews/{id}/reject	Từ chối nội dung	comment (required)	200 → {reviewId, status: REJECTED, reviewedAt}	ADMIN	content_reviews, lessons, media_assets, audit_logs	Phải ghi rõ lý do để Instructor chỉnh sửa nội dung		Phải ghi rõ lý do để Instructor chỉnh sửa nội dung
+95	ADMIN	PUT	/api/admin/users/{id}/status	Khóa hoặc mở khóa tài khoản	isActive: true | false	200 → {userId, isActive, updatedAt}	ADMIN	users	Khi khóa tài khoản phải thu hồi toàn bộ refresh/auth session của user trong Redis		Khi khóa tài khoản phải thu hồi toàn bộ refresh/auth session của user trong Redis
+  ▸  APP CONFIGS
+96	APP CONFIGS	GET	/api/admin/configs	Tất cả cấu hình hệ thống	Query: group (scoring | feature | difficulty | offline)	200 → [{key, value, description, updated_by, updated_at}]	ADMIN	app_configs
+97	APP CONFIGS	PUT	/api/admin/configs/{key}	Cập nhật một cấu hình	value	200 → {key, value, updated_by, updated_at}	ADMIN	app_configs	Validate value trước khi lưu; ghi nhận updated_by (nhiều admin nên cần audit)		Validate value trước khi lưu; ghi nhận updated_by (nhiều admin nên cần audit)
+98	APP CONFIGS	GET	/api/configs	Cấu hình công khai (client Godot dùng)	Query: group=scoring	200 → {pitch_weight, rhythm_weight, dynamics_weight, tonal_weight, breath_weight}	ALL	app_configs	Chỉ trả các key không nhạy cảm		Chỉ trả các key không nhạy cảm
+=== AUTH ===
+AUTH  —  8 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	POST	/api/auth/register	Đăng ký tài khoản	email, password, full_name, role, instrument_id, skill_level_id	201 → {user_id, access_token, refresh_token, expires_in}	PUBLIC	users, learner_profiles / instructor_profiles, learner_instruments	BCrypt hash password; learner chọn nhạc cụ và trình độ bằng FK; không tạo auth session/leaderboard trong PostgreSQL
+2	POST	/api/auth/login	Đăng nhập	email, password	200 → {access_token, refresh_token, expires_in, user}	PUBLIC	users	Access JWT ngắn hạn; tạo refresh/auth session trong Redis: session_id/jti, refresh_token_hash, expires_at, revoked
+3	POST	/api/auth/logout	Đăng xuất	Header: Authorization Bearer {token}	200 → {message}	ALL	—	Thu hồi refresh/auth session trong Redis; access token gắn với session_id/jti đã revoke bị từ chối
+4	POST	/api/auth/refresh	Làm mới access token	refresh_token	200 → {access_token, expires_in}	ALL	—	Xác minh refresh/auth session trong Redis; cấp access JWT mới; rotate refresh token nếu áp dụng
+5	POST	/api/auth/forgot-password	Yêu cầu reset mật khẩu qua email	email	200 → {message}	PUBLIC	users	Gửi email OTP/link reset; lưu token reset trong Redis
+6	POST	/api/auth/reset-password	Đặt lại mật khẩu mới	reset_token, new_password	200 → {message}	PUBLIC	users	Verify reset_token; update password_hash
+7	POST	/api/auth/change-password	Đổi mật khẩu khi đã đăng nhập	current_password, new_password	200 → {message}	ALL	users	Verify current_password trước khi update
+8	POST	/api/auth/first-time-change-password	Instructor đổi mật khẩu ở lần đầu đăng nhập	—	200 → message	INSTRUCTOR	users	Yeu cau doi mat khau sau khi duoc Admin cap tai khoan Instructor
+=== USERS ===
+USERS  —  5 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/users	Danh sách tất cả user	Query: role, is_active, page, size	200 → {data: [users], total, page}	ADMIN	users
+2	GET	/api/users/me	Thông tin tài khoản hiện tại	—	200 → user + profile	ALL	users, learner_profiles, instructor_profiles	'me' alias — không cần biết id của chính mình
+3	PUT	/api/users/me	Cập nhật hồ sơ cá nhân	full_name, biography, years_experience, instrument_id, skill_level_id	200 → updated profile	ALL	users, learner_profiles, instructor_profiles, learner_instruments, instructor_instruments	Nhạc cụ và trình độ lưu bằng FK; không dùng favorite_instrument hoặc specialization dạng text
+4	GET	/api/users/{id}	Chi tiết một user	—	200 → user + profile	ADMIN	users, learner_profiles, instructor_profiles
+5	PUT	/api/users/{id}/status	Kích hoạt / vô hiệu hoá tài khoản	is_active: true | false	200 → {id, is_active}	ADMIN	users	Soft-disable — không xoá dữ liệu
+=== SKILL LEVELS ===
+SKILL LEVELS  —  1 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/skill-levels	Danh sách trình độ học viên	—	200 → [{id, level_name}]	PUBLIC	skill_levels	BEGINNER / INTERMEDIATE / ADVANCED
+=== INSTRUMENTS ===
+INSTRUMENTS  —  5 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/instruments	Danh sách nhạc cụ	—	200 → [{id, name, description, icon_url}]	PUBLIC	instruments
+2	POST	/api/instruments	Thêm nhạc cụ mới	name, description, icon_url	201 → instrument	ADMIN	instruments
+3	PUT	/api/instruments/{id}	Cập nhật nhạc cụ	name, description, icon_url	200 → instrument	ADMIN	instruments
+4	GET	/api/instruments/{id}/techniques	Kỹ thuật của một nhạc cụ	—	200 → [{id, name, description, guide_url}]	PUBLIC	techniques
+5	PUT	/api/instruments/{id}/status	Bật/tắt nhạc cụ (soft-disable)	is_active: true | false	200 → {id, is_active}	ADMIN	instruments	Soft-disable — không xoá, tránh cascade phá huỷ lessons/techniques liên quan
+=== TECHNIQUES ===
+TECHNIQUES  —  4 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/techniques	Danh sách kỹ thuật	Query: instrument_id	200 → [{id, instrument_id, name, description, guide_url}]	PUBLIC	techniques
+2	POST	/api/techniques	Tạo kỹ thuật mới	instrument_id, name, description, guide_url	201 → technique	INSTRUCTOR, ADMIN	techniques
+3	PUT	/api/techniques/{id}	Cập nhật kỹ thuật	name, description, guide_url	200 → technique	INSTRUCTOR, ADMIN	techniques
+4	DELETE	/api/techniques/{id}	Xoá kỹ thuật	—	204 → No Content	ADMIN	techniques
+=== LESSONS ===
+LESSONS  —  6 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/lessons	Danh sách bài học	Query: instrument_id, skill_level_id, status, page, size	200 → {data: [lessons], total, page}	ALL	lessons, skill_levels, instruments	Auto set created_by; status = DRAFT
+2	POST	/api/lessons	Tạo bài học mới	instrument_id, skill_level_id, title, description, order_index	201 → lesson (status=DRAFT)	INSTRUCTOR	lessons
+3	GET	/api/lessons/{id}	Chi tiết đầy đủ bài học	—	200 → lesson + contents + assets + exercises + techniques + mini_games	ALL	lessons, lesson_contents, lesson_assets, exercises, lesson_techniques	Chỉ owner hoặc admin
+4	PUT	/api/lessons/{id}	Cập nhật bài học	title, description, order_index, skill_level_id	200 → updated lesson	INSTRUCTOR, ADMIN	lessons	Chỉ xoá được DRAFT / REJECTED
+5	DELETE	/api/lessons/{id}	Xoá bài học	—	204 → No Content	INSTRUCTOR, ADMIN	lessons	Instructor set PENDING (submit); Admin set APPROVED/REJECTED; gửi notification
+6	PUT	/api/lessons/{id}/status	Đổi trạng thái bài học	status: PENDING | APPROVED | REJECTED,  comment (nếu REJECTED)	200 → {id, status}	INSTRUCTOR, ADMIN	lessons, content_reviews, notifications	Instructor CHỈ được set PENDING (submit); Admin CHỈ được set APPROVED/REJECTED — validate theo role ở BE; gửi notification
+=== LESSON CONTENTS ===
+LESSON CONTENTS  —  4 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/lessons/{id}/contents	Nội dung văn bản của bài học	—	200 → [{id, content_text, order_index}]	ALL	lesson_contents	Sắp xếp theo order_index
+2	POST	/api/lessons/{id}/contents	Thêm đoạn nội dung	content_text, order_index	201 → lesson_content	INSTRUCTOR	lesson_contents
+3	PUT	/api/lessons/{lesson_id}/contents/{id}	Sửa đoạn nội dung	content_text, order_index	200 → updated content	INSTRUCTOR	lesson_contents
+4	DELETE	/api/lessons/{lesson_id}/contents/{id}	Xoá đoạn nội dung	—	204 → No Content	INSTRUCTOR	lesson_contents
+=== LESSON ASSETS ===
+LESSON ASSETS  —  4 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/lessons/{id}/assets	Danh sách file media của bài học	Query: type (REFERENCE_AUDIO | SHEET_IMAGE | TECHNIQUE_VIDEO | BEAT_MAP)	200 → [{id, type, url, tempo_bpm, duration_sec}]	ALL	lesson_assets	Upload → S3/GCP → lưu URL
+2	POST	/api/lessons/{id}/assets	Upload file media	multipart/form-data: file, type, tempo_bpm?, duration_sec?	201 → {id, type, url}	INSTRUCTOR	lesson_assets	Xoá DB + file S3/GCP
+3	DELETE	/api/lessons/{lesson_id}/assets/{id}	Xoá file media	—	204 → No Content	INSTRUCTOR, ADMIN	lesson_assets
+4	PUT	/api/lessons/{lesson_id}/assets/{id}	Cập nhật metadata file media (không đổi file)	tempo_bpm?, duration_sec?	200 → updated asset	INSTRUCTOR	lesson_assets	Chỉ sửa metadata; muốn đổi file phải xoá rồi upload lại
+=== EXERCISES ===
+EXERCISES  —  4 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/lessons/{id}/exercises	Danh sách bài tập của bài học	—	200 → [{id, title, description, pass_threshold, order_index}]	ALL	exercises
+2	POST	/api/lessons/{id}/exercises	Tạo bài tập mới	title, description, beat_map_asset_id, pass_threshold, order_index	201 → exercise	INSTRUCTOR	exercises
+3	PUT	/api/exercises/{id}	Cập nhật bài tập	title, description, pass_threshold, beat_map_asset_id, order_index	200 → exercise	INSTRUCTOR	exercises
+4	DELETE	/api/exercises/{id}	Xoá bài tập	—	204 → No Content	INSTRUCTOR, ADMIN	exercises	CASCADE xoá practice_attempts
+=== LESSON TECHNIQUES ===
+LESSON TECHNIQUES  —  2 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	POST	/api/lessons/{id}/techniques	Gắn kỹ thuật vào bài học	technique_id	201 → {lesson_id, technique_id}	INSTRUCTOR	lesson_techniques	Insert bảng trung gian N-N
+2	DELETE	/api/lessons/{lesson_id}/techniques/{technique_id}	Gỡ kỹ thuật khỏi bài học	—	204 → No Content	INSTRUCTOR	lesson_techniques
+=== PRACTICE ===
+PRACTICE  —  8 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	POST	/api/practice/sessions	Bắt đầu phiên luyện tập	—	201 → {id, started_at}	LEARNER	practice_sessions	INSERT session started_at = NOW()
+2	PUT	/api/practice/sessions/{id}	Kết thúc phiên luyện tập	ended_at (ISO timestamp)	200 → {id, started_at, ended_at, duration_minutes}	LEARNER	practice_sessions, learner_profiles	Tính duration → cộng total_practice_minutes; cập nhật streak
+3	GET	/api/practice/sessions	Lịch sử phiên luyện tập	Query: page, size	200 → {data: [sessions], total}	LEARNER	practice_sessions
+4	POST	/api/practice/attempts	Nộp kết quả luyện tập (AI scores)	session_id, exercise_id, pitch_score, rhythm_score, dynamics_score, tonal_quality_score, breath_score	201 → {id, total_score, stars, points_earned}	LEARNER	practice_attempts, learner_lesson_progress, point_transactions	Server tính total_score từ đúng 5 chỉ số trong doc: pitch, rhythm, tonal quality, breath, dynamics; không có technique_score. Leaderboard cập nhật trong Redis từ dữ liệu nguồn.
+5	GET	/api/practice/attempts	Lịch sử attempts của learner	Query: exercise_id, page, size	200 → {data: [attempts], total}	LEARNER	practice_attempts
+6	GET	/api/practice/attempts/{id}	Chi tiết một attempt	—	200 → attempt + feedback list	LEARNER, INSTRUCTOR	practice_attempts, instructor_feedback
+7	GET	/api/lessons/{id}/attempts	Instructor xem attempts của learner trên bài học	Query: learner_id, page, size	200 → {data: [attempts + learner info], total}	INSTRUCTOR	practice_attempts, exercises	Chỉ thấy attempts thuộc lesson mình tạo
+8	POST	/api/practice/attempts/bulk	Nộp nhiều attempts cùng lúc (offline sync)	[{exercise_id, session_id, scores, created_at}]	200 → {created: N, conflicts: [{index, reason}]}	LEARNER	practice_attempts, learner_lesson_progress	Offline sync phải gửi client_uuid/idempotency key để chống ghi trùng khi retry
+=== FEEDBACK ===
+FEEDBACK  —  2 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	POST	/api/practice/attempts/{id}/feedback	Instructor gửi feedback cho attempt	comment	201 → instructor_feedback	INSTRUCTOR	instructor_feedback, notifications	Gửi notification FEEDBACK cho learner
+2	GET	/api/practice/attempts/{id}/feedback	Danh sách feedback của attempt	—	200 → [{id, instructor_name, comment, created_at}]	LEARNER, INSTRUCTOR	instructor_feedback
+=== PROGRESS ===
+PROGRESS  —  3 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/users/me/progress	Tiến độ học tập của learner	Query: instrument_id, skill_level_id	200 → [{lesson_id, title, stars, completed, started_at, completed_at}]	LEARNER	learner_lesson_progress	stars/status lấy từ learner_lesson_progress; skill level tham chiếu skill_levels bằng FK
+2	GET	/api/users/me/progress/summary	Tóm tắt tiến độ	—	200 → {total_stars, completed_lessons, current_streak, longest_streak, total_points, adaptive_difficulty}	LEARNER	learner_lesson_progress, learner_profiles	Leaderboard đọc từ Redis; PostgreSQL chỉ giữ dữ liệu nguồn
+3	GET	/api/lessons/{id}/learners/{learner_id}/progress	Instructor xem tiến độ learner trên bài học	—	200 → progress + attempt stats	INSTRUCTOR	learner_lesson_progress, practice_attempts, quiz_attempts, minigame_attempts	Dashboard overview của learner
+=== QUIZZES ===
+QUIZZES  —  6 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/lessons/{id}/quizzes	Danh sách câu hỏi quiz của bài học	—	200 → [{id, question, options, order_index}]	ALL	quizzes	Không trả correct_answer cho Learner
+2	POST	/api/lessons/{id}/quizzes	Tạo câu hỏi quiz mới	question, options, correct_answer, order_index	201 → quiz	INSTRUCTOR, ADMIN	quizzes
+3	PUT	/api/quizzes/{id}	Cập nhật câu hỏi quiz	question, options, correct_answer, order_index	200 → quiz	INSTRUCTOR, ADMIN	quizzes
+4	DELETE	/api/quizzes/{id}	Xoá câu hỏi quiz	—	204 → No Content	INSTRUCTOR, ADMIN	quizzes	CASCADE xoá quiz_attempts
+5	POST	/api/quizzes/{id}/attempts	Nộp câu trả lời	selected_answer	201 → {is_correct, score, points_earned}	LEARNER	quiz_attempts, point_transactions	Server chấm điểm; leaderboard cập nhật trong Redis từ dữ liệu nguồn
+6	GET	/api/quizzes/{id}/attempts	Lịch sử trả lời của learner	Query: page, size	200 → {data: [attempts], total}	LEARNER	quiz_attempts
+=== MINI GAMES ===
+MINI GAMES  —  6 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/lessons/{id}/minigames	Mini-game của bài học	—	200 → [{id, title, challenge_type, difficulty, max_score, order_index}]	ALL	minigame_challenges	2 loại: RHYTHM_MATCH / MELODY_COMPLETE
+2	POST	/api/lessons/{id}/minigames	Tạo mini-game cho bài học	title, challenge_type, reference_asset_id?, content_json?, difficulty, max_score, order_index	201 → minigame_challenge	INSTRUCTOR, ADMIN	minigame_challenges	reference_asset_id dùng khi RHYTHM_MATCH; content_json dùng khi MELODY_COMPLETE
+3	PUT	/api/minigames/{id}	Cập nhật mini-game	title, difficulty, max_score, order_index	200 → minigame_challenge	INSTRUCTOR, ADMIN	minigame_challenges
+4	DELETE	/api/minigames/{id}	Xoá mini-game	—	204 → No Content	INSTRUCTOR, ADMIN	minigame_challenges	CASCADE xoá minigame_attempts
+5	POST	/api/minigames/{id}/attempts	Nộp kết quả chơi mini-game	score, stars_earned, started_at, completed_at	201 → {result, points_earned}	LEARNER	minigame_attempts, point_transactions	Cộng điểm; check achievements/cosmetics; leaderboard cập nhật trong Redis
+6	GET	/api/minigames/{id}/attempts	Lịch sử kết quả của learner	Query: page, size	200 → {data: [attempts], total}	LEARNER	minigame_attempts
+=== ACHIEVEMENTS ===
+ACHIEVEMENTS  —  5 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/achievements	Tất cả achievements	—	200 → [{id, name, description, icon_url}]	ALL	achievements
+2	POST	/api/achievements	Tạo achievement mới	name, description, icon_url, condition_json	201 → achievement	ADMIN	achievements
+3	GET	/api/users/me/achievements	Achievements đã đạt và chưa đạt	—	200 → {earned: [{...earned_at}], locked: [{...}]}	LEARNER	achievements, learner_achievements	condition_json: {type, threshold}
+4	PUT	/api/achievements/{id}	Cập nhật achievement	name, description, icon_url, condition_json	200 → achievement	ADMIN	achievements
+5	DELETE	/api/users/{id}/achievements/{achievement_id}	Thu hồi achievement của 1 learner	—	204 → No Content	ADMIN	learner_achievements	Dùng khi phát hiện learner gian lận hoặc trao nhầm
+=== COSMETICS ===
+COSMETICS  —  3 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/cosmetics	Tất cả cosmetic items	Query: item_type (ROOM_DECOR | AVATAR_SKIN | INSTRUMENT_SKIN)	200 → [{id, name, item_type, unlock_type, unlock_value, asset_url}]	ALL	cosmetic_items
+2	GET	/api/users/me/cosmetics	Cosmetics của learner: đã sở hữu + locked	—	200 → {owned: [{...is_equipped}], locked: [...]}	LEARNER	cosmetic_items, learner_cosmetics
+3	PUT	/api/users/me/cosmetics/{cosmetic_id}	Trang bị / gỡ cosmetic item	is_equipped: true | false	200 → {cosmetic_id, is_equipped}	LEARNER	learner_cosmetics	Nếu equip: tự động unequip item cùng loại đang mặc
+=== LEADERBOARDS ===
+LEADERBOARDS  —  3 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/leaderboards	Bảng xếp hạng	Query: top (default 100)	200 → [{rank, learner_name, total_points, current_streak}]	ALL	Redis leaderboard cache; source: point_transactions, users, learner_profiles	Redis Sorted Set; không có bảng leaderboards trong PostgreSQL
+2	GET	/api/leaderboards/me	Vị trí xếp hạng của learner hiện tại	—	200 → {rank, total_points, percentile}	LEARNER	Redis leaderboard cache	Đọc rank trực tiếp từ Redis Sorted Set
+3	GET	/api/users/{id}/point-transactions	Lịch sử điểm của learner	Query: source_type, page, size	200 → {data: [transactions], total}	LEARNER, ADMIN	point_transactions	Audit log điểm: PRACTICE / MINI_GAME / ACHIEVEMENT / DAILY_CHALLENGE / STREAK_BONUS
+=== DAILY CHALLENGES ===
+DAILY CHALLENGES  —  5 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/daily-challenges	Danh sách thử thách	Query: date (YYYY-MM-DD, mặc định hôm nay)	200 → [{challenge + trạng thái hoàn thành của learner}]	LEARNER	daily_challenges, learner_daily_challenges
+2	POST	/api/daily-challenges	Tạo thử thách mới	title, description, instrument_id, reward_points, challenge_date	201 → daily_challenge	ADMIN	daily_challenges	?date=today trả về thử thách hôm nay
+3	POST	/api/daily-challenges/{id}/completions	Hoàn thành thử thách	—	201 → {challenge_id, completed_at, points_earned}	LEARNER	learner_daily_challenges, point_transactions, learner_profiles	Tạo completion record; cộng điểm; cập nhật streak; leaderboard cập nhật trong Redis
+4	PUT	/api/daily-challenges/{id}	Cập nhật thử thách	title, description, instrument_id, reward_points, challenge_date	200 → daily_challenge	ADMIN	daily_challenges
+5	DELETE	/api/daily-challenges/{id}	Xoá thử thách (sửa lỗi tạo nhầm/spam)	—	204 → No Content	ADMIN	daily_challenges	CASCADE xoá learner_daily_challenges liên quan
+=== NOTIFICATIONS ===
+NOTIFICATIONS  —  3 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/notifications	Danh sách thông báo	Query: is_read (true|false), page, size	200 → {data: [...], unread_count}	ALL	notifications
+2	PUT	/api/notifications/{id}	Đánh dấu thông báo đã đọc	is_read: true	200 → {id, is_read}	ALL	notifications
+3	PUT	/api/notifications	Đánh dấu tất cả thông báo đã đọc	is_read: true	200 → {updated_count}	ALL	notifications	Bulk update tất cả notification của user hiện tại
+=== ADMIN ===
+ADMIN  —  8 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/admin/dashboard	Tổng quan quản trị hệ thống	—	200 → {totalUsers, activeUsers, learnerCount, instructorCount, pendingReviews, popularInstruments}	ADMIN	users, usage_sessions, content_reviews, learner_instruments, instruments	Dữ liệu tổng hợp cho Admin Dashboard; có thể cache Redis trong thời gian ngắn
+2	GET	/api/admin/reviews	Danh sách nội dung chờ / đã kiểm duyệt	Query: status, targetType, page, size	200 → {data: [reviews], total, page, size}	ADMIN	content_reviews, lessons, media_assets, users	Admin duyệt lesson hoặc media asset; không trực tiếp sửa nội dung chuyên môn
+3	GET	/api/admin/users	Danh sách tài khoản hệ thống	Query: role, isActive, page, size	200 → {data: [users], total, page, size}	ADMIN	users, roles, learner_profiles, instructor_profiles	Hỗ trợ lọc ADMIN, INSTRUCTOR và LEARNER
+4	POST	/api/admin/create-admin	Admin tạo thêm tài khoản Admin	email, fullName	201 → {userId, email, role, fullName, createdAt}	ADMIN	users	Hệ thống có nhiều Admin; tự sinh mật khẩu tạm và yêu cầu đổi ở lần đăng nhập đầu
+5	POST	/api/admin/create-instructor	Admin tạo tài khoản Instructor	email, fullName, temporaryPassword, biography, yearsExperience, instrumentIds	201 → {userId, email, role, fullName, instrumentIds, createdAt}	ADMIN	users, instructor_profiles, instructor_instruments	Chuyên môn Instructor liên kết qua instrumentIds; không lưu specialization dạng text
+6	POST	/api/admin/reviews/{id}/approve	Phê duyệt nội dung	comment (optional)	200 → {reviewId, status: APPROVED, reviewedAt}	ADMIN	content_reviews, lessons, media_assets, audit_logs	Áp dụng cho lesson hoặc media asset được gửi duyệt
+7	POST	/api/admin/reviews/{id}/reject	Từ chối nội dung	comment (required)	200 → {reviewId, status: REJECTED, reviewedAt}	ADMIN	content_reviews, lessons, media_assets, audit_logs	Phải ghi rõ lý do để Instructor chỉnh sửa nội dung
+8	PUT	/api/admin/users/{id}/status	Khóa hoặc mở khóa tài khoản	isActive: true | false	200 → {userId, isActive, updatedAt}	ADMIN	users	Khi khóa tài khoản phải thu hồi toàn bộ refresh/auth session của user trong Redis
+=== APP CONFIGS ===
+APP CONFIGS  —  3 endpoints
+#	Method	Endpoint	Mô tả	Request Body / Params	Response	Roles	Bảng DB	Ghi chú
+1	GET	/api/admin/configs	Tất cả cấu hình hệ thống	Query: group (scoring | feature | difficulty | offline)	200 → [{key, value, description, updated_by, updated_at}]	ADMIN	app_configs
+2	PUT	/api/admin/configs/{key}	Cập nhật một cấu hình	value	200 → {key, value, updated_by, updated_at}	ADMIN	app_configs	Validate value trước khi lưu; ghi nhận updated_by (nhiều admin nên cần audit)
+3	GET	/api/configs	Cấu hình công khai (client Godot dùng)	Query: group=scoring	200 → {pitch_weight, rhythm_weight, dynamics_weight, tonal_weight, breath_weight}	ALL	app_configs	Chỉ trả các key không nhạy cảm

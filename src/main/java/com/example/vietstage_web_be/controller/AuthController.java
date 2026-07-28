@@ -34,7 +34,17 @@ public class AuthController {
         AuthResponse response = authService.register(request);
         return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
                 .success(true)
-                .message("Register successfully")
+                .message("Register initiated successfully")
+                .data(response)
+                .build());
+    }
+
+    @PostMapping("/verify-registration")
+    public ResponseEntity<BaseResponse<AuthResponse>> verifyRegistration(@RequestBody @Valid VerifyRegistrationRequest request){
+        AuthResponse response = authService.verifyRegistration(request);
+        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                .success(true)
+                .message("Account verified successfully")
                 .data(response)
                 .build());
     }
@@ -76,12 +86,11 @@ public class AuthController {
 
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request){
-        String code = authService.forgotPassword(request);
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request){
+        authService.forgotPassword(request);
 
-        ApiResponse<String> response = ApiResponse.<String>builder()
-                .message("Verification code generated successfully")
-                .data(code)
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .message("Verification code sent to email successfully")
                 .build();
 
         return ResponseEntity.ok(response);
