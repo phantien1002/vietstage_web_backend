@@ -21,7 +21,6 @@ public class InstructorCreateRequest {
     private String fullName;
 
     // Các thông tin bổ sung cho Instructor Profile
-    private String specialization;
     private String biography;
-    private Long yearsExperience;
+    private Integer yearsExperience;
 }

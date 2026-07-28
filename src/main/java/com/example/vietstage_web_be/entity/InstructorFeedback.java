@@ -21,14 +21,14 @@ public class InstructorFeedback {
 
     @ManyToOne
     @JoinColumn(name = "instructor_id")
-    private Users instructor;
+    private User instructor;
 
     @Column(name = "comment", nullable = false)
     private String comment;
 
     @ManyToOne
     @JoinColumn(name = "attempt_id")
-    private PracticeAttempts practiceAttempt;
+    private PracticeAttempt practiceAttempt;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

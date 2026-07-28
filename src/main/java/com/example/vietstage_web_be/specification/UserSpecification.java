@@ -1,6 +1,6 @@
 package com.example.vietstage_web_be.specification;
 
-import com.example.vietstage_web_be.entity.Users;
+import com.example.vietstage_web_be.entity.User;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -16,7 +16,7 @@ public class UserSpecification {
      * @param role     lọc theo role: ADMIN, INSTRUCTOR, LEARNER (nullable)
      * @param isActive lọc theo trạng thái active (nullable)
      */
-    public static Specification<Users> filter(String keyword, String role, Boolean isActive) {
+    public static Specification<User> filter(String keyword, String role, Boolean isActive) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 

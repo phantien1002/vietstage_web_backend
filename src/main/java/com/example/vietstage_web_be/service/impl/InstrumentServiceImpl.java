@@ -2,10 +2,10 @@ package com.example.vietstage_web_be.service.impl;
 
 import com.example.vietstage_web_be.dto.request.InstrumentRequest;
 import com.example.vietstage_web_be.dto.response.InstrumentResponse;
-import com.example.vietstage_web_be.entity.Instruments;
+import com.example.vietstage_web_be.entity.Instrument;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
-import com.example.vietstage_web_be.repository.InstrumentsRepository;
+import com.example.vietstage_web_be.repository.InstrumentRepository;
 import com.example.vietstage_web_be.service.IInstrumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InstrumentServiceImpl implements IInstrumentService {
 
-    private final InstrumentsRepository instrumentsRepository;
+    private final InstrumentRepository instrumentsRepository;
 
     @Override
     @Transactional
@@ -27,13 +27,17 @@ public class InstrumentServiceImpl implements IInstrumentService {
             throw new AppException(ErrorCode.INSTRUMENT_ALREADY_EXIST);
         }
 
-        Instruments instrument = Instruments.builder()
+        Long nextId = instrumentsRepository.findTopByOrderByIdDesc().map(com.example.vietstage_web_be.entity.Instrument::getId).orElse(0L) + 1;
+        String insCode = "INS-" + request.getName().substring(0, Math.min(2, request.getName().length())).toUpperCase() + "-" + String.format("%03d", nextId);
+
+        Instrument instrument = Instrument.builder()
+                .instrumentCode(insCode)
                 .name(request.getName())
                 .description(request.getDescription())
                 .iconUrl(request.getIconUrl())
                 .build();
 
-        Instruments saved = instrumentsRepository.save(instrument);
+        Instrument saved = instrumentsRepository.save(instrument);
         return mapToResponse(saved);
     }
 
@@ -48,7 +52,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
     @Override
     @Transactional(readOnly = true)
     public InstrumentResponse getInstrumentById(Long id) {
-        Instruments instrument = instrumentsRepository.findById(id)
+        Instrument instrument = instrumentsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
         return mapToResponse(instrument);
     }
@@ -56,7 +60,7 @@ public class InstrumentServiceImpl implements IInstrumentService {
     @Override
     @Transactional
     public InstrumentResponse updateInstrument(Long id, InstrumentRequest request) {
-        Instruments instrument = instrumentsRepository.findById(id)
+        Instrument instrument = instrumentsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
 
         if (!instrument.getName().equalsIgnoreCase(request.getName()) &&
@@ -68,21 +72,22 @@ public class InstrumentServiceImpl implements IInstrumentService {
         instrument.setDescription(request.getDescription());
         instrument.setIconUrl(request.getIconUrl());
 
-        Instruments updated = instrumentsRepository.save(instrument);
+        Instrument updated = instrumentsRepository.save(instrument);
         return mapToResponse(updated);
     }
 
     @Override
     @Transactional
     public void deleteInstrument(Long id) {
-        Instruments instrument = instrumentsRepository.findById(id)
+        Instrument instrument = instrumentsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
         instrumentsRepository.delete(instrument);
     }
 
-    private InstrumentResponse mapToResponse(Instruments instrument) {
+    private InstrumentResponse mapToResponse(Instrument instrument) {
         return InstrumentResponse.builder()
                 .id(instrument.getId())
+                .instrumentCode(instrument.getInstrumentCode())
                 .name(instrument.getName())
                 .description(instrument.getDescription())
                 .iconUrl(instrument.getIconUrl())

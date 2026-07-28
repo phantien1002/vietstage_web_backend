@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class InstrumentResponse {
     private Long id;
+    private String instrumentCode;
     private String name;
     private String description;
     private String iconUrl;

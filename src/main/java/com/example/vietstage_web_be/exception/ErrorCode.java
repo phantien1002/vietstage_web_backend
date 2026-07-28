@@ -15,6 +15,7 @@ public enum ErrorCode {
     INVALID_ROLE(1008, "Vai trò không hợp lệ", HttpStatus.BAD_REQUEST),
     ACCOUNT_LOCKED(1009, "Tài khoản đã bị khóa", HttpStatus.FORBIDDEN),
     INVALID_VERIFICATION_CODE(1010, "Mã xác thực không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+    UNAUTHENTICATED(1011, "Chưa xác thực", HttpStatus.UNAUTHORIZED),
     LESSON_NOT_FOUND(2001, "Bài học không tồn tại", HttpStatus.NOT_FOUND),
     INSTRUMENT_NOT_FOUND(2002, "Nhạc cụ không tồn tại", HttpStatus.NOT_FOUND),
     TECHNIQUE_NOT_FOUND(2003, "Kỹ thuật không tồn tại", HttpStatus.NOT_FOUND),
@@ -24,9 +25,11 @@ public enum ErrorCode {
     LESSON_ALREADY_EXIST(2007, "Tiêu đề bài học đã tồn tại trong nhạc cụ này", HttpStatus.CONFLICT),
     INVALID_LESSON_STATUS(2008, "Trạng thái bài học không hợp lệ", HttpStatus.BAD_REQUEST),
     LESSON_STATUS_FORBIDDEN(2009, "Chỉ ADMIN mới có quyền duyệt/từ chối bài học", HttpStatus.FORBIDDEN),
-    INSTRUCTOR_FORBIDDEN(2010, "Chỉ INSTRUCTOR chỉ có thể xem tiến độ của bài học do họ tạo", HttpStatus.FORBIDDEN),
-    BEAT_MAP_ASSET_NOT_FOUND(2011, "Tài nguyên BEATMAP không tồn tại", HttpStatus.NOT_FOUND),
-    EXERCISE_NOT_FOUND(2012, "Bài tập không tồn tại",  HttpStatus.NOT_FOUND);
+    SKILL_LEVEL_NOT_FOUND(2010, "Trình độ không tồn tại", HttpStatus.NOT_FOUND),
+    SKILL_LEVEL_CODE_ALREADY_EXIST(2011, "Mã trình độ đã tồn tại", HttpStatus.CONFLICT),
+    SKILL_LEVEL_ORDER_ALREADY_EXIST(2012, "Thứ tự trình độ đã tồn tại", HttpStatus.CONFLICT),
+    UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
+    EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int code;
     private final String message;

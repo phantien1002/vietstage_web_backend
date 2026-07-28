@@ -8,7 +8,9 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.tags.Tag;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Configuration
@@ -23,16 +25,15 @@ public class OpenAPIConfig {
                         .title("VietStage API")
                         .version("1.0")
                         .description("VietStage API Documentation"))
-                // Định nghĩa thứ tự hiển thị của các tags trên Swagger UI
                 .tags(List.of(
+                        new Tag().name("Admin").description("Các API quản trị hệ thống"),
                         new Tag().name("Authentication").description("Các API liên quan đến Xác thực tài khoản"),
-                        new Tag().name("Users").description("Các API liên quan đến Quản lý người dùng"),
-                        new Tag().name("Lessons").description("Các API liên quan đến Quản lý bài học"),
-                        new Tag().name("Instruments").description("Các API liên quan đến Quản lý nhạc cụ"),
-                        new Tag().name("Techniques").description("Các API liên quan đến Quản lý kỹ thuật"),
-                        new Tag().name("Admin").description("Các API quản trị hệ thống")
+                        new Tag().name("Users").description("Các API liên quan đến tài khoản cá nhân"),
+                        new Tag().name("Lessons").description("Các API quản lý Bài học"),
+                        new Tag().name("Instruments").description("Các API quản lý Nhạc cụ"),
+                        new Tag().name("Techniques").description("Các API quản lý Kỹ thuật nhạc cụ"),
+                        new Tag().name("Skill Levels").description("Các API quản lý Trình độ bài học")
                 ))
-                // Thêm nút Authorize 🔒 trên Swagger UI
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME,
@@ -43,5 +44,34 @@ public class OpenAPIConfig {
                                         .bearerFormat("JWT")
                                         .description("Nhập JWT token. Ví dụ: eyJhbGci...")));
     }
-}
 
+    @Bean
+    public OpenApiCustomizer sortTagsCustomizer() {
+        return openApi -> {
+            List<String> order = List.of(
+                    "Admin",
+                    "Authentication",
+                    "Users",
+                    "Lessons",
+                    "Instruments",
+                    "Techniques",
+                    "Skill Levels"
+            );
+            
+            if (openApi.getTags() != null) {
+                openApi.getTags().sort(Comparator.comparingInt(tag -> {
+                    int index = order.indexOf(tag.getName());
+                    return index == -1 ? Integer.MAX_VALUE : index;
+                }));
+            }
+            
+            if (openApi.getPaths() != null) {
+                io.swagger.v3.oas.models.Paths sortedPaths = new io.swagger.v3.oas.models.Paths();
+                openApi.getPaths().entrySet().stream()
+                        .sorted(java.util.Map.Entry.comparingByKey())
+                        .forEach(entry -> sortedPaths.addPathItem(entry.getKey(), entry.getValue()));
+                openApi.setPaths(sortedPaths);
+            }
+        };
+    }
+}

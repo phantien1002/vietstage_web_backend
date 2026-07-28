@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ApiResponse<T> {
+    @Builder.Default
+    private boolean success = true;
     private String message;
     private T data;
 }

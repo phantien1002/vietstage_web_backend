@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/lessons")
 @RequiredArgsConstructor
-@Tag(name = "Lessons")
+@Tag(name = "Lessons", description = "Các API quản lý Bài học")
 public class LessonController {
 
     private final ILessonService lessonService;
@@ -51,6 +51,21 @@ public class LessonController {
     }
 
     /**
+     * GET /api/lessons/{id}
+     * PUBLIC — chi tiết đầy đủ bài học (contents + assets + exercises + techniques + mini_games).
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "Chi tiết bài học (PUBLIC)")
+    public ResponseEntity<ApiResponse<LessonResponse>> getLessonById(@PathVariable Long id) {
+        LessonResponse data = lessonService.getLessonById(id);
+
+        return ResponseEntity.ok(ApiResponse.<LessonResponse>builder()
+                .message("Get lesson detail successfully")
+                .data(data)
+                .build());
+    }
+
+    /**
      * POST /api/lessons
      * INSTRUCTOR only — tạo bài học mới. Status mặc định = DRAFT. Trả 201 Created.
      */
@@ -67,21 +82,6 @@ public class LessonController {
                         .message("Lesson created successfully")
                         .data(data)
                         .build());
-    }
-
-    /**
-     * GET /api/lessons/{id}
-     * PUBLIC — chi tiết đầy đủ bài học (contents + assets + exercises + techniques + mini_games).
-     */
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết bài học (PUBLIC)")
-    public ResponseEntity<ApiResponse<LessonResponse>> getLessonById(@PathVariable Long id) {
-        LessonResponse data = lessonService.getLessonById(id);
-
-        return ResponseEntity.ok(ApiResponse.<LessonResponse>builder()
-                .message("Get lesson detail successfully")
-                .data(data)
-                .build());
     }
 
     /**
@@ -105,27 +105,14 @@ public class LessonController {
     }
 
     /**
-     * DELETE /api/lessons/{id}
-     * INSTRUCTOR, ADMIN — xóa bài học. Trả 204 No Content.
-     */
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Operation(summary = "Xóa bài học (INSTRUCTOR, ADMIN)")
-    public ResponseEntity<Void> deleteLesson(@PathVariable Long id) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        lessonService.deleteLesson(id, email);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
      * PUT /api/lessons/{id}/status
      * INSTRUCTOR: chỉ được đặt PENDING (nộp bài duyệt).
      * ADMIN: được đặt APPROVED hoặc REJECTED (kèm comment nếu REJECTED).
      * Ghi content_reviews + gửi notification cho người tạo bài học.
      */
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Operation(summary = "Đổi trạng thái bài học (INSTRUCTOR→PENDING, ADMIN→APPROVED/REJECTED)")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Đổi trạng thái bài học (Chỉ dành cho INSTRUCTOR chuyển sang PENDING)")
     public ResponseEntity<ApiResponse<LessonStatusResponse>> updateLessonStatus(
             @PathVariable Long id,
             @RequestBody @Valid LessonStatusRequest request) {
@@ -136,5 +123,18 @@ public class LessonController {
                 .message("Lesson status updated successfully")
                 .data(data)
                 .build());
+    }
+
+    /**
+     * DELETE /api/lessons/{id}
+     * INSTRUCTOR, ADMIN — xóa bài học. Trả 204 No Content.
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @Operation(summary = "Xóa bài học (INSTRUCTOR, ADMIN)")
+    public ResponseEntity<Void> deleteLesson(@PathVariable Long id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        lessonService.deleteLesson(id, email);
+        return ResponseEntity.noContent().build();
     }
 }

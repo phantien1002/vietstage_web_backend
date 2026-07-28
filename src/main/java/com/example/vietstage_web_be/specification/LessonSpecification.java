@@ -1,6 +1,6 @@
 package com.example.vietstage_web_be.specification;
 
-import com.example.vietstage_web_be.entity.Lessons;
+import com.example.vietstage_web_be.entity.Lesson;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class LessonSpecification {
 
-    public static Specification<Lessons> filter(String search, Long instrumentId, Long skillLevelId, String status) {
+    public static Specification<Lesson> filter(String search, Long instrumentId, Long skillLevelId, String status) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 

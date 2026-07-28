@@ -30,8 +30,6 @@ public class LessonRequest {
 
     private Set<Long> techniqueIds;
 
-    private List<String> contents;
-
     // v2.0: lesson_assets thay thế audio_references
     private List<LessonAssetRequest> assets;
 
