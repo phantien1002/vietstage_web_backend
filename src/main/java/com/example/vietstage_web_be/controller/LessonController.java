@@ -19,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/Lesson")
+@RequestMapping("/api/lessons")
 @RequiredArgsConstructor
 @Tag(name = "Lesson", description = "Các API quản lý Bài học")
 public class LessonController {

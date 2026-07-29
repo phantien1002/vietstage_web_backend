@@ -51,7 +51,7 @@ public class ProgressController {
                 .build());
     }
 
-    @GetMapping("/Lesson/{id}/learners/{learner_id}/progress")
+    @GetMapping("/lessons/{id}/learners/{learner_id}/progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<InstructorLearnerProgressResponse>> getLearnerProgressByInstructor(
             @PathVariable("id") Long lessonId,
