@@ -11,11 +11,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "Progress", description = "Các API quản lý Tiến độ học tập")
 public class ProgressController {
     private final ILearnerProgressService progressService;
 

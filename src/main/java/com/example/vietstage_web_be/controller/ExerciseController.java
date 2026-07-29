@@ -11,11 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@Tag(name = "Exercise", description = "Các API quản lý Bài tập")
 public class ExerciseController {
     private final IExerciseService exerciseService;
 
