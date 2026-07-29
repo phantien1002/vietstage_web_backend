@@ -19,15 +19,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/lessons")
+@RequestMapping("/api/Lesson")
 @RequiredArgsConstructor
-@Tag(name = "Lessons", description = "Các API quản lý Bài học")
+@Tag(name = "Lesson", description = "Các API quản lý Bài học")
 public class LessonController {
 
     private final ILessonService lessonService;
 
     /**
-     * GET /api/lessons
+     * GET /api/Lesson
      * PUBLIC — danh sách bài học, có thể lọc theo instrument_id, skill_level_id, status.
      * Phân trang theo page & size.
      */
@@ -45,14 +45,14 @@ public class LessonController {
                 search, instrumentId, skillLevelId, status, page, size);
 
         return ResponseEntity.ok(ApiResponse.<PageResponse<LessonResponse>>builder()
-                .message("Get lessons successfully")
+                .message("Get Lesson successfully")
                 .data(data)
                 .build());
     }
 
     /**
-     * GET /api/lessons/{id}
-     * PUBLIC — chi tiết đầy đủ bài học (contents + assets + exercises + techniques + mini_games).
+     * GET /api/Lesson/{id}
+     * PUBLIC — chi tiết đầy đủ bài học (contents + assets + Exercise + techniques + mini_games).
      */
     @GetMapping("/{id}")
     @Operation(summary = "Chi tiết bài học (PUBLIC)")
@@ -66,7 +66,7 @@ public class LessonController {
     }
 
     /**
-     * POST /api/lessons
+     * POST /api/Lesson
      * INSTRUCTOR only — tạo bài học mới. Status mặc định = DRAFT. Trả 201 Created.
      */
     @PostMapping
@@ -85,7 +85,7 @@ public class LessonController {
     }
 
     /**
-     * PUT /api/lessons/{id}
+     * PUT /api/Lesson/{id}
      * INSTRUCTOR, ADMIN — cập nhật: title, description, order_index, skill_level_id.
      * instrument_id KHÔNG được thay đổi sau khi tạo.
      */
@@ -105,7 +105,7 @@ public class LessonController {
     }
 
     /**
-     * PUT /api/lessons/{id}/status
+     * PUT /api/Lesson/{id}/status
      * INSTRUCTOR: chỉ được đặt PENDING (nộp bài duyệt).
      * ADMIN: được đặt APPROVED hoặc REJECTED (kèm comment nếu REJECTED).
      * Ghi content_reviews + gửi notification cho người tạo bài học.
@@ -126,7 +126,7 @@ public class LessonController {
     }
 
     /**
-     * DELETE /api/lessons/{id}
+     * DELETE /api/Lesson/{id}
      * INSTRUCTOR, ADMIN — xóa bài học. Trả 204 No Content.
      */
     @DeleteMapping("/{id}")
@@ -138,3 +138,4 @@ public class LessonController {
         return ResponseEntity.noContent().build();
     }
 }
+

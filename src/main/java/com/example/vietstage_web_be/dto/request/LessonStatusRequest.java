@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Request body cho PUT /api/lessons/{id}/status
+ * Request body cho PUT /api/Lesson/{id}/status
  * status: PENDING | APPROVED | REJECTED
  * comment: bắt buộc khi status = REJECTED
  */
@@ -18,3 +18,4 @@ public class LessonStatusRequest {
 
     private String comment;
 }
+

@@ -13,6 +13,7 @@ public interface ILearnerProgressService {
     // API 55: /api/users/me/progress/summary
     LearnerProgressSummaryResponse getLearnerProgressSummary(Long learnerId);
 
-    // API 56: /api/lessons/{id}/learners/{learner_id}/progress
+    // API 56: /api/Lesson/{id}/learners/{learner_id}/progress
     InstructorLearnerProgressResponse getLearnerProgressByInstructor(Long lessonId, Long learnerId, Long instructorId);
 }
+

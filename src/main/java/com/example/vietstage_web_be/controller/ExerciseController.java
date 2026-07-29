@@ -19,16 +19,16 @@ import java.util.List;
 public class ExerciseController {
     private final IExerciseService exerciseService;
 
-    @GetMapping("/lessons/{id}/exercises")
+    @GetMapping("/Lesson/{id}/Exercise")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getExercisesByLesson(@PathVariable Long id) {
         List<ExerciseResponse> data = exerciseService.getExercisesByLesson(id);
         return ResponseEntity.ok(ApiResponse.<List<ExerciseResponse>>builder()
-                .message("Get exercises successfully")
+                .message("Get Exercise successfully")
                 .data(data)
                 .build());
     }
 
-    @PostMapping("/lessons/{id}/exercises")
+    @PostMapping("/Lesson/{id}/Exercise")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<ExerciseResponse>> createExercise(@PathVariable Long id, @Valid @RequestBody CreateExerciseRequest request){
         ExerciseResponse data = exerciseService.createExercise(id, request);
@@ -38,7 +38,7 @@ public class ExerciseController {
                 .build());
     }
 
-    @PutMapping("/exercises/{id}")
+    @PutMapping("/Exercise/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<ExerciseResponse>> updateExercise(@PathVariable Long id, @Valid @RequestBody UpdateExerciseRequest request){
         ExerciseResponse data = exerciseService.updateExercise(id, request);
@@ -48,7 +48,7 @@ public class ExerciseController {
                 .build());
     }
 
-    @DeleteMapping("/exercises/{id}")
+    @DeleteMapping("/Exercise/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ApiResponse<Void>> deleteExercise(@PathVariable Long id){
         exerciseService.deleteExercise(id);
@@ -57,3 +57,4 @@ public class ExerciseController {
                 .build());
     }
 }
+

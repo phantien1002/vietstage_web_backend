@@ -50,7 +50,7 @@ public class CodeMigrator implements CommandLineRunner {
             instrumentRepository.save(instrument);
         }
 
-        // Migrate Lessons
+        // Migrate Lesson
         List<Lesson> lessonsWithoutCode = lessonRepository.findAll().stream()
                 .filter(l -> l.getLessonCode() == null || l.getLessonCode().isEmpty())
                 .toList();
@@ -63,3 +63,4 @@ public class CodeMigrator implements CommandLineRunner {
         }
     }
 }
+

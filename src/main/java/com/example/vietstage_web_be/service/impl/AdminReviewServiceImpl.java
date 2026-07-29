@@ -31,8 +31,8 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
 
     @Override
     public List<ReviewItemResponse> getAllReviews() {
-        List<Lesson> lessons = lessonRepository.findAll();
-        return lessons.stream().map(lesson -> {
+        List<Lesson> Lesson = lessonRepository.findAll();
+        return Lesson.stream().map(lesson -> {
             String sheetUrl = "";
             String audioUrl = "";
             String duration = "00:00";
@@ -118,3 +118,4 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
         contentReviewRepository.save(review);
     }
 }
+

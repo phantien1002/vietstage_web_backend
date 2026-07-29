@@ -1,6 +1,6 @@
 package com.example.vietstage_web_be.repository;
 
-import com.example.vietstage_web_be.entity.LessonCompletions;
+import com.example.vietstage_web_be.entity.LessonCompletion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LessonCompletionRepository extends JpaRepository<LessonCompletions,Long> {
+public interface LessonCompletionRepository extends JpaRepository<LessonCompletion,Long> {
     @Query("SELECT l.id AS lessonId, l.title AS title, COALESCE(lc.stars, 0) AS stars, COALESCE(lc.completed, false) AS completed " +
             "FROM Lesson l " +
             "LEFT JOIN LessonCompletion lc ON l.id = lc.lesson.id AND lc.learner.id = :learnerId " +
@@ -33,6 +33,7 @@ public interface LessonCompletionRepository extends JpaRepository<LessonCompleti
 
     // Lấy tiến độ của 1 Learner trên 1 Lesson cụ thể
     @Query("SELECT lc FROM LessonCompletion lc WHERE lc.lesson.id = :lessonId AND lc.learner.id = :learnerId")
-    Optional<LessonCompletions> findByLessonIdAndLearnerId(@Param("lessonId") Long lessonId, @Param("learnerId") Long learnerId);
+    Optional<LessonCompletion> findByLessonIdAndLearnerId(@Param("lessonId") Long lessonId, @Param("learnerId") Long learnerId);
 
 }
+

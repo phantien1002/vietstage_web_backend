@@ -3,7 +3,7 @@ package com.example.vietstage_web_be.service;
 import com.example.vietstage_web_be.dto.request.CreateExerciseRequest;
 import com.example.vietstage_web_be.dto.request.UpdateExerciseRequest;
 import com.example.vietstage_web_be.dto.response.ExerciseResponse;
-import com.example.vietstage_web_be.entity.Exercises;
+import com.example.vietstage_web_be.entity.Exercise;
 
 import java.util.List;
 
@@ -16,3 +16,4 @@ public interface IExerciseService {
 
     void deleteExercise(Long exerciseId);
 }
+

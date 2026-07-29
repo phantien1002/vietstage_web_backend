@@ -3,14 +3,14 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.request.CreateExerciseRequest;
 import com.example.vietstage_web_be.dto.request.UpdateExerciseRequest;
 import com.example.vietstage_web_be.dto.response.ExerciseResponse;
-import com.example.vietstage_web_be.entity.Exercises;
-import com.example.vietstage_web_be.entity.LessonAssets;
-import com.example.vietstage_web_be.entity.Lessons;
+import com.example.vietstage_web_be.entity.Exercise;
+import com.example.vietstage_web_be.entity.MediaAsset;
+import com.example.vietstage_web_be.entity.Lesson;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.ExerciseRepository;
-import com.example.vietstage_web_be.repository.LessonAssetsRepository;
-import com.example.vietstage_web_be.repository.LessonsRepository;
+import com.example.vietstage_web_be.repository.MediaAssetRepository;
+import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.service.IExerciseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,12 +22,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExerciseServiceImpl implements IExerciseService {
     private final ExerciseRepository exerciseRepository;
-    private final LessonsRepository lessonsRepository;
-    private final LessonAssetsRepository  lessonAssetsRepository;
+    private final LessonRepository LessonRepository;
+    private final MediaAssetRepository  MediaAssetRepository;
 
     @Override
     public List<ExerciseResponse> getExercisesByLesson(Long lessonId) {
-        if (lessonsRepository.existsById(lessonId)) {
+        if (LessonRepository.existsById(lessonId)) {
             throw new AppException(ErrorCode.LESSON_NOT_FOUND);
         }
 
@@ -39,10 +39,10 @@ public class ExerciseServiceImpl implements IExerciseService {
 
     @Override
     public ExerciseResponse createExercise(Long lessonId, CreateExerciseRequest request) {
-        Lessons lesson = lessonsRepository.findById(lessonId)
+        Lesson lesson = LessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        Exercises exercise = new Exercises();
+        Exercise exercise = new Exercise();
 
         exercise.setLesson(lesson);
         exercise.setTitle(request.getTitle());
@@ -51,20 +51,20 @@ public class ExerciseServiceImpl implements IExerciseService {
         exercise.setOrderIndex(request.getOrderIndex());
 
         if (request.getPassThreshold() != null) {
-            LessonAssets asset =  lessonAssetsRepository.findById(request.getBeatMapAssetId())
+            MediaAsset asset =  MediaAssetRepository.findById(request.getBeatMapAssetId())
                     .orElseThrow(() -> new AppException(ErrorCode.BEAT_MAP_ASSET_NOT_FOUND));
 
             exercise.setBeatMapAsset(asset);
         }
 
-        Exercises savedExercise = exerciseRepository.save(exercise);
+        Exercise savedExercise = exerciseRepository.save(exercise);
 
         return mapToResponse(savedExercise);
     }
 
     @Override
     public ExerciseResponse updateExercise(Long exerciseId, UpdateExerciseRequest request) {
-        Exercises exercise = exerciseRepository.findById(exerciseId)
+        Exercise exercise = exerciseRepository.findById(exerciseId)
                 .orElseThrow(() -> new AppException(ErrorCode.EXERCISE_NOT_FOUND));
 
         exercise.setTitle(request.getTitle());
@@ -73,26 +73,26 @@ public class ExerciseServiceImpl implements IExerciseService {
         exercise.setOrderIndex(request.getOrderIndex());
 
         if (request.getBeatMapAssetId() != null) {
-            LessonAssets asset =  lessonAssetsRepository.findById(request.getBeatMapAssetId())
+            MediaAsset asset =  MediaAssetRepository.findById(request.getBeatMapAssetId())
                     .orElseThrow(() -> new AppException(ErrorCode.BEAT_MAP_ASSET_NOT_FOUND));
 
             exercise.setBeatMapAsset(asset);
         }
 
-        Exercises savedExercise = exerciseRepository.save(exercise);
+        Exercise savedExercise = exerciseRepository.save(exercise);
 
         return mapToResponse(savedExercise);
     }
 
     @Override
     public void deleteExercise(Long exerciseId) {
-        Exercises exercise = exerciseRepository.findById(exerciseId)
+        Exercise exercise = exerciseRepository.findById(exerciseId)
                 .orElseThrow(() -> new AppException(ErrorCode.EXERCISE_NOT_FOUND));
 
         exerciseRepository.delete(exercise);
     }
 
-    private ExerciseResponse mapToResponse(Exercises exercise){
+    private ExerciseResponse mapToResponse(Exercise exercise){
         return ExerciseResponse.builder()
                 .id(exercise.getId())
                 .lessonId(
@@ -117,3 +117,4 @@ public class ExerciseServiceImpl implements IExerciseService {
 
     }
 }
+

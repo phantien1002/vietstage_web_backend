@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "exercises")
+@Table(name = "Exercise")
 public class Exercise {
 
     @Id
@@ -35,6 +35,14 @@ public class Exercise {
 
     @Column(name = "order_index")
     private Integer orderIndex;
+
+    @ManyToOne
+    @JoinColumn(name = "beat_map_asset_id")
+    private MediaAsset beatMapAsset;
+
+    @ManyToOne
+    @JoinColumn(name = "reference_asset_id")
+    private MediaAsset referenceAsset;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
     private List<PracticeAttempt> practiceAttempts;

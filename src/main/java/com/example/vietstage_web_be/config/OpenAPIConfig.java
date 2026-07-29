@@ -29,7 +29,7 @@ public class OpenAPIConfig {
                         new Tag().name("Admin").description("Các API quản trị hệ thống"),
                         new Tag().name("Authentication").description("Các API liên quan đến Xác thực tài khoản"),
                         new Tag().name("Users").description("Các API liên quan đến tài khoản cá nhân"),
-                        new Tag().name("Lessons").description("Các API quản lý Bài học"),
+                        new Tag().name("Lesson").description("Các API quản lý Bài học"),
                         new Tag().name("Instruments").description("Các API quản lý Nhạc cụ"),
                         new Tag().name("Techniques").description("Các API quản lý Kỹ thuật nhạc cụ"),
                         new Tag().name("Skill Levels").description("Các API quản lý Trình độ bài học")
@@ -52,7 +52,7 @@ public class OpenAPIConfig {
                     "Admin",
                     "Authentication",
                     "Users",
-                    "Lessons",
+                    "Lesson",
                     "Instruments",
                     "Techniques",
                     "Skill Levels"
@@ -75,3 +75,4 @@ public class OpenAPIConfig {
         };
     }
 }
+
