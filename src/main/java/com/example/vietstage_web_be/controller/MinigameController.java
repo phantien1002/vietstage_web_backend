@@ -7,6 +7,7 @@ import com.example.vietstage_web_be.dto.response.MinigameAttemptResponse;
 import com.example.vietstage_web_be.dto.response.MinigameChallengeResponse;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.IMinigameService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "Mini Games", description = "Các API quản lý mini games")
 public class MinigameController {
 
     private final IMinigameService minigameService;

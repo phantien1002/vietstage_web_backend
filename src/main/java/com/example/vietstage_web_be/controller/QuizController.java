@@ -7,6 +7,7 @@ import com.example.vietstage_web_be.dto.response.QuizAttemptResponse;
 import com.example.vietstage_web_be.dto.response.QuizResponse;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.IQuizService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "Quizzes", description = "Các API quản lý trắc nghiệm")
 public class QuizController {
 
     private final IQuizService quizService;
