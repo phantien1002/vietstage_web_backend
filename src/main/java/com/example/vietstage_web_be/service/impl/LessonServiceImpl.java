@@ -39,7 +39,7 @@ public class LessonServiceImpl implements ILessonService {
     private final ContentReviewRepository contentReviewRepository;
 
     // =========================================================
-    // POST /api/lessons
+    // POST /api/Lesson
     // =========================================================
     @Override
     @Transactional
@@ -123,7 +123,7 @@ public class LessonServiceImpl implements ILessonService {
     }
 
     // =========================================================
-    // GET /api/lessons
+    // GET /api/Lesson
     // =========================================================
     @Override
     @Transactional(readOnly = true)
@@ -153,7 +153,7 @@ public class LessonServiceImpl implements ILessonService {
     }
 
     // =========================================================
-    // GET /api/lessons/{id}
+    // GET /api/Lesson/{id}
     // =========================================================
     @Override
     @Transactional(readOnly = true)
@@ -164,7 +164,7 @@ public class LessonServiceImpl implements ILessonService {
     }
 
     // =========================================================
-    // PUT /api/lessons/{id}
+    // PUT /api/Lesson/{id}
     // Spec: chỉ cập nhật title, description, order_index, skill_level_id
     // instrument_id KHÔNG thay đổi sau khi tạo
     // =========================================================
@@ -204,7 +204,7 @@ public class LessonServiceImpl implements ILessonService {
     }
 
     // =========================================================
-    // DELETE /api/lessons/{id}
+    // DELETE /api/Lesson/{id}
     // =========================================================
     @Override
     @Transactional
@@ -218,7 +218,7 @@ public class LessonServiceImpl implements ILessonService {
     }
 
     // =========================================================
-    // PUT /api/lessons/{id}/status
+    // PUT /api/Lesson/{id}/status
     // - INSTRUCTOR: chỉ được đặt PENDING (nộp bài duyệt)
     // - ADMIN: được đặt APPROVED hoặc REJECTED (kèm comment)
     // Sau khi thay đổi: ghi content_reviews + gửi notification cho người tạo
@@ -315,7 +315,7 @@ public class LessonServiceImpl implements ILessonService {
                                 .guideUrl(t.getGuideUrl())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
-                .lessonAssets(lesson.getMediaAssets() != null ? lesson.getMediaAssets().stream()
+                .mediaAssets(lesson.getMediaAssets() != null ? lesson.getMediaAssets().stream()
                         .map(a -> LessonResponse.AssetInfo.builder()
                                 .id(a.getId())
                                 .assetType(a.getAssetType())
@@ -336,3 +336,4 @@ public class LessonServiceImpl implements ILessonService {
                 .build();
     }
 }
+

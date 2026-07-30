@@ -13,7 +13,7 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "lessons")
+@Table(name = "Lesson")
 public class Lesson {
 
     @Id
@@ -74,3 +74,4 @@ public class Lesson {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MediaAsset> mediaAssets;
 }
+

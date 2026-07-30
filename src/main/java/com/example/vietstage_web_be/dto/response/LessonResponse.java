@@ -26,7 +26,7 @@ public class LessonResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<TechniqueInfo> techniques;
-    private List<AssetInfo> lessonAssets;
+    private List<AssetInfo> mediaAssets;
     private List<ExerciseInfo> exercises;
 
     @Data
@@ -95,3 +95,4 @@ public class LessonResponse {
         private Integer orderIndex;
     }
 }
+

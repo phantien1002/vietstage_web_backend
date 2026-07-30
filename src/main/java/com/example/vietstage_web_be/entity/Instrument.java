@@ -38,5 +38,6 @@ public class Instrument {
     private List<Technique> techniques;
 
     @OneToMany(mappedBy = "instrument")
-    private List<Lesson> lessons;
+    private List<Lesson> Lesson;
 }
+

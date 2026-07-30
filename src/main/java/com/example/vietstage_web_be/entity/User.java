@@ -59,7 +59,7 @@ public class User {
     private List<Lesson> createdLessons;
 
     @OneToMany(mappedBy = "learner")
-    private List<PracticeAttempt> practiceAttempts;
+    private List<PracticeAttempt> PracticeAttempt;
 
     @OneToMany(mappedBy = "instructor")
     private List<InstructorFeedback> givenFeedbacks;
@@ -84,5 +84,6 @@ public class User {
     private List<MinigameAttempt> minigameAttempts;
     
     @OneToMany(mappedBy = "learner")
-    private List<QuizAttempt> quizAttempts;
+    private List<QuizAttempt> QuizAttempt;
 }
+

@@ -29,7 +29,11 @@ public enum ErrorCode {
     SKILL_LEVEL_CODE_ALREADY_EXIST(2011, "Mã trình độ đã tồn tại", HttpStatus.CONFLICT),
     SKILL_LEVEL_ORDER_ALREADY_EXIST(2012, "Thứ tự trình độ đã tồn tại", HttpStatus.CONFLICT),
     UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
-    EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR);
+    EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR),
+    BEAT_MAP_ASSET_NOT_FOUND(2013, "Không tìm thấy asset beat map", HttpStatus.NOT_FOUND),
+    EXERCISE_NOT_FOUND(2014, "Không tìm thấy bài tập", HttpStatus.NOT_FOUND),
+    INSTRUCTOR_FORBIDDEN(2015, "Giảng viên không có quyền truy cập", HttpStatus.FORBIDDEN),
+    QUIZ_NOT_FOUND(2016, "Không tìm thấy câu hỏi trắc nghiệm", HttpStatus.NOT_FOUND);
 
     private final int code;
     private final String message;
