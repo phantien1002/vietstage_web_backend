@@ -21,9 +21,13 @@ public class PracticeAttempt {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learner_id")
     private User learner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id")
+    private PracticeSession practiceSession;
 
     @ManyToOne
     @JoinColumn(name = "exercise_id")
@@ -46,6 +50,15 @@ public class PracticeAttempt {
 
     @Column(name = "total_score")
     private BigDecimal totalScore;
+
+    @Column(name = "stars")
+    private Integer stars;
+
+    @Column(name = "points_earned")
+    private Integer pointsEarned;
+
+    @Column(name = "client_uuid", unique = true)
+    private String clientUuid;
 
     @Column(name = "sync_status")
     private String syncStatus; // SYNCED | PENDING_SYNC | CONFLICT

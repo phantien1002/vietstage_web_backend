@@ -73,6 +73,15 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<PointTransaction> pointTransactions;
 
+    @OneToMany(mappedBy = "learner")
+    private List<PracticeSession> practiceSessions;
+
+    @OneToMany(mappedBy = "learner")
+    private List<PracticeAttempt> practiceAttempts;
+
+    @OneToMany(mappedBy = "instructor")
+    private List<InstructorFeedback> instructorFeedbacks;
+
     @ManyToMany
     @JoinTable(
             name = "learner_daily_challenges",
