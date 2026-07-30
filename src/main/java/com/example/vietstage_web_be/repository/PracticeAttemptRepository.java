@@ -17,5 +17,13 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
             "JOIN pa.exercise e " +
             "WHERE e.lesson.id = :lessonId AND pa.learner.id = :learnerId")
     Double findBestScoreByLessonAndLearner(@Param("lessonId") Long lessonId, @Param("learnerId") Long learnerId);
+
+    org.springframework.data.domain.Page<PracticeAttempt> findByLearnerId(Long learnerId, org.springframework.data.domain.Pageable pageable);
+    
+    org.springframework.data.domain.Page<PracticeAttempt> findByLearnerIdAndExerciseId(Long learnerId, Long exerciseId, org.springframework.data.domain.Pageable pageable);
+    
+    org.springframework.data.domain.Page<PracticeAttempt> findByExerciseLessonIdAndLearnerId(Long lessonId, Long learnerId, org.springframework.data.domain.Pageable pageable);
+    
+    java.util.Optional<PracticeAttempt> findByClientUuid(String clientUuid);
 }
 

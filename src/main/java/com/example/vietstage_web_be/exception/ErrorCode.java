@@ -37,7 +37,10 @@ public enum ErrorCode {
     MINIGAME_NOT_FOUND(2017, "Không tìm thấy minigame", HttpStatus.NOT_FOUND),
     ACHIEVEMENT_NOT_FOUND(2018, "Không tìm thấy thành tựu", HttpStatus.NOT_FOUND),
     COSMETIC_NOT_FOUND(2019, "Không tìm thấy vật phẩm trang trí", HttpStatus.NOT_FOUND),
-    COSMETIC_NOT_OWNED(2020, "Bạn chưa sở hữu vật phẩm này", HttpStatus.FORBIDDEN);
+    COSMETIC_NOT_OWNED(2020, "Bạn chưa sở hữu vật phẩm này", HttpStatus.FORBIDDEN),
+    RESOURCE_NOT_FOUND(2021, "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
+    FORBIDDEN(2022, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    BAD_REQUEST(2023, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

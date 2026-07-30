@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface MediaAssetRepository extends JpaRepository<MediaAsset, Long> {
     List<MediaAsset> findByLessonId(Long lessonId);
+    List<MediaAsset> findByLessonIdAndAssetType(Long lessonId, String assetType);
     void deleteByLessonId(Long lessonId);
 }
