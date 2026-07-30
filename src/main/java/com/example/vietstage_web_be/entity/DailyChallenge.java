@@ -36,6 +36,6 @@ public class DailyChallenge {
     @Column(name = "challenge_date")
     private LocalDate challengeDate;
 
-    @ManyToMany(mappedBy = "dailyChallenges")
-    private Set<User> learners;
+    @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<LearnerDailyChallenge> learnerDailyChallenges;
 }

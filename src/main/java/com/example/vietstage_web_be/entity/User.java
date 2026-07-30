@@ -82,13 +82,8 @@ public class User {
     @OneToMany(mappedBy = "instructor")
     private List<InstructorFeedback> instructorFeedbacks;
 
-    @ManyToMany
-    @JoinTable(
-            name = "learner_daily_challenges",
-            joinColumns = @JoinColumn(name = "learner_user_id"),
-            inverseJoinColumns = @JoinColumn(name = "challenge_id")
-    )
-    private Set<DailyChallenge> dailyChallenges;
+    @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LearnerDailyChallenge> learnerDailyChallenges;
 
     @OneToMany(mappedBy = "learner")
     private List<MinigameAttempt> minigameAttempts;

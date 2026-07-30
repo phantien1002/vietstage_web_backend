@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LearnerProfileRepository extends JpaRepository<LearnerProfile, Long> {
+    java.util.Optional<LearnerProfile> findByUserId(Long userId);
 }
