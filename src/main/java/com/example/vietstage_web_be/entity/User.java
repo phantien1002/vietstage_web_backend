@@ -67,6 +67,9 @@ public class User {
     @OneToMany(mappedBy = "learner")
     private List<LearnerAchievement> learnerAchievements;
 
+    @OneToMany(mappedBy = "learner")
+    private List<LearnerCosmetic> learnerCosmetics;
+
     @ManyToMany
     @JoinTable(
             name = "learner_daily_challenges",

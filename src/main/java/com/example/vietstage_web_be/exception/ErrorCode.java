@@ -35,7 +35,9 @@ public enum ErrorCode {
     INSTRUCTOR_FORBIDDEN(2015, "Giảng viên không có quyền truy cập", HttpStatus.FORBIDDEN),
     QUIZ_NOT_FOUND(2016, "Không tìm thấy câu hỏi trắc nghiệm", HttpStatus.NOT_FOUND),
     MINIGAME_NOT_FOUND(2017, "Không tìm thấy minigame", HttpStatus.NOT_FOUND),
-    ACHIEVEMENT_NOT_FOUND(2018, "Không tìm thấy thành tựu", HttpStatus.NOT_FOUND);
+    ACHIEVEMENT_NOT_FOUND(2018, "Không tìm thấy thành tựu", HttpStatus.NOT_FOUND),
+    COSMETIC_NOT_FOUND(2019, "Không tìm thấy vật phẩm trang trí", HttpStatus.NOT_FOUND),
+    COSMETIC_NOT_OWNED(2020, "Bạn chưa sở hữu vật phẩm này", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;
