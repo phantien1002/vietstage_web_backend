@@ -33,7 +33,8 @@ public enum ErrorCode {
     BEAT_MAP_ASSET_NOT_FOUND(2013, "Không tìm thấy asset beat map", HttpStatus.NOT_FOUND),
     EXERCISE_NOT_FOUND(2014, "Không tìm thấy bài tập", HttpStatus.NOT_FOUND),
     INSTRUCTOR_FORBIDDEN(2015, "Giảng viên không có quyền truy cập", HttpStatus.FORBIDDEN),
-    QUIZ_NOT_FOUND(2016, "Không tìm thấy câu hỏi trắc nghiệm", HttpStatus.NOT_FOUND);
+    QUIZ_NOT_FOUND(2016, "Không tìm thấy câu hỏi trắc nghiệm", HttpStatus.NOT_FOUND),
+    MINIGAME_NOT_FOUND(2017, "Không tìm thấy minigame", HttpStatus.NOT_FOUND);
 
     private final int code;
     private final String message;
