@@ -25,6 +25,9 @@ public class Achievement {
     @Column(name = "description")
     private String description;
 
-    @ManyToMany(mappedBy = "achievements")
-    private Set<User> learners;
+    @Column(name = "icon_url")
+    private String iconUrl;
+
+    @Column(name = "condition_json")
+    private String conditionJson;
 }

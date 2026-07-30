@@ -64,13 +64,14 @@ public class User {
     @OneToMany(mappedBy = "instructor")
     private List<InstructorFeedback> givenFeedbacks;
 
-    @ManyToMany
-    @JoinTable(
-            name = "learner_achievements",
-            joinColumns = @JoinColumn(name = "learner_user_id"),
-            inverseJoinColumns = @JoinColumn(name = "achievement_id")
-    )
-    private Set<Achievement> achievements;
+    @OneToMany(mappedBy = "learner")
+    private List<LearnerAchievement> learnerAchievements;
+
+    @OneToMany(mappedBy = "learner")
+    private List<LearnerCosmetic> learnerCosmetics;
+
+    @OneToMany(mappedBy = "user")
+    private List<PointTransaction> pointTransactions;
 
     @ManyToMany
     @JoinTable(
