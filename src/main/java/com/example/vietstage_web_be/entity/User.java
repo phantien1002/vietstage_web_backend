@@ -70,6 +70,9 @@ public class User {
     @OneToMany(mappedBy = "learner")
     private List<LearnerCosmetic> learnerCosmetics;
 
+    @OneToMany(mappedBy = "user")
+    private List<PointTransaction> pointTransactions;
+
     @ManyToMany
     @JoinTable(
             name = "learner_daily_challenges",
