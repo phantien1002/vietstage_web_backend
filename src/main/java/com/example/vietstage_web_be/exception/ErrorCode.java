@@ -28,6 +28,9 @@ public enum ErrorCode {
     SKILL_LEVEL_NOT_FOUND(2010, "Trình độ không tồn tại", HttpStatus.NOT_FOUND),
     SKILL_LEVEL_CODE_ALREADY_EXIST(2011, "Mã trình độ đã tồn tại", HttpStatus.CONFLICT),
     SKILL_LEVEL_ORDER_ALREADY_EXIST(2012, "Thứ tự trình độ đã tồn tại", HttpStatus.CONFLICT),
+    INSTRUCTOR_FORBIDDEN(2013, "Chỉ INSTRUCTOR chỉ có thể xem tiến độ của bài học do họ tạo", HttpStatus.FORBIDDEN),
+    BEAT_MAP_ASSET_NOT_FOUND(2014, "Tài nguyên BEATMAP không tồn tại", HttpStatus.NOT_FOUND),
+    EXERCISE_NOT_FOUND(2015, "Bài tập không tồn tại",  HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
     EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR);
 

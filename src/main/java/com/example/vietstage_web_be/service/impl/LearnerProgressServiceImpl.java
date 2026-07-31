@@ -3,12 +3,11 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.response.InstructorLearnerProgressResponse;
 import com.example.vietstage_web_be.dto.response.LearnerProgressItemResponse;
 import com.example.vietstage_web_be.dto.response.LearnerProgressSummaryResponse;
-import com.example.vietstage_web_be.entity.LessonCompletions;
-import com.example.vietstage_web_be.entity.Lessons;
+import com.example.vietstage_web_be.entity.Lesson;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.LessonCompletionRepository;
-import com.example.vietstage_web_be.repository.LessonsRepository;
+import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.PracticeAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
 import com.example.vietstage_web_be.service.ILearnerProgressService;
@@ -27,7 +26,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
     private final LessonCompletionRepository lessonCompletionRepository;
     private final PracticeAttemptRepository practiceAttemptRepository;
     private final QuizAttemptRepository quizAttemptRepository;
-    private final LessonsRepository lessonRepository;
+    private final LessonRepository lessonRepository;
 
     @Override
     public List<LearnerProgressItemResponse> getLearnerProgress(Long learnerId, Long instrumentId, Long skillLevelId) {
@@ -59,27 +58,18 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
 
     @Override
     public InstructorLearnerProgressResponse getLearnerProgressByInstructor(Long lessonId, Long learnerId, Long instructorId) {
-        Lessons lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "lesson not found with id: " + lessonId));
 
         if (lesson.getCreatedBy() != null && !lesson.getCreatedBy().equals(instructorId)) {
             throw new AppException(ErrorCode.INSTRUCTOR_FORBIDDEN);
         }
 
-        Optional<LessonCompletions> completionsOptional = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId);
 
         Integer practiceAttempts = practiceAttemptRepository.countAttemptsByLessonAndLearner(lessonId, learnerId);
         Double bestScore = practiceAttemptRepository.findBestScoreByLessonAndLearner(lessonId, learnerId);
         Integer quizAttempt = quizAttemptRepository.countQuizAttemptsByLessonAndLearner(lessonId, learnerId);
 
-        return InstructorLearnerProgressResponse.builder()
-                .lessonId(lessonId)
-                .learnerId(learnerId)
-                .stars(completionsOptional.map(LessonCompletions::getStars).orElse(0))
-                .completed(completionsOptional.map(LessonCompletions::getCompleted).orElse(false))
-                .totalPracticeAttempts(practiceAttempts != null ? practiceAttempts : 0)
-                .bestPracticeScore(bestScore !=  null ? bestScore : 0.0)
-                .totalQuizAttempts(quizAttempt != null ? quizAttempt : 0)
-                .build();
+        return null;
     }
 }
