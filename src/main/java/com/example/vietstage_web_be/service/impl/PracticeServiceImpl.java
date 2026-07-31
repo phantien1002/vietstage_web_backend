@@ -12,6 +12,7 @@ import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.*;
 import com.example.vietstage_web_be.service.ILeaderboardService;
+import com.example.vietstage_web_be.service.ILearnerProgressService;
 import com.example.vietstage_web_be.service.IPracticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,9 +34,10 @@ public class PracticeServiceImpl implements IPracticeService {
 
     private final PracticeSessionRepository sessionRepository;
     private final PracticeAttemptRepository attemptRepository;
-    private final LearnerProfileRepository learnerProfileRepository;
     private final ExerciseRepository exerciseRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
     private final ILeaderboardService leaderboardService;
+    private final ILearnerProgressService progressService;
     private final LessonRepository lessonRepository;
 
     @Override
@@ -71,7 +73,7 @@ public class PracticeServiceImpl implements IPracticeService {
         
         long currentSeconds = profile.getTotalPracticeSeconds() != null ? profile.getTotalPracticeSeconds() : 0L;
         profile.setTotalPracticeSeconds(currentSeconds + duration.getSeconds());
-        learnerProfileRepository.save(profile);
+        progressService.updateStreakAndSave(profile);
 
         return mapSessionToResponse(session);
     }

@@ -3,7 +3,10 @@ package com.example.vietstage_web_be;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 @SpringBootApplication
+@EnableScheduling
 public class VietstageWebBeApplication {
 
     public static void main(String[] args) {

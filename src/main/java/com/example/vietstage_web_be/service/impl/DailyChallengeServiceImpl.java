@@ -9,6 +9,7 @@ import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.*;
 import com.example.vietstage_web_be.service.IDailyChallengeService;
+import com.example.vietstage_web_be.service.ILearnerProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class DailyChallengeServiceImpl implements IDailyChallengeService {
     private final InstrumentRepository instrumentRepository;
     private final LearnerProfileRepository learnerProfileRepository;
     private final PointTransactionRepository pointTransactionRepository;
+    private final ILearnerProgressService progressService;
 
     @Override
     public List<DailyChallengeLearnerResponse> getChallenges(LocalDate date, User learner) {
@@ -122,12 +124,8 @@ public class DailyChallengeServiceImpl implements IDailyChallengeService {
         Integer currentPoints = profile.getTotalPoints() != null ? profile.getTotalPoints() : 0;
         profile.setTotalPoints(currentPoints + challenge.getRewardPoints());
         
-        // Update streak logic (simplified for now, ideally check last activity date)
-        profile.setCurrentStreak(profile.getCurrentStreak() + 1);
-        if (profile.getCurrentStreak() > profile.getLongestStreak()) {
-            profile.setLongestStreak(profile.getCurrentStreak());
-        }
-        learnerProfileRepository.save(profile);
+        // Update streak logic using shared service
+        progressService.updateStreakAndSave(profile);
 
         // Record transaction
         PointTransaction transaction = PointTransaction.builder()
