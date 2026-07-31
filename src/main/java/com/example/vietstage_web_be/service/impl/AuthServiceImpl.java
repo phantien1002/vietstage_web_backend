@@ -50,29 +50,16 @@ public class AuthServiceImpl implements IAuthService {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email exist");
         }
 
-        Role learnerRole = RoleRepository.findByName("LEARNER")
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Role LEARNER not found"));
-
-        String prefix = "HV"; // LEARNER
-        Long nextId = UserRepository.findTopByOrderByIdDesc().map(User::getId).orElse(0L) + 1;
-        String generatedUserCode = String.format("%s-%04d", prefix, nextId);
-
-        User user = User.builder()
-                .userCode(generatedUserCode)
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
-                .role(learnerRole)
-                .active(false) // Not active until OTP is verified
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        UserRepository.save(user);
-
         // Generate and send OTP
         String otpCode = String.valueOf(new Random().nextInt(900000) + 100000);
-        redisTemplate.opsForValue().set(REGISTRATION_OTP_PREFIX + request.getEmail(), otpCode, Duration.ofMinutes(5));
+        
+        java.util.Map<String, String> pendingUser = new java.util.HashMap<>();
+        pendingUser.put("email", request.getEmail());
+        pendingUser.put("password", passwordEncoder.encode(request.getPassword()));
+        pendingUser.put("fullName", request.getFullName());
+        pendingUser.put("otp", otpCode);
+
+        redisTemplate.opsForValue().set(REGISTRATION_OTP_PREFIX + request.getEmail(), pendingUser, Duration.ofMinutes(5));
         
         try {
             emailService.sendOtpEmail(request.getEmail(), otpCode, "VietStage - Xác nhận tài khoản", "Mã xác nhận đăng ký tài khoản của bạn là:");
@@ -83,23 +70,36 @@ public class AuthServiceImpl implements IAuthService {
 
         return AuthResponse.builder()
                 .message("Register initiated. Please check your email for OTP verification.")
-                .userCode(user.getUserCode())
                 .build();
     }
 
     @Override
     @Transactional
     public AuthResponse verifyRegistration(VerifyRegistrationRequest request) {
-        String savedCode = (String) redisTemplate.opsForValue().get(REGISTRATION_OTP_PREFIX + request.getEmail());
+        java.util.Map<String, Object> pendingUser = (java.util.Map<String, Object>) redisTemplate.opsForValue().get(REGISTRATION_OTP_PREFIX + request.getEmail());
         
-        if (savedCode == null || !savedCode.equals(request.getOtpCode())) {
+        if (pendingUser == null || !request.getOtpCode().equals(pendingUser.get("otp"))) {
             throw new AppException(ErrorCode.INVALID_VERIFICATION_CODE, "Invalid or expired OTP code");
         }
 
-        User user = UserRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "User not found"));
+        Role learnerRole = RoleRepository.findByName("LEARNER")
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Role LEARNER not found"));
 
-        user.setActive(true);
+        String prefix = "HV"; // LEARNER
+        Long nextId = UserRepository.findTopByOrderByIdDesc().map(User::getId).orElse(0L) + 1;
+        String generatedUserCode = String.format("%s-%04d", prefix, nextId);
+
+        User user = User.builder()
+                .userCode(generatedUserCode)
+                .email((String) pendingUser.get("email"))
+                .passwordHash((String) pendingUser.get("password"))
+                .fullName((String) pendingUser.get("fullName"))
+                .role(learnerRole)
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
         UserRepository.save(user);
 
         redisTemplate.delete(REGISTRATION_OTP_PREFIX + request.getEmail());

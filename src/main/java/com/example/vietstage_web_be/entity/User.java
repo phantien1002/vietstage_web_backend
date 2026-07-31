@@ -2,6 +2,7 @@ package com.example.vietstage_web_be.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -82,13 +83,18 @@ public class User {
     @OneToMany(mappedBy = "instructor")
     private List<InstructorFeedback> instructorFeedbacks;
 
-    @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @ToString.Exclude
     private List<LearnerDailyChallenge> learnerDailyChallenges;
+
+    @Column(name = "fcm_token", length = 500)
+    private String fcmToken;
 
     @OneToMany(mappedBy = "learner")
     private List<MinigameAttempt> minigameAttempts;
     
     @OneToMany(mappedBy = "learner")
     private List<QuizAttempt> QuizAttempt;
-}
 
+}

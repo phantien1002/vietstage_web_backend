@@ -10,6 +10,7 @@ import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.*;
 import com.example.vietstage_web_be.service.IDailyChallengeService;
 import com.example.vietstage_web_be.service.ILearnerProgressService;
+import com.example.vietstage_web_be.service.INotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class DailyChallengeServiceImpl implements IDailyChallengeService {
     private final LearnerProfileRepository learnerProfileRepository;
     private final PointTransactionRepository pointTransactionRepository;
     private final ILearnerProgressService progressService;
+    private final INotificationService notificationService;
 
     @Override
     public List<DailyChallengeLearnerResponse> getChallenges(LocalDate date, User learner) {
@@ -126,6 +128,13 @@ public class DailyChallengeServiceImpl implements IDailyChallengeService {
         
         // Update streak logic using shared service
         progressService.updateStreakAndSave(profile);
+
+        // Notify user
+        notificationService.createNotification(learner,
+                "Thử thách hằng ngày hoàn tất!",
+                "Chúc mừng! Bạn đã hoàn thành thử thách '" + challenge.getTitle() + "' và nhận được " + challenge.getRewardPoints() + " điểm.",
+                "DAILY_CHALLENGE"
+        );
 
         // Record transaction
         PointTransaction transaction = PointTransaction.builder()

@@ -25,6 +25,9 @@ public class AppConfig {
     @Column(name = "config_value", nullable = false)
     private String configValue;
 
+    @Column(name = "config_group")
+    private String configGroup;
+
     @Column(name = "description")
     private String description;
 
