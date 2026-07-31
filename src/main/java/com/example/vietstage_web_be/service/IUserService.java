@@ -17,6 +17,10 @@ public interface IUserService {
      */
     UserResponse getMyProfile(String email);
 
+    void changePassword(Long userId, String oldPassword, String newPassword);
+
+    void updateFcmToken(Long userId, String fcmToken);
+
     /**
      * Cập nhật thông tin profile của user hiện tại.
      */

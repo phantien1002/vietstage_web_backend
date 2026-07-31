@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.example.vietstage_web_be.entity.User;
 import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.Map;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -41,6 +44,20 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
                 .message("Profile updated successfully")
                 .data(data)
+                .build());
+    }
+
+    @PutMapping("/me/fcm-token")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> updateFcmToken(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, String> request) {
+        
+        String fcmToken = request.get("fcm_token");
+        userService.updateFcmToken(user.getId(), fcmToken);
+        
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("FCM Token updated successfully")
                 .build());
     }
 
