@@ -13,12 +13,12 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "Lesson")
+@Table(name = "lessons")
 public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "lesson_id", nullable = false)
     private Long id;
 
     @Column(name = "lesson_code", unique = true)
