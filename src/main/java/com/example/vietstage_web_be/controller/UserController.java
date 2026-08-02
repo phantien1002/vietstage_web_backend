@@ -1,5 +1,6 @@
 package com.example.vietstage_web_be.controller;
 
+import com.example.vietstage_web_be.dto.request.ChangePasswordRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
 import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
@@ -58,6 +59,18 @@ public class UserController {
         
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .message("FCM Token updated successfully")
+                .build());
+    }
+    @PutMapping("/me/password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal(expression = "user") User user,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        
+        userService.changePassword(user.getId(), request);
+        
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Đổi mật khẩu thành công")
                 .build());
     }
 

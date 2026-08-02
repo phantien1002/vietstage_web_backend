@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.service;
 
 import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
+import com.example.vietstage_web_be.dto.request.ChangePasswordRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
 import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
@@ -17,7 +18,7 @@ public interface IUserService {
      */
     UserResponse getMyProfile(String email);
 
-    void changePassword(Long userId, String oldPassword, String newPassword);
+    void changePassword(Long userId, ChangePasswordRequest request);
 
     void updateFcmToken(Long userId, String fcmToken);
 
