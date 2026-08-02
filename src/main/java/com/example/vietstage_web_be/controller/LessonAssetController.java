@@ -35,7 +35,7 @@ public class LessonAssetController {
     @PostMapping(consumes = "multipart/form-data")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<LessonAssetResponse>> uploadAsset(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("type") String type,
@@ -48,7 +48,7 @@ public class LessonAssetController {
     @PutMapping("/{assetId}")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<LessonAssetResponse>> updateAssetMetadata(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @PathVariable Long assetId,
             @Valid @RequestBody LessonAssetRequest request) {
@@ -59,7 +59,7 @@ public class LessonAssetController {
     @DeleteMapping("/{assetId}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteAsset(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @PathVariable Long lessonId,
             @PathVariable Long assetId) {
         assetService.deleteAsset(user, lessonId, assetId);

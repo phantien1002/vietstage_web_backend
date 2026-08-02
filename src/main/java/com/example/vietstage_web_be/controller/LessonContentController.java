@@ -32,7 +32,7 @@ public class LessonContentController {
     @PostMapping
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<LessonContentResponse>> addContent(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @Valid @RequestBody LessonContentRequest request) {
         LessonContentResponse response = contentService.addContent(instructor, lessonId, request);
@@ -42,7 +42,7 @@ public class LessonContentController {
     @PutMapping("/{contentId}")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<LessonContentResponse>> updateContent(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @PathVariable Long contentId,
             @Valid @RequestBody LessonContentRequest request) {
@@ -53,7 +53,7 @@ public class LessonContentController {
     @DeleteMapping("/{contentId}")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<Void> deleteContent(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @PathVariable Long contentId) {
         contentService.deleteContent(instructor, lessonId, contentId);

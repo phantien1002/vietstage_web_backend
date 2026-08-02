@@ -29,7 +29,7 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Lấy danh sách thông báo")
     public ResponseEntity<BaseResponse<NotificationListResponse>> getNotifications(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @RequestParam(required = false) Boolean isRead,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -44,7 +44,7 @@ public class NotificationController {
     @Operation(summary = "Đánh dấu 1 thông báo đã đọc")
     public ResponseEntity<BaseResponse<NotificationResponse>> markAsRead(
             @PathVariable Long id,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
         
         NotificationResponse response = notificationService.markAsRead(id, user);
         return ResponseEntity.ok(BaseResponse.success(response));
@@ -54,7 +54,7 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Đánh dấu tất cả đã đọc")
     public ResponseEntity<BaseResponse<Map<String, Integer>>> markAllAsRead(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
         
         int updatedCount = notificationService.markAllAsRead(user);
         return ResponseEntity.ok(BaseResponse.success(Map.of("updated_count", updatedCount)));

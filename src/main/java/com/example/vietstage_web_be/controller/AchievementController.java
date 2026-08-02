@@ -42,7 +42,7 @@ public class AchievementController {
     @GetMapping("/users/me/achievements")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<LearnerAchievementsResponse>> getMyAchievements(
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
         LearnerAchievementsResponse response = achievementService.getMyAchievements(learner);
         return ResponseEntity.ok(BaseResponse.success(response));
     }

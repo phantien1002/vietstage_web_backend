@@ -24,7 +24,7 @@ public class LessonTechniqueController {
     @PostMapping
     @PreAuthorize("hasAuthority(''INSTRUCTOR'')")
     public ResponseEntity<BaseResponse<String>> addTechnique(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @Valid @RequestBody LessonTechniqueRequest request) {
         techniqueService.addTechnique(instructor, lessonId, request);
@@ -35,7 +35,7 @@ public class LessonTechniqueController {
     @DeleteMapping("/{techniqueId}")
     @PreAuthorize("hasAuthority(''INSTRUCTOR'')")
     public ResponseEntity<Void> removeTechnique(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
             @PathVariable Long techniqueId) {
         techniqueService.removeTechnique(instructor, lessonId, techniqueId);

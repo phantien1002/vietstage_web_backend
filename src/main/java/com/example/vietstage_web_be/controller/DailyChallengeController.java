@@ -31,7 +31,7 @@ public class DailyChallengeController {
     @GetMapping
     @PreAuthorize("hasAuthority(''LEARNER'')")
     public ResponseEntity<BaseResponse<List<DailyChallengeLearnerResponse>>> getChallenges(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(BaseResponse.success(dailyChallengeService.getChallenges(date, learner)));
     }
@@ -47,7 +47,7 @@ public class DailyChallengeController {
     @PostMapping("/{id}/completions")
     @PreAuthorize("hasAuthority(''LEARNER'')")
     public ResponseEntity<BaseResponse<CompletionResponse>> completeChallenge(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @PathVariable Long id) {
         CompletionResponse response = dailyChallengeService.completeChallenge(id, learner);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
