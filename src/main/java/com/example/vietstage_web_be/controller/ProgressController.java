@@ -29,9 +29,9 @@ public class ProgressController {
     public ResponseEntity<ApiResponse<List<LearnerProgressItemResponse>>> getLearnerProgress(
             @RequestParam(value = "instrument_id", required = false) Long instrumentId,
             @RequestParam(value = "skill_level_id", required = false) Long skillLevelId,
-            Authentication authentication) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
 
-        Long currentLearnerId = Long.parseLong(authentication.getName());
+        Long currentLearnerId = currentUser.getId();
 
         List<LearnerProgressItemResponse> data = progressService.getLearnerProgress(
                 currentLearnerId, instrumentId, skillLevelId);
@@ -45,9 +45,9 @@ public class ProgressController {
     @GetMapping("/users/me/progress/summary")
     @PreAuthorize("hasRole('LEARNER')")
     public ResponseEntity<ApiResponse<LearnerProgressSummaryResponse>> getLearnerProgressSummary(
-            Authentication authentication) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
 
-        Long currentLearnerId = Long.parseLong(authentication.getName());
+        Long currentLearnerId = currentUser.getId();
         LearnerProgressSummaryResponse data = progressService.getLearnerProgressSummary(currentLearnerId);
 
         return ResponseEntity.ok(ApiResponse.<LearnerProgressSummaryResponse>builder()
@@ -61,9 +61,9 @@ public class ProgressController {
     public ResponseEntity<ApiResponse<InstructorLearnerProgressResponse>> getLearnerProgressByInstructor(
             @PathVariable("id") Long lessonId,
             @PathVariable("learner_id") Long learnerId,
-            Authentication authentication) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
 
-        Long currentInstructorId = Long.parseLong(authentication.getName());
+        Long currentInstructorId = currentUser.getId();
         InstructorLearnerProgressResponse data = progressService.getLearnerProgressByInstructor(
                 lessonId, learnerId, currentInstructorId);
 
