@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.service.impl;
 
 import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
+import com.example.vietstage_web_be.dto.request.ChangePasswordRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
 import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
@@ -139,8 +140,22 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void changePassword(Long userId, String oldPassword, String newPassword) {
-        
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH, "Mật khẩu mới và xác nhận mật khẩu không khớp");
+        }
+
+        User user = UserRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new AppException(ErrorCode.PASSWORD_INCORRECT, "Mật khẩu cũ không chính xác");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        UserRepository.save(user);
     }
 
     @Override
