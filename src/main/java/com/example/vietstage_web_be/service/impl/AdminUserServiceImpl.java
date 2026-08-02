@@ -3,6 +3,11 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.response.ActivityDto;
 import com.example.vietstage_web_be.dto.response.AdminUserResponse;
 import com.example.vietstage_web_be.dto.response.UserStatsDto;
+import com.example.vietstage_web_be.dto.response.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import com.example.vietstage_web_be.entity.AuditLog;
 import com.example.vietstage_web_be.entity.Instrument;
 import com.example.vietstage_web_be.entity.User;
@@ -29,10 +34,13 @@ public class AdminUserServiceImpl implements IAdminUserService {
     private final LessonRepository lessonRepository;
 
     @Override
-    public List<AdminUserResponse> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
         
-        return users.stream().map(user -> {
+        Page<User> userPage = userRepository.searchUsers(search, role, pageable);
+        
+        List<AdminUserResponse> content = userPage.getContent().stream().map(user -> {
             String roleName = user.getRole().getName();
             String displayRole;
             if ("ADMIN".equalsIgnoreCase(roleName)) displayRole = "Admin";
@@ -106,6 +114,15 @@ public class AdminUserServiceImpl implements IAdminUserService {
                     .activities(activities)
                     .build();
         }).collect(Collectors.toList());
+
+        return PageResponse.<AdminUserResponse>builder()
+                .content(content)
+                .page(userPage.getNumber())
+                .size(userPage.getSize())
+                .totalElements(userPage.getTotalElements())
+                .totalPages(userPage.getTotalPages())
+                .last(userPage.isLast())
+                .build();
     }
 
     private String getInitials(String fullName) {

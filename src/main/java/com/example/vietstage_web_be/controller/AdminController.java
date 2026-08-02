@@ -8,6 +8,7 @@ import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.DashboardStatsResponse;
 import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
+import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.AdminUserResponse;
 import com.example.vietstage_web_be.dto.response.ReviewItemResponse;
 import com.example.vietstage_web_be.service.IAdminUserService;
@@ -42,11 +43,18 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ApiResponse<List<AdminUserResponse>> getAllUsers() {
-        return ApiResponse.<List<AdminUserResponse>>builder()
+    public ApiResponse<PageResponse<AdminUserResponse>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(required = false, defaultValue = "") String role,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        return ApiResponse.<PageResponse<AdminUserResponse>>builder()
                 .success(true)
                 .message("Successfully fetched all users")
-                .data(adminUserService.getAllUsers())
+                .data(adminUserService.getAllUsers(page, size, search, role, sortBy, sortDir))
                 .build();
     }
 
