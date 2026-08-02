@@ -41,6 +41,11 @@ public class UserServiceImpl implements IUserService {
         User user = UserRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với email: " + email));
         user.setFullName(request.getFullName());
+        
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+        
         User savedUser = UserRepository.save(user);
         return toUserResponse(savedUser);
     }
@@ -123,8 +128,10 @@ public class UserServiceImpl implements IUserService {
     private UserResponse toUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
+                .userCode(user.getUserCode())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
                 .role(user.getRole().getName())
                 .active(user.getActive())
                 .createdAt(user.getCreatedAt())
