@@ -119,6 +119,7 @@ public class AuthServiceImpl implements IAuthService {
                 .refreshToken(refreshToken)
                 .sessionId(sessionId)
                 .userCode(user.getUserCode())
+                .avatarUrl(user.getAvatarUrl())
                 .role(roleName)
                 .build();
     }
@@ -150,6 +151,7 @@ public class AuthServiceImpl implements IAuthService {
                 .refreshToken(refreshToken)
                 .sessionId(sessionId)
                 .userCode(user.getUserCode())
+                .avatarUrl(user.getAvatarUrl())
                 .role(roleName)
                 .build();
     }
@@ -188,6 +190,7 @@ public class AuthServiceImpl implements IAuthService {
                 .refreshToken(newRefreshToken)
                 .sessionId(newSessionId)
                 .userCode(user.getUserCode())
+                .avatarUrl(user.getAvatarUrl())
                 .role(roleName)
                 .build();
     }

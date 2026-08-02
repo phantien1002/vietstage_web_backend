@@ -14,6 +14,7 @@ public class AuthResponse {
     private String refreshToken;
     private String sessionId;
     private String userCode;
+    private String avatarUrl;
 
     private String role;
     private String message;
