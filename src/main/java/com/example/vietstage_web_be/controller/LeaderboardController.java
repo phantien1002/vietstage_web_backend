@@ -37,7 +37,7 @@ public class LeaderboardController {
     @GetMapping("/leaderboards/me")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<MyLeaderboardResponse>> getMyLeaderboard(
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
         MyLeaderboardResponse response = leaderboardService.getMyLeaderboard(learner);
         return ResponseEntity.ok(BaseResponse.success(response));
     }

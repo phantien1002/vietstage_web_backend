@@ -27,7 +27,7 @@ public class FeedbackController {
     @PostMapping("/practice/attempts/{id}/feedback")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<FeedbackResponse>> submitFeedback(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long id,
             @Valid @RequestBody FeedbackRequest request) {
         FeedbackResponse response = feedbackService.submitFeedback(instructor, id, request);

@@ -39,7 +39,7 @@ public class AppConfigController {
     public ResponseEntity<BaseResponse<AppConfigResponse>> updateConfig(
             @PathVariable String key,
             @RequestBody Map<String, String> request,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
         
         String value = request.get("value");
         AppConfigResponse response = appConfigService.updateConfig(key, value, user);

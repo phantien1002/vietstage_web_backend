@@ -33,7 +33,7 @@ public class QuizController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BaseResponse<List<QuizResponse>>> getQuizzesByLesson(
             @PathVariable Long id,
-            @AuthenticationPrincipal User currentUser) {
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
         
         List<QuizResponse> response = quizService.getQuizzesByLesson(id, currentUser);
         return ResponseEntity.ok(BaseResponse.success(response));
@@ -71,7 +71,7 @@ public class QuizController {
     public ResponseEntity<BaseResponse<QuizAttemptResponse>> submitAttempt(
             @PathVariable Long id,
             @Valid @RequestBody QuizAttemptRequest request,
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
             
         QuizAttemptResponse response = quizService.submitAttempt(id, request, learner);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
@@ -83,7 +83,7 @@ public class QuizController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
             
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizAttemptResponse> response = quizService.getAttempts(id, pageable, learner);

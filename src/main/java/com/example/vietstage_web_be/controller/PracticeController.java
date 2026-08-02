@@ -33,7 +33,7 @@ public class PracticeController {
 
     @PostMapping("/practice/sessions")
     @PreAuthorize("hasAuthority('LEARNER')")
-    public ResponseEntity<BaseResponse<PracticeSessionResponse>> startSession(@AuthenticationPrincipal User learner) {
+    public ResponseEntity<BaseResponse<PracticeSessionResponse>> startSession(@AuthenticationPrincipal(expression = "user") User learner) {
         PracticeSessionResponse response = practiceService.startSession(learner);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
     }
@@ -41,7 +41,7 @@ public class PracticeController {
     @PutMapping("/practice/sessions/{id}")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<PracticeSessionResponse>> endSession(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @PathVariable Long id,
             @Valid @RequestBody EndSessionRequest request) {
         PracticeSessionResponse response = practiceService.endSession(learner, id, request);
@@ -51,7 +51,7 @@ public class PracticeController {
     @GetMapping("/practice/sessions")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<PageResponse<PracticeSessionResponse>>> getHistorySessions(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("startedAt").descending());
@@ -62,7 +62,7 @@ public class PracticeController {
     @PostMapping("/practice/attempts")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<PracticeAttemptResponse>> submitAttempt(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @Valid @RequestBody PracticeAttemptRequest request) {
         PracticeAttemptResponse response = practiceService.submitAttempt(learner, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
@@ -71,7 +71,7 @@ public class PracticeController {
     @GetMapping("/practice/attempts")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<PageResponse<PracticeAttempt>>> getMyAttempts(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @RequestParam(required = false) Long exercise_id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -90,7 +90,7 @@ public class PracticeController {
     @GetMapping("/lessons/{id}/attempts")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<PageResponse<PracticeAttempt>>> getLearnerAttemptsForLesson(
-            @AuthenticationPrincipal User instructor,
+            @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long id,
             @RequestParam Long learner_id,
             @RequestParam(defaultValue = "0") int page,
@@ -103,7 +103,7 @@ public class PracticeController {
     @PostMapping("/practice/attempts/bulk")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<BulkPracticeAttemptResponse>> submitBulkAttempts(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @Valid @RequestBody BulkPracticeAttemptRequest request) {
         BulkPracticeAttemptResponse response = practiceService.submitBulkAttempts(learner, request);
         return ResponseEntity.ok(BaseResponse.success(response));

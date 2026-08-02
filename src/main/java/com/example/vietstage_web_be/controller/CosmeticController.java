@@ -35,7 +35,7 @@ public class CosmeticController {
     @GetMapping("/users/me/cosmetics")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<MyCosmeticsResponse>> getMyCosmetics(
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
         MyCosmeticsResponse response = cosmeticsService.getMyCosmetics(learner);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
@@ -43,7 +43,7 @@ public class CosmeticController {
     @PutMapping("/users/me/cosmetics/{cosmeticId}")
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<EquipCosmeticResponse>> equipCosmetic(
-            @AuthenticationPrincipal User learner,
+            @AuthenticationPrincipal(expression = "user") User learner,
             @PathVariable Long cosmeticId,
             @Valid @RequestBody EquipCosmeticRequest request) {
         EquipCosmeticResponse response = cosmeticsService.equipCosmetic(learner, cosmeticId, request.getIsEquipped());

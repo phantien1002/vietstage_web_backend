@@ -50,7 +50,7 @@ public class UserController {
     @PutMapping("/me/fcm-token")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> updateFcmToken(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @RequestBody Map<String, String> request) {
         
         String fcmToken = request.get("fcm_token");

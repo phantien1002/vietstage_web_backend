@@ -67,7 +67,7 @@ public class MinigameController {
     public ResponseEntity<BaseResponse<MinigameAttemptResponse>> submitAttempt(
             @PathVariable Long id,
             @Valid @RequestBody MinigameAttemptRequest request,
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
         MinigameAttemptResponse response = minigameService.submitAttempt(id, request, learner);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
     }
@@ -78,7 +78,7 @@ public class MinigameController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal User learner) {
+            @AuthenticationPrincipal(expression = "user") User learner) {
         Pageable pageable = PageRequest.of(page, size);
         Page<MinigameAttemptResponse> response = minigameService.getAttempts(id, pageable, learner);
         return ResponseEntity.ok(BaseResponse.success(response));
