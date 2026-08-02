@@ -2,6 +2,7 @@ package com.example.vietstage_web_be.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,30 +60,41 @@ public class User {
     private List<Lesson> createdLessons;
 
     @OneToMany(mappedBy = "learner")
-    private List<PracticeAttempt> practiceAttempts;
+    private List<PracticeAttempt> PracticeAttempt;
 
     @OneToMany(mappedBy = "instructor")
     private List<InstructorFeedback> givenFeedbacks;
 
-    @ManyToMany
-    @JoinTable(
-            name = "learner_achievements",
-            joinColumns = @JoinColumn(name = "learner_user_id"),
-            inverseJoinColumns = @JoinColumn(name = "achievement_id")
-    )
-    private Set<Achievement> achievements;
+    @OneToMany(mappedBy = "learner")
+    private List<LearnerAchievement> learnerAchievements;
 
-    @ManyToMany
-    @JoinTable(
-            name = "learner_daily_challenges",
-            joinColumns = @JoinColumn(name = "learner_user_id"),
-            inverseJoinColumns = @JoinColumn(name = "challenge_id")
-    )
-    private Set<DailyChallenge> dailyChallenges;
+    @OneToMany(mappedBy = "learner")
+    private List<LearnerCosmetic> learnerCosmetics;
+
+    @OneToMany(mappedBy = "user")
+    private List<PointTransaction> pointTransactions;
+
+    @OneToMany(mappedBy = "learner")
+    private List<PracticeSession> practiceSessions;
+
+    @OneToMany(mappedBy = "learner")
+    private List<PracticeAttempt> practiceAttempts;
+
+    @OneToMany(mappedBy = "instructor")
+    private List<InstructorFeedback> instructorFeedbacks;
+
+    @OneToMany(mappedBy = "learner", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<LearnerDailyChallenge> learnerDailyChallenges;
+
+    @Column(name = "fcm_token", length = 500)
+    private String fcmToken;
 
     @OneToMany(mappedBy = "learner")
     private List<MinigameAttempt> minigameAttempts;
     
     @OneToMany(mappedBy = "learner")
-    private List<QuizAttempt> quizAttempts;
+    private List<QuizAttempt> QuizAttempt;
+
 }

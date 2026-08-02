@@ -44,7 +44,7 @@ public class AuthControllerTest {
 
         assertEquals(200, response.getStatusCode().value());
         assertTrue(response.getBody().isSuccess());
-        assertEquals("Register successfully", response.getBody().getMessage());
+        assertEquals("Register initiated successfully", response.getBody().getMessage());
     }
 
     @Test

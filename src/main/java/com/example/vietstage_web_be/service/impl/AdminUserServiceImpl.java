@@ -51,7 +51,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 // Calculate stats
                 int courses = user.getCreatedLessons() != null ? user.getCreatedLessons().size() : 0;
                 
-                // Calculate students (mocking logic or counting from practice attempts of these lessons)
+                // Calculate students (mocking logic or counting from practice attempts of these Lesson)
                 // Assuming simple mockup for students and rating for now or basic aggregation
                 int students = 0;
                 double rating = 5.0; // Default or mock rating
@@ -154,3 +154,4 @@ public class AdminUserServiceImpl implements IAdminUserService {
         userRepository.save(user);
     }
 }
+

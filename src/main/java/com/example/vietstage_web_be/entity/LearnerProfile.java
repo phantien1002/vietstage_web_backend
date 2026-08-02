@@ -21,12 +21,23 @@ public class LearnerProfile {
 
 
     @Column(name = "total_practice_seconds", nullable = false)
+    @Builder.Default
     private Long totalPracticeSeconds = 0L;
 
+    @Column(name = "total_points", nullable = false)
+    @Builder.Default
+    private Integer totalPoints = 0;
+
+    @Column(name = "total_stars", nullable = false)
+    @Builder.Default
+    private Integer totalStars = 0;
+
     @Column(name = "current_streak", nullable = false)
+    @Builder.Default
     private Integer currentStreak = 0;
 
     @Column(name = "longest_streak", nullable = false)
+    @Builder.Default
     private Integer longestStreak = 0;
 
     @Column(name = "last_practice_date")

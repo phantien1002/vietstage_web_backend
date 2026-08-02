@@ -3,10 +3,13 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.response.InstructorLearnerProgressResponse;
 import com.example.vietstage_web_be.dto.response.LearnerProgressItemResponse;
 import com.example.vietstage_web_be.dto.response.LearnerProgressSummaryResponse;
+import com.example.vietstage_web_be.entity.LessonCompletion;
 import com.example.vietstage_web_be.entity.Lesson;
+import com.example.vietstage_web_be.entity.LearnerProfile;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.LessonCompletionRepository;
+import com.example.vietstage_web_be.repository.LearnerProfileRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.PracticeAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +28,7 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class LearnerProgressServiceImpl implements ILearnerProgressService {
     private final LessonCompletionRepository lessonCompletionRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
     private final PracticeAttemptRepository practiceAttemptRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
@@ -46,13 +51,45 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
     }
 
     @Override
+    @Transactional
+    public LearnerProfile updateStreakAndSave(LearnerProfile profile) {
+        LocalDate today = LocalDate.now();
+        LocalDate lastDate = profile.getLastPracticeDate();
+
+        if (lastDate == null) {
+            profile.setCurrentStreak(1);
+        } else if (lastDate.equals(today.minusDays(1))) {
+            profile.setCurrentStreak(profile.getCurrentStreak() + 1);
+        } else if (lastDate.isBefore(today.minusDays(1))) {
+            profile.setCurrentStreak(1);
+        }
+        // If lastDate == today, streak remains unchanged
+
+        if (profile.getCurrentStreak() > profile.getLongestStreak()) {
+            profile.setLongestStreak(profile.getCurrentStreak());
+        }
+
+        profile.setLastPracticeDate(today);
+        return learnerProfileRepository.save(profile);
+    }
+
+    @Override
     public LearnerProgressSummaryResponse getLearnerProgressSummary(Long learnerId) {
         Integer totalStars = lessonCompletionRepository.sumTotalStarsByLearnerId(learnerId);
         Long completedLessons = lessonCompletionRepository.countCompletedLessonsByLearnerId(learnerId);
 
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId).orElse(null);
+        Integer currentStreak = profile != null ? profile.getCurrentStreak() : 0;
+        Integer longestStreak = profile != null ? profile.getLongestStreak() : 0;
+        Integer totalPoints = profile != null ? profile.getTotalPoints() : 0;
+
         return LearnerProgressSummaryResponse.builder()
                 .totalStars(totalStars != null ? totalStars : 0)
                 .completedLessons(completedLessons != null ? completedLessons : 0L)
+                .currentStreak(currentStreak)
+                .longestStreak(longestStreak)
+                .totalPoints(totalPoints)
+                .adaptiveDifficulty(0)
                 .build();
     }
 
@@ -65,11 +102,20 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
             throw new AppException(ErrorCode.INSTRUCTOR_FORBIDDEN);
         }
 
+        Optional<LessonCompletion> completionsOptional = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId);
 
-        Integer practiceAttempts = practiceAttemptRepository.countAttemptsByLessonAndLearner(lessonId, learnerId);
+        Integer PracticeAttempt = practiceAttemptRepository.countAttemptsByLessonAndLearner(lessonId, learnerId);
         Double bestScore = practiceAttemptRepository.findBestScoreByLessonAndLearner(lessonId, learnerId);
         Integer quizAttempt = quizAttemptRepository.countQuizAttemptsByLessonAndLearner(lessonId, learnerId);
 
-        return null;
+        return InstructorLearnerProgressResponse.builder()
+                .lessonId(lessonId)
+                .learnerId(learnerId)
+                .stars(completionsOptional.map(LessonCompletion::getStars).orElse(0))
+                .completed(completionsOptional.map(LessonCompletion::getCompleted).orElse(false))
+                .totalPracticeAttempts(PracticeAttempt != null ? PracticeAttempt : 0)
+                .bestPracticeScore(bestScore !=  null ? bestScore : 0.0)
+                .totalQuizAttempts(quizAttempt != null ? quizAttempt : 0)
+                .build();
     }
 }

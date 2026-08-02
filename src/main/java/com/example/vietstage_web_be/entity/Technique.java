@@ -33,5 +33,6 @@ public class Technique {
     private String guideUrl;
 
     @ManyToMany(mappedBy = "techniques")
-    private Set<Lesson> lessons;
+    private Set<Lesson> Lesson;
 }
+

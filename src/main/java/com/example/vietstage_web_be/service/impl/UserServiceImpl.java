@@ -3,10 +3,8 @@ package com.example.vietstage_web_be.service.impl;
 import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.UpdateProfileRequest;
-import com.example.vietstage_web_be.dto.request.UpdateUserStatusRequest;
 import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
 import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
-import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.UserResponse;
 import com.example.vietstage_web_be.entity.InstructorProfile;
 import com.example.vietstage_web_be.entity.Role;
@@ -16,20 +14,12 @@ import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.RoleRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
 import com.example.vietstage_web_be.service.IUserService;
-import com.example.vietstage_web_be.specification.UserSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +62,7 @@ public class UserServiceImpl implements IUserService {
         user.setUserCode(generatedUserCode);
         user.setRole(role);
         user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword())); // Mã hóa bảo mật
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword())); 
         user.setFullName(request.getFullName());
         user.setActive(true);
         user.setCreatedAt(LocalDateTime.now());
@@ -130,14 +120,9 @@ public class UserServiceImpl implements IUserService {
                 .build();
     }
 
-    // ============================================================
-    //  Private helpers
-    // ============================================================
-
     private UserResponse toUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
-
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().getName())
@@ -146,5 +131,17 @@ public class UserServiceImpl implements IUserService {
                 .build();
     }
 
-}
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        
+    }
 
+    @Override
+    @Transactional
+    public void updateFcmToken(Long userId, String fcmToken) {
+        User user = UserRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        user.setFcmToken(fcmToken);
+        UserRepository.save(user);
+    }
+}

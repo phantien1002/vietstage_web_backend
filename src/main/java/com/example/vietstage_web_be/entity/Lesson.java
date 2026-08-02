@@ -18,7 +18,7 @@ public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "lesson_id", nullable = false)
     private Long id;
 
     @Column(name = "lesson_code", unique = true)
@@ -63,6 +63,9 @@ public class Lesson {
     private Set<Technique> techniques;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LessonContent> lessonContents;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Exercise> exercises;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -74,3 +77,4 @@ public class Lesson {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MediaAsset> mediaAssets;
 }
+

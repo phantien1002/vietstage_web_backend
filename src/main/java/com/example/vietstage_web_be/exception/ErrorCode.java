@@ -32,7 +32,18 @@ public enum ErrorCode {
     BEAT_MAP_ASSET_NOT_FOUND(2014, "Tài nguyên BEATMAP không tồn tại", HttpStatus.NOT_FOUND),
     EXERCISE_NOT_FOUND(2015, "Bài tập không tồn tại",  HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Lỗi hệ thống không xác định", HttpStatus.INTERNAL_SERVER_ERROR),
-    EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR);
+    EMAIL_SEND_FAILED(1012, "Không thể gửi email OTP", HttpStatus.INTERNAL_SERVER_ERROR),
+    BEAT_MAP_ASSET_NOT_FOUND(2013, "Không tìm thấy asset beat map", HttpStatus.NOT_FOUND),
+    EXERCISE_NOT_FOUND(2014, "Không tìm thấy bài tập", HttpStatus.NOT_FOUND),
+    INSTRUCTOR_FORBIDDEN(2015, "Giảng viên không có quyền truy cập", HttpStatus.FORBIDDEN),
+    QUIZ_NOT_FOUND(2016, "Không tìm thấy câu hỏi trắc nghiệm", HttpStatus.NOT_FOUND),
+    MINIGAME_NOT_FOUND(2017, "Không tìm thấy minigame", HttpStatus.NOT_FOUND),
+    ACHIEVEMENT_NOT_FOUND(2018, "Không tìm thấy thành tựu", HttpStatus.NOT_FOUND),
+    COSMETIC_NOT_FOUND(2019, "Không tìm thấy vật phẩm trang trí", HttpStatus.NOT_FOUND),
+    COSMETIC_NOT_OWNED(2020, "Bạn chưa sở hữu vật phẩm này", HttpStatus.FORBIDDEN),
+    RESOURCE_NOT_FOUND(2021, "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
+    FORBIDDEN(2022, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    BAD_REQUEST(2023, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

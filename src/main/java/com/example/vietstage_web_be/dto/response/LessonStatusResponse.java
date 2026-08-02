@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Response gọn cho PUT /api/lessons/{id}/status
+ * Response gọn cho PUT /api/Lesson/{id}/status
  * Chỉ trả về {id, status} theo spec
  */
 @Data
@@ -18,3 +18,4 @@ public class LessonStatusResponse {
     private Long id;
     private String status;
 }
+
