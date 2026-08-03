@@ -49,4 +49,28 @@ public class CosmeticController {
         EquipCosmeticResponse response = cosmeticsService.equipCosmetic(learner, cosmeticId, request.getIsEquipped());
         return ResponseEntity.ok(BaseResponse.success(response));
     }
+
+    @PostMapping("/cosmetics")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<BaseResponse<CosmeticItemResponse>> createCosmetic(
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
+        CosmeticItemResponse response = cosmeticsService.createCosmetic(request);
+        return ResponseEntity.ok(BaseResponse.success(response));
+    }
+
+    @PutMapping("/cosmetics/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<BaseResponse<CosmeticItemResponse>> updateCosmetic(
+            @PathVariable Long id,
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
+        CosmeticItemResponse response = cosmeticsService.updateCosmetic(id, request);
+        return ResponseEntity.ok(BaseResponse.success(response));
+    }
+
+    @DeleteMapping("/cosmetics/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<BaseResponse<String>> deleteCosmetic(@PathVariable Long id) {
+        cosmeticsService.deleteCosmetic(id);
+        return ResponseEntity.ok(BaseResponse.success("Deleted successfully"));
+    }
 }
