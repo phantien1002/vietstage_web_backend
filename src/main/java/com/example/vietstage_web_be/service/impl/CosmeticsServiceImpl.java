@@ -98,6 +98,48 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .build();
     }
 
+    @Override
+    public CosmeticItemResponse createCosmetic(com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
+        CosmeticItem item = CosmeticItem.builder()
+                .name(request.getName())
+                .itemType(request.getItemType())
+                .assetUrl(request.getAssetUrl())
+                .unlockType(request.getUnlockType())
+                .unlockValue(request.getUnlockValue())
+                .build();
+        cosmeticItemRepository.save(item);
+        return mapToResponse(item);
+    }
+
+    @Override
+    public CosmeticItemResponse updateCosmetic(Long id, com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
+        CosmeticItem item = cosmeticItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)); // Or create a generic NOT_FOUND
+        
+        item.setName(request.getName());
+        item.setItemType(request.getItemType());
+        item.setAssetUrl(request.getAssetUrl());
+        item.setUnlockType(request.getUnlockType());
+        item.setUnlockValue(request.getUnlockValue());
+        
+        cosmeticItemRepository.save(item);
+        return mapToResponse(item);
+    }
+
+    @Override
+    public void deleteCosmetic(Long id) {
+        CosmeticItem item = cosmeticItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Remove relationships in learner_cosmetics before deleting the item
+        List<LearnerCosmetic> learnerCosmetics = learnerCosmeticRepository.findAll().stream()
+                .filter(lc -> lc.getCosmeticItem().getId().equals(id))
+                .collect(Collectors.toList());
+        learnerCosmeticRepository.deleteAll(learnerCosmetics);
+        
+        cosmeticItemRepository.delete(item);
+    }
+
     private CosmeticItemResponse mapToResponse(CosmeticItem item) {
         return CosmeticItemResponse.builder()
                 .id(item.getId())
