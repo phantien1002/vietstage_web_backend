@@ -1,9 +1,10 @@
 package com.example.vietstage_web_be.controller;
 
+import com.example.vietstage_web_be.dto.request.InstructorPracticeAttemptRequest;
 import com.example.vietstage_web_be.dto.response.*;
 import com.example.vietstage_web_be.service.IInstructorService;
 import com.example.vietstage_web_be.service.ILearnerProgressService;
-import com.google.api.gax.paging.Page;
+import org.springframework.data.domain.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -72,22 +73,19 @@ public class ProgressController {
     }
 
     @GetMapping("/instructor/learners/{learnerId}/progress/summary")
-    public ResponseEntity<LearnerSummaryResponse> getLearnerProgressSummary(@PathVariable("learnerId") Long learnerId) {
-
-        LearnerSummaryResponse response = instructorService.getLearnerProgressSummary(learnerId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<LearnerProgressSummaryResponse> getLearnerProgressSummary(@PathVariable("learnerId") Long learnerId) {
+        LearnerProgressSummaryResponse summary = instructorService.getLearnerProgressSummary(learnerId);
+        return ResponseEntity.ok(summary);
     }
 
     @GetMapping("/instructor/practice-attempts")
-    public ResponseEntity<?> getPracticeAttempts(@ModelAttribute PracticeAttemptGroupedResponse filterRequest) {
-
-        if (filterRequest.getTimeGroup() != null && !filterRequest.getTimeGroup().isBlank()) {
-            List<PracticeAttemptGroupedResponse> groupedResponse = instructorService.getGroupedPracticeAttemptDetail(filterRequest);
-            return ResponseEntity.ok(groupedResponse);
+    public ResponseEntity<?> getPracticeAttempts(@ModelAttribute InstructorPracticeAttemptRequest filterRequest) {
+        if (filterRequest.getGroupBy() != null && !filterRequest.getGroupBy().isBlank()){
+            List<PracticeAttemptGroupedResponse> groupedResponses = instructorService.getGroupedPracticeAttemptDetail(filterRequest);
+            return ResponseEntity.ok(groupedResponses);
         }
 
-        //Page<PracticeAttemptDetailResponse> detailResponsePage = instructorService.getFilteredPracticeAttemptDetail(filterRequest);
-        Page<PracticeAttemptDetailResponse> detailResponsePage = null;
+        Page<PracticeAttemptDetailResponse> detailResponsePage = instructorService.getFilteredPracticeAttempts(filterRequest);
         return ResponseEntity.ok(detailResponsePage);
     }
 }

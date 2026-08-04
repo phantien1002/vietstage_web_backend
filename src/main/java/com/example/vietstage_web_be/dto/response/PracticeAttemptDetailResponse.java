@@ -29,5 +29,5 @@ public class PracticeAttemptDetailResponse {
     private Boolean isPassed;
     private String syncStatus;
     private Integer durationSeconds;
-    private LocalDateTime attemptedAt;
+    private LocalDateTime createdAt;
 }
