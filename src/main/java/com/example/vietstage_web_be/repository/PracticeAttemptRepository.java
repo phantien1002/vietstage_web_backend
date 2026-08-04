@@ -5,6 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt, Long> {
@@ -25,5 +30,48 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
     org.springframework.data.domain.Page<PracticeAttempt> findByExerciseLessonIdAndLearnerId(Long lessonId, Long learnerId, org.springframework.data.domain.Pageable pageable);
     
     java.util.Optional<PracticeAttempt> findByClientUuid(String clientUuid);
+
+    @Query("SELECT pa FROM PracticeAttempt pa " +
+            "JOIN FETCH pa.exercise e " +
+            "LEFT JOIN FETCH e.lesson l " +
+            "JOIN FETCH pa.learner u " +
+            "WHERE (:learnerId IS NULL OR u.id = :learnerId) " +
+            "AND (:lessonId IS NULL OR l.id = :lessonId) " +
+            "AND (:fromDateTime IS NULL OR pa.createdAt >= :fromDateTime) " +
+            "AND (:toDateTime IS NULL OR pa.createdAt <= :toDateTime) " +
+            "ORDER BY pa.createdAt DESC")
+    Page<PracticeAttempt> findFilteredAttempts(
+            @Param("learnerId") Long learnerId,
+            @Param("lessonId") Long lessonId,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("toDateTime") LocalDateTime toDateTime,
+            Pageable pageable
+    );
+
+    @Query(value = "SELECT " +
+            "CASE " +
+            "   WHEN :groupBy = 'week' THEN TO_CHAR(pa.created_at, 'YYYY-\"W\"IW') " +
+            "   WHEN :groupBy = 'month' THEN TO_CHAR(pa.created_at, 'YYYY-MM') " +
+            "   ELSE TO_CHAR(pa.created_at, 'YYYY-MM-DD') " +
+            "END AS timeGroup, " +
+            "COUNT(pa.id) AS totalAttempts, " +
+            "AVG(pa.total_score) AS averageTotalScore, " +
+            "SUM(pa.points_earned) AS totalPointsEarned, " +
+            "SUM(pa.stars) AS totalStarsEarned " +
+            "FROM practice_attempts pa " +
+            "JOIN exercises e ON pa.exercise_id = e.id " +
+            "WHERE (:learnerId IS NULL OR pa.learner_id = :learnerId) " +
+            "AND (:lessonId IS NULL OR e.lesson_id = :lessonId) " +
+            "AND (:fromDateTime IS NULL OR pa.created_at >= :fromDateTime) " +
+            "AND (:toDateTime IS NULL OR pa.created_at <= :toDateTime) " +
+            "GROUP BY timeGroup " +
+            "ORDER BY timeGroup ASC", nativeQuery = true)
+    List<Object[]> findGroupedPracticeStats(
+            @Param("learnerId") Long learnerId,
+            @Param("lessonId") Long lessonId,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("toDateTime") LocalDateTime toDateTime,
+            @Param("groupBy") String groupBy
+    );
 }
 

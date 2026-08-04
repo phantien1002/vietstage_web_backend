@@ -1,10 +1,9 @@
 package com.example.vietstage_web_be.controller;
 
-import com.example.vietstage_web_be.dto.response.ApiResponse;
-import com.example.vietstage_web_be.dto.response.InstructorLearnerProgressResponse;
-import com.example.vietstage_web_be.dto.response.LearnerProgressItemResponse;
-import com.example.vietstage_web_be.dto.response.LearnerProgressSummaryResponse;
+import com.example.vietstage_web_be.dto.response.*;
+import com.example.vietstage_web_be.service.IInstructorService;
 import com.example.vietstage_web_be.service.ILearnerProgressService;
+import com.google.api.gax.paging.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,6 +20,7 @@ import java.util.List;
 @Tag(name = "Progress", description = "Các API quản lý Tiến độ học tập")
 public class ProgressController {
     private final ILearnerProgressService progressService;
+    private final IInstructorService instructorService;
 
     @GetMapping("/users/me/progress")
     @PreAuthorize("hasRole('LEARNER')")
@@ -71,5 +71,24 @@ public class ProgressController {
                 .build());
     }
 
+    @GetMapping("/instructor/learners/{learnerId}/progress/summary")
+    public ResponseEntity<LearnerSummaryResponse> getLearnerProgressSummary(@PathVariable("learnerId") Long learnerId) {
+
+        LearnerSummaryResponse response = instructorService.getLearnerProgressSummary(learnerId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/instructor/practice-attempts")
+    public ResponseEntity<?> getPracticeAttempts(@ModelAttribute PracticeAttemptGroupedResponse filterRequest) {
+
+        if (filterRequest.getTimeGroup() != null && !filterRequest.getTimeGroup().isBlank()) {
+            List<PracticeAttemptGroupedResponse> groupedResponse = instructorService.getGroupedPracticeAttemptDetail(filterRequest);
+            return ResponseEntity.ok(groupedResponse);
+        }
+
+        //Page<PracticeAttemptDetailResponse> detailResponsePage = instructorService.getFilteredPracticeAttemptDetail(filterRequest);
+        Page<PracticeAttemptDetailResponse> detailResponsePage = null;
+        return ResponseEntity.ok(detailResponsePage);
+    }
 }
 
