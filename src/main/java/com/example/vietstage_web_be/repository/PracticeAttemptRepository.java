@@ -50,8 +50,8 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
 
     @Query(value = "SELECT " +
             "CASE " +
-            "   WHEN :groupBy = 'week' THEN TO_CHAR(pa.created_at, 'YYYY-\"W\"IW') " +
-            "   WHEN :groupBy = 'month' THEN TO_CHAR(pa.created_at, 'YYYY-MM') " +
+            "   WHEN CAST(:groupBy AS text) = 'week' THEN TO_CHAR(pa.created_at, 'YYYY-\"W\"IW') " +
+            "   WHEN CAST(:groupBy AS text) = 'month' THEN TO_CHAR(pa.created_at, 'YYYY-MM') " +
             "   ELSE TO_CHAR(pa.created_at, 'YYYY-MM-DD') " +
             "END AS timeGroup, " +
             "COUNT(pa.id) AS totalAttempts, " +
@@ -62,8 +62,8 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
             "JOIN exercises e ON pa.exercise_id = e.id " +
             "WHERE (:learnerId IS NULL OR pa.learner_id = :learnerId) " +
             "AND (:lessonId IS NULL OR e.lesson_id = :lessonId) " +
-            "AND (:fromDateTime IS NULL OR pa.created_at >= :fromDateTime) " +
-            "AND (:toDateTime IS NULL OR pa.created_at <= :toDateTime) " +
+            "AND (CAST(:fromDateTime AS timestamp) IS NULL OR pa.created_at >= :fromDateTime) " +
+            "AND (CAST(:toDateTime AS timestamp) IS NULL OR pa.created_at <= :toDateTime) " +
             "GROUP BY timeGroup " +
             "ORDER BY timeGroup ASC", nativeQuery = true)
     List<Object[]> findGroupedPracticeStats(
