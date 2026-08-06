@@ -35,12 +35,14 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
             "JOIN FETCH pa.exercise e " +
             "LEFT JOIN FETCH e.lesson l " +
             "JOIN FETCH pa.learner u " +
-            "WHERE (:learnerId IS NULL OR u.id = :learnerId) " +
+            "WHERE l.createdBy.id = :instructorId " +
+            "AND (:learnerId IS NULL OR u.id = :learnerId) " +
             "AND (:lessonId IS NULL OR l.id = :lessonId) " +
-            "AND (:fromDateTime IS NULL OR pa.createdAt >= :fromDateTime) " +
-            "AND (:toDateTime IS NULL OR pa.createdAt <= :toDateTime) " +
+            "AND (pa.createdAt >= :fromDateTime) " +
+            "AND (pa.createdAt <= :toDateTime) " +
             "ORDER BY pa.createdAt DESC")
     Page<PracticeAttempt> findFilteredAttempts(
+            @Param("instructorId") Long instructorId,
             @Param("learnerId") Long learnerId,
             @Param("lessonId") Long lessonId,
             @Param("fromDateTime") LocalDateTime fromDateTime,
@@ -60,13 +62,16 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
             "SUM(pa.stars) AS totalStarsEarned " +
             "FROM practice_attempts pa " +
             "JOIN exercises e ON pa.exercise_id = e.id " +
-            "WHERE (:learnerId IS NULL OR pa.learner_id = :learnerId) " +
+            "JOIN lessons l ON e.lesson_id = l.id " +
+            "WHERE l.created_by = :instructorId " +
+            "AND (:learnerId IS NULL OR pa.learner_id = :learnerId) " +
             "AND (:lessonId IS NULL OR e.lesson_id = :lessonId) " +
-            "AND (CAST(:fromDateTime AS timestamp) IS NULL OR pa.created_at >= :fromDateTime) " +
-            "AND (CAST(:toDateTime AS timestamp) IS NULL OR pa.created_at <= :toDateTime) " +
+            "AND (pa.created_at >= :fromDateTime) " +
+            "AND (pa.created_at <= :toDateTime) " +
             "GROUP BY timeGroup " +
             "ORDER BY timeGroup ASC", nativeQuery = true)
     List<Object[]> findGroupedPracticeStats(
+            @Param("instructorId") Long instructorId,
             @Param("learnerId") Long learnerId,
             @Param("lessonId") Long lessonId,
             @Param("fromDateTime") LocalDateTime fromDateTime,

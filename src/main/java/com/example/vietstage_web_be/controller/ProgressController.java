@@ -81,14 +81,48 @@ public class ProgressController {
     }
 
     @GetMapping("/instructor/practice-attempts")
-    public ResponseEntity<?> getPracticeAttempts(@ModelAttribute InstructorPracticeAttemptRequest filterRequest) {
-        if (filterRequest.getGroupBy() != null && !filterRequest.getGroupBy().isBlank()){
-            List<PracticeAttemptGroupedResponse> groupedResponses = instructorService.getGroupedPracticeAttemptDetail(filterRequest);
-            return ResponseEntity.ok(groupedResponses);
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<?> getPracticeAttempts(
+            @AuthenticationPrincipal(expression = "user") User currentUser,
+            @RequestParam(required = false) Long learnerId,
+            @RequestParam(required = false) Long lessonId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fromDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate toDate,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false, defaultValue = "10") Integer size,
+            @RequestParam(required = false) String groupBy) {
+
+        InstructorPracticeAttemptRequest filterRequest = InstructorPracticeAttemptRequest.builder()
+                .learnerId(learnerId)
+                .lessonId(lessonId)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .page(page)
+                .size(size)
+                .groupBy(groupBy)
+                .build();
+
+        if (groupBy != null && !groupBy.isBlank()) {
+            List<PracticeAttemptGroupedResponse> groupedResponses = instructorService.getGroupedPracticeAttemptDetail(currentUser.getId(), filterRequest);
+            return ResponseEntity.ok(ApiResponse.<List<PracticeAttemptGroupedResponse>>builder()
+                    .message("Get grouped attempts successfully")
+                    .data(groupedResponses)
+                    .build());
         }
 
-        Page<PracticeAttemptDetailResponse> detailResponsePage = instructorService.getFilteredPracticeAttempts(filterRequest);
-        return ResponseEntity.ok(detailResponsePage);
+        Page<PracticeAttemptDetailResponse> detailResponsePage = instructorService.getFilteredPracticeAttempts(currentUser.getId(), filterRequest);
+        PageResponse<PracticeAttemptDetailResponse> pageResponse = new PageResponse<>(
+                detailResponsePage.getContent(),
+                detailResponsePage.getNumber(),
+                detailResponsePage.getSize(),
+                detailResponsePage.getTotalElements(),
+                detailResponsePage.getTotalPages(),
+                detailResponsePage.isLast()
+        );
+        return ResponseEntity.ok(ApiResponse.<PageResponse<PracticeAttemptDetailResponse>>builder()
+                .message("Get practice attempts successfully")
+                .data(pageResponse)
+                .build());
     }
 }
 

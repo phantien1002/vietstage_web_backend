@@ -11,9 +11,9 @@ import java.util.List;
 public interface IInstructorService {
     LearnerProgressSummaryResponse getLearnerProgressSummary(Long learnerId);
 
-    Page<PracticeAttemptDetailResponse> getFilteredPracticeAttempts(InstructorPracticeAttemptRequest request);
+    Page<PracticeAttemptDetailResponse> getFilteredPracticeAttempts(Long instructorId, InstructorPracticeAttemptRequest request);
 
-    List<PracticeAttemptGroupedResponse> getGroupedPracticeAttemptDetail(InstructorPracticeAttemptRequest request);
+    List<PracticeAttemptGroupedResponse> getGroupedPracticeAttemptDetail(Long instructorId, InstructorPracticeAttemptRequest request);
 
     Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instructorId, String search, org.springframework.data.domain.Pageable pageable);
 }

@@ -1,11 +1,17 @@
 package com.example.vietstage_web_be.dto.request;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class InstructorPracticeAttemptRequest {
     private Long learnerId;
     private Long lessonId;

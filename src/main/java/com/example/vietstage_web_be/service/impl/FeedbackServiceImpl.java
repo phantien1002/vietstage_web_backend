@@ -57,7 +57,22 @@ public class FeedbackServiceImpl implements IFeedbackService {
     }
 
     @Override
-    public List<FeedbackResponse> getFeedbackForAttempt(Long attemptId) {
+    public List<FeedbackResponse> getFeedbackForAttempt(User currentUser, Long attemptId) {
+        PracticeAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (currentUser.getRole().getName().equals("INSTRUCTOR")) {
+            if (!attempt.getExercise().getLesson().getCreatedBy().getId().equals(currentUser.getId())) {
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
+        } else if (currentUser.getRole().getName().equals("LEARNER")) {
+            if (!attempt.getLearner().getId().equals(currentUser.getId())) {
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
+        } else {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
         return feedbackRepository.findByPracticeAttemptId(attemptId).stream()
                 .map(f -> FeedbackResponse.builder()
                         .id(f.getId())

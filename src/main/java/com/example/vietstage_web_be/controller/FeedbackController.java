@@ -37,8 +37,9 @@ public class FeedbackController {
     @GetMapping("/practice/attempts/{id}/feedback")
     @PreAuthorize("hasAnyAuthority('LEARNER', 'INSTRUCTOR')")
     public ResponseEntity<BaseResponse<List<FeedbackResponse>>> getFeedbackForAttempt(
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @PathVariable Long id) {
-        List<FeedbackResponse> response = feedbackService.getFeedbackForAttempt(id);
+        List<FeedbackResponse> response = feedbackService.getFeedbackForAttempt(currentUser, id);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 }

@@ -53,9 +53,9 @@ public class InstructorServiceImpl implements IInstructorService {
     }
 
     @Override
-    public Page<PracticeAttemptDetailResponse> getFilteredPracticeAttempts(InstructorPracticeAttemptRequest request) {
-        LocalDateTime fromDateTime = request.getFromDate() != null ? request.getFromDate().atStartOfDay() : null;
-        LocalDateTime toDateTime = request.getToDate() != null ? request.getToDate().atTime(LocalTime.MAX) : null;
+    public Page<PracticeAttemptDetailResponse> getFilteredPracticeAttempts(Long instructorId, InstructorPracticeAttemptRequest request) {
+        LocalDateTime fromDateTime = request.getFromDate() != null ? request.getFromDate().atStartOfDay() : LocalDateTime.of(1970, 1, 1, 0, 0);
+        LocalDateTime toDateTime = request.getToDate() != null ? request.getToDate().atTime(LocalTime.MAX) : LocalDateTime.of(2100, 12, 31, 23, 59);
 
         Pageable pageable = PageRequest.of(
                 request.getPage() != null ? request.getPage() : 0,
@@ -63,6 +63,7 @@ public class InstructorServiceImpl implements IInstructorService {
         );
 
         Page<PracticeAttempt> attemptPage = practiceAttemptRepository.findFilteredAttempts(
+                instructorId,
                 request.getLearnerId(),
                 request.getLessonId(),
                 fromDateTime,
@@ -92,15 +93,16 @@ public class InstructorServiceImpl implements IInstructorService {
     }
 
     @Override
-    public List<PracticeAttemptGroupedResponse> getGroupedPracticeAttemptDetail(InstructorPracticeAttemptRequest request) {
-        LocalDateTime fromDateTime = request.getFromDate() != null ? request.getFromDate().atStartOfDay() : null;
-        LocalDateTime toDateTime = request.getToDate() != null ? request.getToDate().atTime(LocalTime.MAX) : null;
+    public List<PracticeAttemptGroupedResponse> getGroupedPracticeAttemptDetail(Long instructorId, InstructorPracticeAttemptRequest request) {
+        LocalDateTime fromDateTime = request.getFromDate() != null ? request.getFromDate().atStartOfDay() : LocalDateTime.of(1970, 1, 1, 0, 0);
+        LocalDateTime toDateTime = request.getToDate() != null ? request.getToDate().atTime(LocalTime.MAX) : LocalDateTime.of(2100, 12, 31, 23, 59);
 
         String groupBy = (request.getGroupBy() != null && !request.getGroupBy().isBlank())
                 ? request.getGroupBy().toLowerCase()
                 : "day";
 
         List<Object[]> results = practiceAttemptRepository.findGroupedPracticeStats(
+                instructorId,
                 request.getLearnerId(),
                 request.getLessonId(),
                 fromDateTime,

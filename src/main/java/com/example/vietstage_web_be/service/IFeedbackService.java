@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface IFeedbackService {
     FeedbackResponse submitFeedback(User instructor, Long attemptId, FeedbackRequest request);
-    List<FeedbackResponse> getFeedbackForAttempt(Long attemptId);
+    List<FeedbackResponse> getFeedbackForAttempt(User currentUser, Long attemptId);
 }
