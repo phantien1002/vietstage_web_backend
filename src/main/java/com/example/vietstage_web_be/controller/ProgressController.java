@@ -82,6 +82,11 @@ public class ProgressController {
 
     @GetMapping("/instructor/practice-attempts")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful operation"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     public ResponseEntity<ApiResponse<PageResponse<PracticeAttemptDetailResponse>>> getPracticeAttempts(
             @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(required = false) Long learnerId,

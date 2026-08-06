@@ -120,9 +120,23 @@ public class PracticeServiceImpl implements IPracticeService {
     }
 
     @Override
-    public PracticeAttempt getAttemptDetails(Long attemptId) {
-        return attemptRepository.findById(attemptId)
+    public PracticeAttempt getAttemptDetails(User user, Long attemptId) {
+        PracticeAttempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (user.getRole().getName().equals("INSTRUCTOR")) {
+            if (!attempt.getExercise().getLesson().getCreatedBy().getId().equals(user.getId())) {
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
+        } else if (user.getRole().getName().equals("LEARNER")) {
+            if (!attempt.getLearner().getId().equals(user.getId())) {
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
+        } else {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        return attempt;
     }
 
     @Override

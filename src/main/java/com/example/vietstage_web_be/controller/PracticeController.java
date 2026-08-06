@@ -82,8 +82,15 @@ public class PracticeController {
 
     @GetMapping("/practice/attempts/{id}")
     @PreAuthorize("hasAnyAuthority('LEARNER', 'INSTRUCTOR')")
-    public ResponseEntity<BaseResponse<PracticeAttempt>> getAttemptDetails(@PathVariable Long id) {
-        PracticeAttempt response = practiceService.getAttemptDetails(id);
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful operation"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    public ResponseEntity<BaseResponse<PracticeAttempt>> getAttemptDetails(
+            @AuthenticationPrincipal(expression = "user") User currentUser,
+            @PathVariable Long id) {
+        PracticeAttempt response = practiceService.getAttemptDetails(currentUser, id);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 

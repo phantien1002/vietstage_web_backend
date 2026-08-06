@@ -26,6 +26,11 @@ public class FeedbackController {
 
     @PostMapping("/practice/attempts/{id}/feedback")
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Successful operation"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     public ResponseEntity<BaseResponse<FeedbackResponse>> submitFeedback(
             @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long id,
@@ -36,6 +41,11 @@ public class FeedbackController {
 
     @GetMapping("/practice/attempts/{id}/feedback")
     @PreAuthorize("hasAnyAuthority('LEARNER', 'INSTRUCTOR')")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful operation"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     public ResponseEntity<BaseResponse<List<FeedbackResponse>>> getFeedbackForAttempt(
             @AuthenticationPrincipal(expression = "user") User currentUser,
             @PathVariable Long id) {

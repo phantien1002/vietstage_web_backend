@@ -18,7 +18,7 @@ public interface IPracticeService {
     
     PracticeAttemptResponse submitAttempt(User learner, PracticeAttemptRequest request);
     PageResponse<PracticeAttempt> getMyAttempts(User learner, Long exerciseId, Pageable pageable);
-    PracticeAttempt getAttemptDetails(Long attemptId);
+    PracticeAttempt getAttemptDetails(User user, Long attemptId);
     PageResponse<PracticeAttempt> getLearnerAttemptsForLesson(User instructor, Long lessonId, Long learnerId, Pageable pageable);
     
     BulkPracticeAttemptResponse submitBulkAttempts(User learner, BulkPracticeAttemptRequest request);
