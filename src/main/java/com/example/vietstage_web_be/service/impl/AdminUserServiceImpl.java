@@ -68,17 +68,8 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 // Calculate stats
                 int courses = user.getCreatedLessons() != null ? user.getCreatedLessons().size() : 0;
                 
-                // Calculate students (mocking logic or counting from practice attempts of these Lesson)
-                // Assuming simple mockup for students and rating for now or basic aggregation
-                int students = 0;
+                int students = (int) userRepository.countLearnersForInstructor(user.getId());
                 double rating = 5.0; // Default or mock rating
-                
-                if (user.getCreatedLessons() != null) {
-                    // This is a naive calculation, ideally done via custom query
-                    students = user.getCreatedLessons().stream()
-                        .mapToInt(l -> l.getExercises() != null ? l.getExercises().size() : 0) 
-                        .sum(); // placeholder logic
-                }
                 
                 stats = UserStatsDto.builder()
                         .courses(courses)

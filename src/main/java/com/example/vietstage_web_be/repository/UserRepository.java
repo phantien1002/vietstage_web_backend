@@ -26,6 +26,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     long countByRoleName(String roleName);
 
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(DISTINCT lc.learner) FROM LessonCompletion lc WHERE lc.lesson.createdBy.id = :instructorId AND lc.learner.role.name = 'LEARNER'")
+    long countLearnersForInstructor(@org.springframework.data.repository.query.Param("instructorId") Long instructorId);
+
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT lc.learner FROM LessonCompletion lc WHERE " +
            "lc.lesson.createdBy.id = :instructorId AND lc.learner.role.name = 'LEARNER' AND " +
            "(:search IS NULL OR :search = '' OR LOWER(lc.learner.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(lc.learner.email) LIKE LOWER(CONCAT('%', :search, '%')))")
