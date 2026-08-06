@@ -15,16 +15,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/api/instructor")
 @RequiredArgsConstructor
+@Tag(name = "Instructor", description = "Các API dành riêng cho Giảng viên")
 public class InstructorController {
 
     private final IInstructorService instructorService;
 
     @GetMapping("/learners")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Lấy danh sách Học viên", description = "API lấy danh sách các học viên mà Giảng viên hiện tại được phép theo dõi.")
     public ResponseEntity<ApiResponse<Page<LearnerForInstructorResponse>>> getLearnersForInstructor(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
