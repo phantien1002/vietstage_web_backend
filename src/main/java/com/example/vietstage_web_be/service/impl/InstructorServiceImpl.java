@@ -126,4 +126,20 @@ public class InstructorServiceImpl implements IInstructorService {
                     .build();
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instructorId, String search, Pageable pageable) {
+        Page<User> learners = userRepository.findLearnersForInstructor(instructorId, search, pageable);
+        return learners.map(user -> {
+            String instrumentName = "N/A"; // favoriteInstrument is not mapped
+            return com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse.builder()
+                    .id(user.getId())
+                    .fullName(user.getFullName())
+                    .email(user.getEmail())
+                    .userCode(user.getUserCode())
+                    .instrumentName(instrumentName)
+                    .build();
+        });
+    }
 }
+

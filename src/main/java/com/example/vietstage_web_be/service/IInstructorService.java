@@ -14,4 +14,6 @@ public interface IInstructorService {
     Page<PracticeAttemptDetailResponse> getFilteredPracticeAttempts(InstructorPracticeAttemptRequest request);
 
     List<PracticeAttemptGroupedResponse> getGroupedPracticeAttemptDetail(InstructorPracticeAttemptRequest request);
+
+    Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instructorId, String search, org.springframework.data.domain.Pageable pageable);
 }

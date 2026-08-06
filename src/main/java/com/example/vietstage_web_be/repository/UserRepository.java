@@ -21,4 +21,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         @org.springframework.data.repository.query.Param("role") String role, 
         org.springframework.data.domain.Pageable pageable
     );
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT lc.learner FROM LessonCompletion lc WHERE " +
+           "lc.lesson.createdBy.id = :instructorId AND " +
+           "(:search IS NULL OR :search = '' OR LOWER(lc.learner.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(lc.learner.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"role", "learnerProfile"})
+    org.springframework.data.domain.Page<User> findLearnersForInstructor(
+        @org.springframework.data.repository.query.Param("instructorId") Long instructorId, 
+        @org.springframework.data.repository.query.Param("search") String search, 
+        org.springframework.data.domain.Pageable pageable
+    );
 }
