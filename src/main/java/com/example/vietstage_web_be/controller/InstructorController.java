@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.Operation;
 @RestController
 @RequestMapping("/api/instructor")
 @RequiredArgsConstructor
-@Tag(name = "Instructor", description = "Các API dành riêng cho Giảng viên")
+@Tag(name = "Progress", description = "Các API quản lý Tiến độ học tập")
 public class InstructorController {
 
     private final IInstructorService instructorService;
