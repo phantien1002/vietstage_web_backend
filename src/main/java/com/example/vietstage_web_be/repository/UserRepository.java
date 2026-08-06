@@ -14,13 +14,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE " +
            "(:search IS NULL OR :search = '' OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "(:role IS NULL OR :role = '' OR u.role.name = :role)")
+           "(COALESCE(:roles, NULL) IS NULL OR u.role.name IN :roles) AND " +
+           "(:isActive IS NULL OR u.active = :isActive)")
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"role"})
     org.springframework.data.domain.Page<User> searchUsers(
         @org.springframework.data.repository.query.Param("search") String search, 
-        @org.springframework.data.repository.query.Param("role") String role, 
+        @org.springframework.data.repository.query.Param("roles") java.util.List<String> roles, 
+        @org.springframework.data.repository.query.Param("isActive") Boolean isActive,
         org.springframework.data.domain.Pageable pageable
     );
+
+    long countByRoleName(String roleName);
 
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT lc.learner FROM LessonCompletion lc WHERE " +
            "lc.lesson.createdBy.id = :instructorId AND lc.learner.role.name = 'LEARNER' AND " +

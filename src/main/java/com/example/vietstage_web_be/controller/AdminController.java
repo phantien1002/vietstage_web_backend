@@ -3,6 +3,7 @@ package com.example.vietstage_web_be.controller;
 import com.example.vietstage_web_be.dto.request.AdminCreateRequest;
 import com.example.vietstage_web_be.dto.request.InstructorCreateRequest;
 import com.example.vietstage_web_be.dto.request.ReviewActionRequest;
+import com.example.vietstage_web_be.dto.request.UserRoleUpdateRequest;
 import com.example.vietstage_web_be.dto.request.UserStatusUpdateRequest;
 import com.example.vietstage_web_be.dto.response.AdminCreateResponse;
 import com.example.vietstage_web_be.dto.response.ApiResponse;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,14 +49,15 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false, defaultValue = "") String search,
-            @RequestParam(required = false, defaultValue = "") String role,
+            @RequestParam(required = false) List<String> roles,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
         return ApiResponse.<PageResponse<AdminUserResponse>>builder()
                 .success(true)
                 .message("Successfully fetched all users")
-                .data(adminUserService.getAllUsers(page, size, search, role, sortBy, sortDir))
+                .data(adminUserService.getAllUsers(page, size, search, roles, status, sortBy, sortDir))
                 .build();
     }
 
@@ -67,6 +70,19 @@ public class AdminController {
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully updated user status")
+                .build();
+    }
+
+    @PutMapping("/users/{id}/role")
+    public ApiResponse<Void> updateUserRole(
+            @AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser,
+            @PathVariable Long id,
+            @Valid @RequestBody UserRoleUpdateRequest request) {
+        
+        adminUserService.updateUserRole(id, request.getRole(), currentUser.getId());
+        return ApiResponse.<Void>builder()
+                .success(true)
+                .message("Successfully updated user role")
                 .build();
     }
 

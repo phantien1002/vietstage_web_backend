@@ -14,6 +14,8 @@ import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.repository.AuditLogRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
+import com.example.vietstage_web_be.repository.RoleRepository;
+import com.example.vietstage_web_be.entity.Role;
 import com.example.vietstage_web_be.service.IAdminUserService;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
@@ -32,13 +34,20 @@ public class AdminUserServiceImpl implements IAdminUserService {
     private final UserRepository userRepository;
     private final AuditLogRepository auditLogRepository;
     private final LessonRepository lessonRepository;
+    private final RoleRepository roleRepository;
 
     @Override
-    public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String sortBy, String sortDir) {
+    public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, List<String> roles, String status, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         
-        Page<User> userPage = userRepository.searchUsers(search, role, pageable);
+        Boolean isActive = null;
+        if (status != null && !status.trim().isEmpty()) {
+            if (status.equalsIgnoreCase("ACTIVE")) isActive = true;
+            else if (status.equalsIgnoreCase("LOCKED")) isActive = false;
+        }
+
+        Page<User> userPage = userRepository.searchUsers(search, roles, isActive, pageable);
         
         List<AdminUserResponse> content = userPage.getContent().stream().map(user -> {
             String roleName = user.getRole().getName();
@@ -144,7 +153,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
 
-        if ("locked".equalsIgnoreCase(status)) {
+        if ("LOCKED".equalsIgnoreCase(status)) {
             user.setActive(false);
             AuditLog log = AuditLog.builder()
                     .user(user)
@@ -155,7 +164,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                     .createdAt(LocalDateTime.now())
                     .build();
             auditLogRepository.save(log);
-        } else {
+        } else if ("ACTIVE".equalsIgnoreCase(status)) {
             user.setActive(true);
             AuditLog log = AuditLog.builder()
                     .user(user)
@@ -166,9 +175,48 @@ public class AdminUserServiceImpl implements IAdminUserService {
                     .createdAt(LocalDateTime.now())
                     .build();
             auditLogRepository.save(log);
+        } else {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Trạng thái không hợp lệ");
         }
-        
         userRepository.save(user);
     }
-}
 
+    @Override
+    @Transactional
+    public void updateUserRole(Long id, String newRole, Long currentUserId) {
+        if (id.equals(currentUserId)) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Không thể tự cập quyền của chính mình");
+        }
+
+        if (!newRole.equalsIgnoreCase("ADMIN") && !newRole.equalsIgnoreCase("INSTRUCTOR") && !newRole.equalsIgnoreCase("USER")) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ hỗ trợ cập nhật thành ADMIN, INSTRUCTOR hoặc USER");
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
+
+        String oldRole = user.getRole().getName();
+        if (oldRole.equalsIgnoreCase("ADMIN") && !newRole.equalsIgnoreCase("ADMIN")) {
+            long adminCount = userRepository.countByRoleName("ADMIN");
+            if (adminCount <= 1) {
+                throw new AppException(ErrorCode.BAD_REQUEST, "Không thể thu hồi quyền Admin duy nhất của hệ thống");
+            }
+        }
+
+        Role role = roleRepository.findByName(newRole.toUpperCase())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, "Không tìm thấy Role"));
+
+        user.setRole(role);
+        userRepository.save(user);
+
+        AuditLog log = AuditLog.builder()
+                .user(user)
+                .actionType("UPDATE_ROLE")
+                .entityType("USER")
+                .entityId(user.getId().toString())
+                .description("Cập nhật role từ " + oldRole + " thành " + newRole)
+                .createdAt(LocalDateTime.now())
+                .build();
+        auditLogRepository.save(log);
+    }
+}
