@@ -82,7 +82,7 @@ public class ProgressController {
 
     @GetMapping("/instructor/practice-attempts")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<?> getPracticeAttempts(
+    public ResponseEntity<ApiResponse<PageResponse<PracticeAttemptDetailResponse>>> getPracticeAttempts(
             @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(required = false) Long learnerId,
             @RequestParam(required = false) Long lessonId,
@@ -104,7 +104,7 @@ public class ProgressController {
 
         if (groupBy != null && !groupBy.isBlank()) {
             List<PracticeAttemptGroupedResponse> groupedResponses = instructorService.getGroupedPracticeAttemptDetail(currentUser.getId(), filterRequest);
-            return ResponseEntity.ok(ApiResponse.<List<PracticeAttemptGroupedResponse>>builder()
+            return (ResponseEntity) ResponseEntity.ok(ApiResponse.<List<PracticeAttemptGroupedResponse>>builder()
                     .message("Get grouped attempts successfully")
                     .data(groupedResponses)
                     .build());
