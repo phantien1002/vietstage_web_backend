@@ -14,6 +14,13 @@ public class AppConfigResponse {
     private String value;
     private String description;
     
+    private String valueType;
+    private Double min;
+    private Double max;
+    private Double step;
+    private String options;
+    private String defaultValue;
+    
     @JsonProperty("config_group")
     private String configGroup;
     

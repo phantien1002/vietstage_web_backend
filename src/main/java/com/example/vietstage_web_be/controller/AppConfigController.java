@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.controller;
 
 import com.example.vietstage_web_be.dto.BaseResponse;
+import com.example.vietstage_web_be.dto.request.ConfigUpdateRequest;
 import com.example.vietstage_web_be.dto.response.AppConfigResponse;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.IAppConfigService;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
@@ -38,11 +41,10 @@ public class AppConfigController {
     @Operation(summary = "Cập nhật một cấu hình")
     public ResponseEntity<BaseResponse<AppConfigResponse>> updateConfig(
             @PathVariable String key,
-            @RequestBody Map<String, String> request,
+            @Valid @RequestBody ConfigUpdateRequest request,
             @AuthenticationPrincipal(expression = "user") User user) {
         
-        String value = request.get("value");
-        AppConfigResponse response = appConfigService.updateConfig(key, value, user);
+        AppConfigResponse response = appConfigService.updateConfig(key, request.getValue(), user);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 

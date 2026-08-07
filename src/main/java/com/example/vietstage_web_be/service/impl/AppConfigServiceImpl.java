@@ -38,7 +38,9 @@ public class AppConfigServiceImpl implements IAppConfigService {
     @Transactional
     public AppConfigResponse updateConfig(String key, String value, User updatedBy) {
         AppConfig config = appConfigRepository.findByConfigKey(key)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy cấu hình này"));
+
+        validateConfigValue(config, value);
 
         config.setConfigValue(value);
         config.setUpdatedBy(updatedBy);
@@ -46,6 +48,44 @@ public class AppConfigServiceImpl implements IAppConfigService {
         appConfigRepository.save(config);
 
         return mapToResponse(config);
+    }
+
+    private void validateConfigValue(AppConfig config, String value) {
+        if (value == null) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị cấu hình không được để trống");
+        }
+
+        String type = config.getValueType();
+        if (type == null) return;
+
+        switch (type.toUpperCase()) {
+            case "BOOLEAN":
+                if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
+                    throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị phải là true hoặc false");
+                }
+                break;
+            case "NUMBER":
+                try {
+                    double numVal = Double.parseDouble(value);
+                    if (config.getMinValue() != null && numVal < config.getMinValue()) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị nhỏ nhất cho phép là " + config.getMinValue());
+                    }
+                    if (config.getMaxValue() != null && numVal > config.getMaxValue()) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị lớn nhất cho phép là " + config.getMaxValue());
+                    }
+                } catch (NumberFormatException e) {
+                    throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị phải là một số hợp lệ");
+                }
+                break;
+            case "STRING":
+                if (config.getOptions() != null && !config.getOptions().isEmpty()) {
+                    List<String> validOptions = List.of(config.getOptions().split(","));
+                    if (!validOptions.contains(value)) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị phải nằm trong danh sách: " + config.getOptions());
+                    }
+                }
+                break;
+        }
     }
 
     @Override
@@ -66,6 +106,12 @@ public class AppConfigServiceImpl implements IAppConfigService {
                 .key(config.getConfigKey())
                 .value(config.getConfigValue())
                 .description(config.getDescription())
+                .valueType(config.getValueType())
+                .min(config.getMinValue())
+                .max(config.getMaxValue())
+                .step(config.getStepValue())
+                .options(config.getOptions())
+                .defaultValue(config.getDefaultValue())
                 .configGroup(config.getConfigGroup())
                 .updatedBy(config.getUpdatedBy() != null ? config.getUpdatedBy().getFullName() : null)
                 .updatedAt(config.getUpdatedAt())

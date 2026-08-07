@@ -31,6 +31,24 @@ public class AppConfig {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "value_type")
+    private String valueType; // NUMBER, BOOLEAN, STRING, JSON
+
+    @Column(name = "min_value")
+    private Double minValue;
+
+    @Column(name = "max_value")
+    private Double maxValue;
+
+    @Column(name = "step_value")
+    private Double stepValue;
+
+    @Column(name = "options", columnDefinition = "TEXT")
+    private String options;
+
+    @Column(name = "default_value")
+    private String defaultValue;
+
     @ManyToOne
     @JoinColumn(name = "updated_by")
     private User updatedBy;
