@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -76,8 +77,28 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
             String instructorName = lesson.getCreatedBy() != null ? lesson.getCreatedBy().getFullName() : "Unknown";
             String inst = lesson.getInstrument() != null ? lesson.getInstrument().getName() : "Unknown";
 
+            Optional<ContentReview> latestReviewOpt = contentReviewRepository.findFirstByLessonIdOrderByReviewedAtDesc(lesson.getId());
+
+            Long responseId = lesson.getId();
+            String feedback = null;
+            String approvedBy = null;
+            String approvedAt = null;
+
+            if (latestReviewOpt.isPresent()) {
+                ContentReview review = latestReviewOpt.get();
+                responseId = review.getId();
+                feedback = review.getComment();
+                if (review.getReviewer() != null) {
+                    approvedBy = review.getReviewer().getFullName();
+                }
+                if (review.getReviewedAt() != null) {
+                    DateTimeFormatter reviewFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                    approvedAt = review.getReviewedAt().format(reviewFormatter);
+                }
+            }
+
             return ReviewItemResponse.builder()
-                    .id(lesson.getId())
+                    .id(responseId)
                     .lessonId(lesson.getId())
                     .title(lesson.getTitle())
                     .instrumentId(lesson.getInstrument() != null ? lesson.getInstrument().getId() : null)
@@ -89,6 +110,9 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .technicalNotes(lesson.getDescription()) // Mapping description to technical notes for now
                     .description(lesson.getDescription())
                     .status(lesson.getStatus() != null ? lesson.getStatus().toLowerCase() : "pending")
+                    .feedback(feedback)
+                    .approvedBy(approvedBy)
+                    .approvedAt(approvedAt)
                     .build();
         }).collect(Collectors.toList());
 

@@ -19,6 +19,12 @@ public class LessonSpecification {
                         criteriaBuilder.upper(root.get("status")), 
                         status.toUpperCase()
                 ));
+            } else {
+                // If no specific status is requested, exclude DRAFT from admin reviews
+                predicates.add(criteriaBuilder.notEqual(
+                        criteriaBuilder.upper(root.get("status")), 
+                        "DRAFT"
+                ));
             }
 
             if (StringUtils.hasText(search)) {
