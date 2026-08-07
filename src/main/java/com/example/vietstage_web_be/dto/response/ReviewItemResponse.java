@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,9 +17,8 @@ public class ReviewItemResponse {
     private String instrument;
     private String instructor;
     private String date;
-    private String sheetMusicUrl;
-    private String audioUrl;
-    private String duration;
+    private List<AssetResponse> assets;
+    private String technicalNotes;
     private String description;
     private String status; // 'pending' | 'approved' | 'rejected'
     private String feedback;

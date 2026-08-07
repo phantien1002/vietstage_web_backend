@@ -1,5 +1,6 @@
 package com.example.vietstage_web_be.service.impl;
 
+import com.example.vietstage_web_be.dto.response.AssetResponse;
 import com.example.vietstage_web_be.dto.response.ReviewItemResponse;
 import com.example.vietstage_web_be.entity.Lesson;
 import com.example.vietstage_web_be.entity.MediaAsset;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,25 +33,32 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
 
     @Override
     public List<ReviewItemResponse> getAllReviews() {
-        List<Lesson> Lesson = lessonRepository.findAll();
-        return Lesson.stream().map(lesson -> {
-            String sheetUrl = "";
-            String audioUrl = "";
-            String duration = "00:00";
+        List<Lesson> pendingLessons = lessonRepository.findByStatusIgnoreCase("PENDING");
+        return pendingLessons.stream().map(lesson -> {
+            List<AssetResponse> assets = new ArrayList<>();
             if (lesson.getMediaAssets() != null) {
                 for (MediaAsset asset : lesson.getMediaAssets()) {
-                    if ("SHEET_MUSIC".equals(asset.getAssetType()) || "DOCUMENT".equals(asset.getAssetType())) {
-                        sheetUrl = asset.getAssetUrl();
-                    }
-                    if ("AUDIO".equals(asset.getAssetType()) || "VIDEO".equals(asset.getAssetType())) {
-                        audioUrl = asset.getAssetUrl();
-                        if (asset.getDurationSec() != null) {
-                            int totalSecs = asset.getDurationSec().intValue();
-                            int min = totalSecs / 60;
-                            int sec = totalSecs % 60;
-                            duration = String.format("%02d:%02d", min, sec);
+                    String mimeType = "application/octet-stream";
+                    if (asset.getAssetType() != null) {
+                        if (asset.getAssetType().contains("AUDIO")) {
+                            mimeType = "audio/mpeg";
+                        } else if (asset.getAssetType().contains("VIDEO")) {
+                            mimeType = "video/mp4";
+                        } else if (asset.getAssetType().contains("IMAGE") || asset.getAssetType().contains("SHEET")) {
+                            mimeType = "image/png";
+                        } else if (asset.getAssetType().contains("DOCUMENT")) {
+                            mimeType = "application/pdf";
                         }
                     }
+                    
+                    assets.add(AssetResponse.builder()
+                            .id(asset.getId())
+                            .assetType(asset.getAssetType())
+                            .title(asset.getTitle())
+                            .assetUrl(asset.getAssetUrl())
+                            .mimeType(mimeType)
+                            .durationSec(asset.getDurationSec())
+                            .build());
                 }
             }
             
@@ -65,9 +74,8 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .instrument(inst)
                     .instructor(instructorName)
                     .date(dateStr)
-                    .sheetMusicUrl(sheetUrl)
-                    .audioUrl(audioUrl)
-                    .duration(duration)
+                    .assets(assets)
+                    .technicalNotes(lesson.getDescription()) // Mapping description to technical notes for now
                     .description(lesson.getDescription())
                     .status(lesson.getStatus() != null ? lesson.getStatus().toLowerCase() : "pending")
                     .build();

@@ -116,8 +116,10 @@ public class AdminController {
     }
 
     @PostMapping("/reviews/{id}/approve")
-    public ApiResponse<Void> approveReview(@PathVariable Long id) {
-        adminReviewService.approveReview(id, 1L); // Assuming adminId = 1L for now
+    public ApiResponse<Void> approveReview(
+            @AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser,
+            @PathVariable Long id) {
+        adminReviewService.approveReview(id, currentUser.getId());
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully approved review")
@@ -126,9 +128,10 @@ public class AdminController {
 
     @PostMapping("/reviews/{id}/reject")
     public ApiResponse<Void> rejectReview(
+            @AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser,
             @PathVariable Long id, 
             @RequestBody ReviewActionRequest request) {
-        adminReviewService.rejectReview(id, request.getFeedback(), 1L);
+        adminReviewService.rejectReview(id, request.getFeedback(), currentUser.getId());
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully rejected review")
