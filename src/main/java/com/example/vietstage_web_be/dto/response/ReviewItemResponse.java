@@ -12,7 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewItemResponse {
-    private Long id;
+    private Long id; // backward compatibility for frontend
+    private Long lessonId;
     private String title;
     private String instrument;
     private String instructor;

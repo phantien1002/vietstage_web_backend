@@ -10,6 +10,8 @@ import com.example.vietstage_web_be.dto.response.ApiResponse;
 import com.example.vietstage_web_be.dto.response.DashboardStatsResponse;
 import com.example.vietstage_web_be.dto.response.InstructorCreateResponse;
 import com.example.vietstage_web_be.dto.response.PageResponse;
+import com.example.vietstage_web_be.dto.response.ApiResponse;
+import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.AdminUserResponse;
 import com.example.vietstage_web_be.dto.response.ReviewItemResponse;
 import com.example.vietstage_web_be.service.IAdminUserService;
@@ -20,6 +22,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -107,11 +112,19 @@ public class AdminController {
     }
 
     @GetMapping("/reviews")
-    public ApiResponse<List<ReviewItemResponse>> getAllReviews() {
-        return ApiResponse.<List<ReviewItemResponse>>builder()
+    public ApiResponse<PageResponse<ReviewItemResponse>> getAllReviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long instructorId,
+            @RequestParam(required = false) Long instrumentId) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
+        
+        return ApiResponse.<PageResponse<ReviewItemResponse>>builder()
                 .success(true)
                 .message("Successfully fetched all reviews")
-                .data(adminReviewService.getAllReviews())
+                .data(adminReviewService.getAllReviews(status, instructorId, instrumentId, pageable))
                 .build();
     }
 

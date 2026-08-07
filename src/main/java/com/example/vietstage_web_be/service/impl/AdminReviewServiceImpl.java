@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.service.impl;
 
 import com.example.vietstage_web_be.dto.response.AssetResponse;
+import com.example.vietstage_web_be.dto.response.PageResponse;
 import com.example.vietstage_web_be.dto.response.ReviewItemResponse;
 import com.example.vietstage_web_be.entity.Lesson;
 import com.example.vietstage_web_be.entity.MediaAsset;
@@ -9,10 +10,13 @@ import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.LessonRepository;
+import com.example.vietstage_web_be.repository.LessonSpecification;
 import com.example.vietstage_web_be.repository.ContentReviewRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
 import com.example.vietstage_web_be.service.IAdminReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,9 +36,13 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
     private final UserRepository userRepository;
 
     @Override
-    public List<ReviewItemResponse> getAllReviews() {
-        List<Lesson> pendingLessons = lessonRepository.findByStatusIgnoreCase("PENDING");
-        return pendingLessons.stream().map(lesson -> {
+    public PageResponse<ReviewItemResponse> getAllReviews(String status, Long instructorId, Long instrumentId, Pageable pageable) {
+        Page<Lesson> lessonPage = lessonRepository.findAll(
+                LessonSpecification.filterBy(status, instructorId, instrumentId), 
+                pageable
+        );
+
+        List<ReviewItemResponse> content = lessonPage.getContent().stream().map(lesson -> {
             List<AssetResponse> assets = new ArrayList<>();
             if (lesson.getMediaAssets() != null) {
                 for (MediaAsset asset : lesson.getMediaAssets()) {
@@ -70,6 +78,7 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
 
             return ReviewItemResponse.builder()
                     .id(lesson.getId())
+                    .lessonId(lesson.getId())
                     .title(lesson.getTitle())
                     .instrument(inst)
                     .instructor(instructorName)
@@ -80,6 +89,15 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .status(lesson.getStatus() != null ? lesson.getStatus().toLowerCase() : "pending")
                     .build();
         }).collect(Collectors.toList());
+
+        return PageResponse.<ReviewItemResponse>builder()
+                .content(content)
+                .page(lessonPage.getNumber())
+                .size(lessonPage.getSize())
+                .totalElements(lessonPage.getTotalElements())
+                .totalPages(lessonPage.getTotalPages())
+                .last(lessonPage.isLast())
+                .build();
     }
 
     @Override
