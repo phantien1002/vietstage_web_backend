@@ -21,6 +21,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import com.example.vietstage_web_be.entity.Instrument;
+import com.example.vietstage_web_be.repository.InstrumentRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +33,7 @@ public class UserServiceImpl implements IUserService {
 
     private final UserRepository UserRepository;
     private final RoleRepository RoleRepository;
+    private final InstrumentRepository instrumentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -79,6 +85,12 @@ public class UserServiceImpl implements IUserService {
         profile.setBiography(request.getBiography());
         profile.setYearsExperience(request.getYearsExperience() != null ? request.getYearsExperience() : 0);
         profile.setUpdatedAt(LocalDateTime.now());
+
+        if (request.getInstrumentIds() != null && !request.getInstrumentIds().isEmpty()) {
+            List<Instrument> instrumentsList = instrumentRepository.findAllById(request.getInstrumentIds());
+            Set<Instrument> instruments = new HashSet<>(instrumentsList);
+            profile.setInstruments(instruments);
+        }
 
         user.setInstructorProfile(profile);
 
