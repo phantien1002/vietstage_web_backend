@@ -13,18 +13,41 @@ import java.util.List;
 @AllArgsConstructor
 public class DashboardStatsResponse {
     private long totalUsers;
+    private long activeUsers; // new
     private long totalRevenue;
     private long totalLessons;
     private long activeInstructors;
-    private List<ChartData> chartData;
+    
+    private List<PopularInstrument> popularInstruments; // new
+    private List<SessionDurationData> sessionDuration; // new
+    private List<RetentionData> retention; // new
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ChartData {
-        private String name;
-        private long users;
-        private long revenue;
+    public static class PopularInstrument {
+        private Long instrumentId;
+        private String instrumentName;
+        private Long practiceCount;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SessionDurationData {
+        private String period;
+        private Double averageDurationMinutes;
+        private Double totalDurationMinutes;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RetentionData {
+        private String period;
+        private Double retentionRate;
     }
 }
