@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewActionRequest {
+    @NotBlank(message = "Phản hồi từ chối là bắt buộc")
     private String feedback;
 }

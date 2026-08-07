@@ -10,7 +10,7 @@ import java.util.List;
 
 public class LessonSpecification {
 
-    public static Specification<Lesson> filterBy(String status, Long instructorId, Long instrumentId) {
+    public static Specification<Lesson> filterBy(String status, String search, Long instructorId, Long instrumentId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -19,6 +19,13 @@ public class LessonSpecification {
                         criteriaBuilder.upper(root.get("status")), 
                         status.toUpperCase()
                 ));
+            }
+
+            if (StringUtils.hasText(search)) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                Predicate titlePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), searchPattern);
+                Predicate instructorPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.join("createdBy").get("fullName")), searchPattern);
+                predicates.add(criteriaBuilder.or(titlePredicate, instructorPredicate));
             }
 
             if (instructorId != null) {

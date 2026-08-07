@@ -15,7 +15,9 @@ public class ReviewItemResponse {
     private Long id; // backward compatibility for frontend
     private Long lessonId;
     private String title;
+    private Long instrumentId;
     private String instrument;
+    private Long instructorId;
     private String instructor;
     private String date;
     private List<AssetResponse> assets;

@@ -36,9 +36,9 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
     private final UserRepository userRepository;
 
     @Override
-    public PageResponse<ReviewItemResponse> getAllReviews(String status, Long instructorId, Long instrumentId, Pageable pageable) {
+    public PageResponse<ReviewItemResponse> getAllReviews(String status, String search, Long instructorId, Long instrumentId, Pageable pageable) {
         Page<Lesson> lessonPage = lessonRepository.findAll(
-                LessonSpecification.filterBy(status, instructorId, instrumentId), 
+                LessonSpecification.filterBy(status, search, instructorId, instrumentId), 
                 pageable
         );
 
@@ -80,7 +80,9 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .id(lesson.getId())
                     .lessonId(lesson.getId())
                     .title(lesson.getTitle())
+                    .instrumentId(lesson.getInstrument() != null ? lesson.getInstrument().getId() : null)
                     .instrument(inst)
+                    .instructorId(lesson.getCreatedBy() != null ? lesson.getCreatedBy().getId() : null)
                     .instructor(instructorName)
                     .date(dateStr)
                     .assets(assets)
@@ -104,7 +106,11 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
     @Transactional
     public void approveReview(Long id, Long adminId) {
         Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Bài học không tồn tại"));
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (!"PENDING".equalsIgnoreCase(lesson.getStatus())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ có thể xử lý bài học đang ở trạng thái chờ duyệt (PENDING)");
+        }
 
         lesson.setStatus("APPROVED");
         lessonRepository.save(lesson);
@@ -126,7 +132,11 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
     @Transactional
     public void rejectReview(Long id, String feedback, Long adminId) {
         Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Bài học không tồn tại"));
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (!"PENDING".equalsIgnoreCase(lesson.getStatus())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ có thể xử lý bài học đang ở trạng thái chờ duyệt (PENDING)");
+        }
 
         lesson.setStatus("REJECTED");
         lessonRepository.save(lesson);

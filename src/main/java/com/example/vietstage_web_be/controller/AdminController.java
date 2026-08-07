@@ -116,6 +116,7 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Long instructorId,
             @RequestParam(required = false) Long instrumentId) {
         
@@ -124,7 +125,7 @@ public class AdminController {
         return ApiResponse.<PageResponse<ReviewItemResponse>>builder()
                 .success(true)
                 .message("Successfully fetched all reviews")
-                .data(adminReviewService.getAllReviews(status, instructorId, instrumentId, pageable))
+                .data(adminReviewService.getAllReviews(status, search, instructorId, instrumentId, pageable))
                 .build();
     }
 
@@ -143,7 +144,7 @@ public class AdminController {
     public ApiResponse<Void> rejectReview(
             @AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser,
             @PathVariable Long id, 
-            @RequestBody ReviewActionRequest request) {
+            @Valid @RequestBody ReviewActionRequest request) {
         adminReviewService.rejectReview(id, request.getFeedback(), currentUser.getId());
         return ApiResponse.<Void>builder()
                 .success(true)
