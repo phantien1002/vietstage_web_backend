@@ -72,10 +72,11 @@ public class AdminController {
 
     @PutMapping("/users/{id}/status")
     public ApiResponse<Void> updateUserStatus(
+            @AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser,
             @PathVariable Long id,
             @RequestBody UserStatusUpdateRequest request) {
         
-        adminUserService.updateUserStatus(id, request.getStatus());
+        adminUserService.updateUserStatus(id, request.getStatus(), currentUser.getId());
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully updated user status")
@@ -92,6 +93,31 @@ public class AdminController {
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully updated user role")
+                .build();
+    }
+
+    @PutMapping("/users/{id}")
+    public ApiResponse<Void> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.UpdateProfileRequest request) {
+        
+        adminUserService.updateUser(id, request);
+        return ApiResponse.<Void>builder()
+                .success(true)
+                .message("Successfully updated user profile")
+                .build();
+    }
+
+    @PostMapping("/users/{id}/reset-password")
+    public ApiResponse<Void> resetPassword(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> request) {
+        
+        String newPassword = request.get("new_password");
+        adminUserService.resetPassword(id, newPassword);
+        return ApiResponse.<Void>builder()
+                .success(true)
+                .message("Successfully reset password")
                 .build();
     }
 

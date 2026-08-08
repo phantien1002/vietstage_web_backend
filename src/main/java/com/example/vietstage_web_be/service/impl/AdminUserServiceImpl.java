@@ -35,6 +35,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
     private final AuditLogRepository auditLogRepository;
     private final LessonRepository lessonRepository;
     private final RoleRepository roleRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
     public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, List<String> roles, String status, String sortBy, String sortDir) {
@@ -69,7 +70,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 int courses = user.getCreatedLessons() != null ? user.getCreatedLessons().size() : 0;
                 
                 int students = (int) userRepository.countLearnersForInstructor(user.getId());
-                double rating = 5.0; // Default or mock rating
+                double rating = 0.0;
                 
                 stats = UserStatsDto.builder()
                         .courses(courses)
@@ -140,7 +141,10 @@ public class AdminUserServiceImpl implements IAdminUserService {
 
     @Override
     @Transactional
-    public void updateUserStatus(Long id, String status) {
+    public void updateUserStatus(Long id, String status, Long currentUserId) {
+        if (id.equals(currentUserId) && "LOCKED".equalsIgnoreCase(status)) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Không thể tự khóa tài khoản của chính mình");
+        }
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
 
@@ -179,8 +183,8 @@ public class AdminUserServiceImpl implements IAdminUserService {
             throw new AppException(ErrorCode.FORBIDDEN, "Không thể tự cập quyền của chính mình");
         }
 
-        if (!newRole.equalsIgnoreCase("ADMIN") && !newRole.equalsIgnoreCase("INSTRUCTOR") && !newRole.equalsIgnoreCase("USER")) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ hỗ trợ cập nhật thành ADMIN, INSTRUCTOR hoặc USER");
+        if (!newRole.equalsIgnoreCase("ADMIN") && !newRole.equalsIgnoreCase("INSTRUCTOR") && !newRole.equalsIgnoreCase("LEARNER")) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ hỗ trợ cập nhật thành ADMIN, INSTRUCTOR hoặc LEARNER");
         }
 
         User user = userRepository.findById(id)
@@ -206,6 +210,52 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 .entityType("USER")
                 .entityId(user.getId().toString())
                 .description("Cập nhật role từ " + oldRole + " thành " + newRole)
+                .createdAt(LocalDateTime.now())
+                .build();
+        auditLogRepository.save(log);
+    }
+
+    @Override
+    @Transactional
+    public void updateUser(Long id, com.example.vietstage_web_be.dto.request.UpdateProfileRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
+
+        if (request.getFullName() != null) user.setFullName(request.getFullName());
+        if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
+
+        userRepository.save(user);
+
+        AuditLog log = AuditLog.builder()
+                .user(user)
+                .actionType("UPDATE_PROFILE")
+                .entityType("USER")
+                .entityId(user.getId().toString())
+                .description("Cập nhật thông tin tài khoản bởi Admin")
+                .createdAt(LocalDateTime.now())
+                .build();
+        auditLogRepository.save(log);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(Long id, String newPassword) {
+        if (newPassword == null || newPassword.trim().isEmpty() || newPassword.length() < 6) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Mật khẩu mới phải có ít nhất 6 ký tự");
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        AuditLog log = AuditLog.builder()
+                .user(user)
+                .actionType("RESET_PASSWORD")
+                .entityType("USER")
+                .entityId(user.getId().toString())
+                .description("Mật khẩu được cấp lại bởi Admin")
                 .createdAt(LocalDateTime.now())
                 .build();
         auditLogRepository.save(log);
