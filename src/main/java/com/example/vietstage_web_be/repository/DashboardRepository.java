@@ -45,29 +45,29 @@ public class DashboardRepository {
 
     public List<Map<String, Object>> getSessionDuration(LocalDateTime fromDate, LocalDateTime toDate, String granularity) {
         String dateFormat = getDateFormatForGranularity(granularity);
-        String sql = """
-            SELECT TO_CHAR(started_at, ?) as period,
+        String sql = String.format("""
+            SELECT TO_CHAR(started_at, '%s') as period,
                    AVG(duration_minutes) as average_duration,
                    SUM(duration_minutes) as total_duration
             FROM practice_sessions
             WHERE started_at >= ? AND started_at <= ?
-            GROUP BY TO_CHAR(started_at, ?)
+            GROUP BY TO_CHAR(started_at, '%s')
             ORDER BY period ASC
-        """;
-        return jdbcTemplate.queryForList(sql, dateFormat, fromDate, toDate, dateFormat);
+        """, dateFormat, dateFormat);
+        return jdbcTemplate.queryForList(sql, fromDate, toDate);
     }
 
     public List<Map<String, Object>> getRetentionRate(LocalDateTime fromDate, LocalDateTime toDate, String granularity) {
         String dateFormat = getDateFormatForGranularity(granularity);
         // Calculate retention: users active in this period who were also active in the PREVIOUS period.
         // For simplicity and efficiency, we compare user activity across periods.
-        String sql = """
+        String sql = String.format("""
             WITH periods AS (
-                SELECT DISTINCT learner_id as user_id, TO_CHAR(started_at, ?) as period
+                SELECT DISTINCT learner_id as user_id, TO_CHAR(started_at, '%s') as period
                 FROM practice_sessions
                 WHERE started_at >= ? AND started_at <= ?
                 UNION
-                SELECT DISTINCT user_id, TO_CHAR(started_at, ?) as period
+                SELECT DISTINCT user_id, TO_CHAR(started_at, '%s') as period
                 FROM usage_sessions
                 WHERE started_at >= ? AND started_at <= ?
             ),
@@ -89,8 +89,8 @@ public class DashboardRepository {
             FROM period_users pu
             LEFT JOIN retained_users ru ON pu.period = ru.period
             ORDER BY pu.period ASC
-        """;
-        return jdbcTemplate.queryForList(sql, dateFormat, fromDate, toDate, dateFormat, fromDate, toDate);
+        """, dateFormat, dateFormat);
+        return jdbcTemplate.queryForList(sql, fromDate, toDate, fromDate, toDate);
     }
 
     private String getDateFormatForGranularity(String granularity) {
