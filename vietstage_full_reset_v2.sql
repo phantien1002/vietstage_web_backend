@@ -142,7 +142,8 @@ CREATE TABLE instructor_profiles (
 -- 3. INSTRUMENTS, LEARNER SELECTION AND INSTRUCTOR EXPERTISE
 -- =========================================================
 CREATE TABLE instruments (
-    instrument_id BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
+    instrument_code VARCHAR(50) UNIQUE,
     name          VARCHAR(100) NOT NULL UNIQUE,
     description   TEXT,
     icon_url      TEXT,
@@ -153,7 +154,7 @@ CREATE TABLE instruments (
 
 CREATE TABLE learner_instruments (
     learner_user_id          BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    instrument_id            BIGINT NOT NULL REFERENCES instruments(instrument_id) ON DELETE RESTRICT,
+    instrument_id            BIGINT NOT NULL REFERENCES instruments(id) ON DELETE RESTRICT,
     current_skill_level_id   BIGINT NOT NULL REFERENCES skill_levels(skill_level_id) ON DELETE RESTRICT,
     adaptive_skill_level_id  BIGINT NOT NULL REFERENCES skill_levels(skill_level_id) ON DELETE RESTRICT,
     selected_at              TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -162,13 +163,13 @@ CREATE TABLE learner_instruments (
 
 CREATE TABLE instructor_instruments (
     instructor_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    instrument_id      BIGINT NOT NULL REFERENCES instruments(instrument_id) ON DELETE RESTRICT,
+    instrument_id      BIGINT NOT NULL REFERENCES instruments(id) ON DELETE RESTRICT,
     PRIMARY KEY (instructor_user_id, instrument_id)
 );
 
 CREATE TABLE techniques (
     technique_id  BIGSERIAL PRIMARY KEY,
-    instrument_id BIGINT NOT NULL REFERENCES instruments(instrument_id) ON DELETE RESTRICT,
+    instrument_id BIGINT NOT NULL REFERENCES instruments(id) ON DELETE RESTRICT,
     name          VARCHAR(120) NOT NULL,
     description   TEXT,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -182,7 +183,7 @@ CREATE TABLE techniques (
 CREATE TABLE lessons (
     lesson_id            BIGSERIAL PRIMARY KEY,
     lesson_code          VARCHAR(50) UNIQUE,
-    instrument_id        BIGINT NOT NULL REFERENCES instruments(instrument_id) ON DELETE RESTRICT,
+    instrument_id        BIGINT NOT NULL REFERENCES instruments(id) ON DELETE RESTRICT,
     skill_level_id       BIGINT NOT NULL REFERENCES skill_levels(skill_level_id) ON DELETE RESTRICT,
     created_by_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     title                VARCHAR(200) NOT NULL,
@@ -417,7 +418,7 @@ CREATE TABLE learner_cosmetics (
 -- =========================================================
 CREATE TABLE daily_challenges (
     challenge_id   BIGSERIAL PRIMARY KEY,
-    instrument_id  BIGINT REFERENCES instruments(instrument_id) ON DELETE RESTRICT,
+    instrument_id  BIGINT REFERENCES instruments(id) ON DELETE RESTRICT,
     title          VARCHAR(200) NOT NULL,
     description    TEXT,
     challenge_date DATE NOT NULL,
