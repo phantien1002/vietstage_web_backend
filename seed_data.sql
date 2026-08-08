@@ -24,10 +24,10 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 3. INSTRUCTOR INSTRUMENTS (Specialty)
 INSERT INTO instructor_instruments (instructor_user_id, instrument_id) VALUES 
-((SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh')),
-((SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Sao Truc')),
-((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Dan Bau')),
-((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'))
+((SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh')),
+((SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Sáo')),
+((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Đàn Bầu')),
+((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'))
 ON CONFLICT DO NOTHING;
 
 -- 4. LEARNER PROFILES
@@ -38,9 +38,9 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 5. LESSONS
 INSERT INTO lessons (instrument_id, skill_level_id, created_by_user_id, title, description, status, order_index) VALUES 
-((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 1: Làm quen Đàn Tranh', 'Cách gảy cơ bản', 'APPROVED', 1),
-((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 2: Nốt nhạc cơ bản', 'Các nốt trên Đàn Tranh', 'APPROVED', 2),
-((SELECT instrument_id FROM instruments WHERE name = 'Sao Truc'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), 'Bài 1: Cách thổi Sáo', 'Cách lấy hơi và thổi', 'APPROVED', 1)
+((SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 1: Làm quen Đàn Tranh', 'Cách gảy cơ bản', 'APPROVED', 1),
+((SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 2: Nốt nhạc cơ bản', 'Các nốt trên Đàn Tranh', 'APPROVED', 2),
+((SELECT instrument_id FROM instruments WHERE name = 'Sáo'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), 'Bài 1: Cách thổi Sáo', 'Cách lấy hơi và thổi', 'APPROVED', 1)
 ON CONFLICT DO NOTHING;
 
 -- 6. EXERCISES
@@ -59,8 +59,8 @@ INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id, descriptio
 
 -- 7. TECHNIQUES
 INSERT INTO techniques (instrument_id, name, description, difficulty, guide_url) VALUES
-((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), 'Rung', 'Ky thuat rung day co ban', 'EASY', 'http://example.com/rung'),
-((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), 'Mo', 'Ky thuat mo day', 'MEDIUM', 'http://example.com/mo'),
-((SELECT instrument_id FROM instruments WHERE name = 'Sao Truc'), 'Vuot', 'Ky thuat vuot nhip', 'EASY', 'http://example.com/vuot')
+((SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'), 'Rung', 'Ky thuat rung day co ban', 'EASY', 'http://example.com/rung'),
+((SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'), 'Mo', 'Ky thuat mo day', 'MEDIUM', 'http://example.com/mo'),
+((SELECT instrument_id FROM instruments WHERE name = 'Sáo'), 'Vuot', 'Ky thuat vuot nhip', 'EASY', 'http://example.com/vuot')
 ON CONFLICT DO NOTHING;
 

@@ -579,10 +579,10 @@ INSERT INTO skill_levels (level_code, level_name, order_index) VALUES
 ON CONFLICT (level_code) DO NOTHING;
 
 INSERT INTO instruments (name, description) VALUES
-    ('Dan Tranh', 'Vietnamese 16-string zither'),
-    ('Dan Bau',   'Vietnamese monochord'),
-    ('Sao Truc',  'Vietnamese bamboo flute'),
-    ('Trong',     'Vietnamese traditional drum')
+    ('Đàn Tranh', 'Vietnamese 16-string zither'),
+    ('Đàn Bầu',   'Vietnamese monochord'),
+    ('Sáo',  'Vietnamese bamboo flute'),
+    ('Trống Chầu',     'Vietnamese traditional drum')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO app_configs (config_key, config_value, description) VALUES
@@ -774,10 +774,10 @@ INSERT INTO skill_levels (level_code, level_name, order_index) VALUES
 ON CONFLICT (level_code) DO NOTHING;
 
 INSERT INTO instruments (name, description) VALUES
-    ('Dan Tranh', 'Vietnamese 16-string zither'),
-    ('Dan Bau',   'Vietnamese monochord'),
-    ('Sao Truc',  'Vietnamese bamboo flute'),
-    ('Trong',     'Vietnamese traditional drum')
+    ('Đàn Tranh', 'Vietnamese 16-string zither'),
+    ('Đàn Bầu',   'Vietnamese monochord'),
+    ('Sáo',  'Vietnamese bamboo flute'),
+    ('Trống Chầu',     'Vietnamese traditional drum')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO app_configs (config_key, config_value, description) VALUES

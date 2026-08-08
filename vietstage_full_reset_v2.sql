@@ -588,10 +588,10 @@ INSERT INTO skill_levels (level_code, level_name, order_index) VALUES
 ON CONFLICT (level_code) DO NOTHING;
 
 INSERT INTO instruments (name, description) VALUES
-    ('Dan Tranh', 'Vietnamese 16-string zither'),
-    ('Dan Bau',   'Vietnamese monochord'),
-    ('Sao Truc',  'Vietnamese bamboo flute'),
-    ('Trong',     'Vietnamese traditional drum')
+    ('Đàn Tranh', 'Vietnamese 16-string zither'),
+    ('Đàn Bầu',   'Vietnamese monochord'),
+    ('Sáo',  'Vietnamese bamboo flute'),
+    ('Trống Chầu',     'Vietnamese traditional drum')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO app_configs (config_key, config_value, description) VALUES
@@ -633,10 +633,10 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 3. INSTRUCTOR INSTRUMENTS (Specialty)
 INSERT INTO instructor_instruments (instructor_user_id, instrument_id) VALUES 
-((SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh')),
-((SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Sao Truc')),
-((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Dan Bau')),
-((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'))
+((SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh')),
+((SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Sáo')),
+((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Đàn Bầu')),
+((SELECT user_id FROM users WHERE email = 'danbau.pro@vietstage.com'), (SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'))
 ON CONFLICT DO NOTHING;
 
 -- 4. LEARNER PROFILES
@@ -647,9 +647,9 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- 5. LESSONS
 INSERT INTO lessons (instrument_id, skill_level_id, created_by_user_id, title, description, status, order_index) VALUES 
-((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 1: Làm quen Đàn Tranh', 'Cách gảy cơ bản', 'APPROVED', 1),
-((SELECT instrument_id FROM instruments WHERE name = 'Dan Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 2: Nốt nhạc cơ bản', 'Các nốt trên Đàn Tranh', 'APPROVED', 2),
-((SELECT instrument_id FROM instruments WHERE name = 'Sao Truc'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), 'Bài 1: Cách thổi Sáo', 'Cách lấy hơi và thổi', 'APPROVED', 1)
+((SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 1: Làm quen Đàn Tranh', 'Cách gảy cơ bản', 'APPROVED', 1),
+((SELECT instrument_id FROM instruments WHERE name = 'Đàn Tranh'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'dantranh.master@vietstage.com'), 'Bài 2: Nốt nhạc cơ bản', 'Các nốt trên Đàn Tranh', 'APPROVED', 2),
+((SELECT instrument_id FROM instruments WHERE name = 'Sáo'), (SELECT skill_level_id FROM skill_levels WHERE level_code = 'BEGINNER'), (SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), 'Bài 1: Cách thổi Sáo', 'Cách lấy hơi và thổi', 'APPROVED', 1)
 ON CONFLICT DO NOTHING;
 
 -- 6. EXERCISES
