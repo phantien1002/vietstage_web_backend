@@ -19,7 +19,7 @@ public class DashboardRepository {
     public long getActiveUsers(LocalDateTime fromDate, LocalDateTime toDate) {
         String sql = """
             SELECT COUNT(DISTINCT user_id) FROM (
-                SELECT learner_user_id as user_id FROM practice_attempts WHERE completed_at >= ? AND completed_at <= ?
+                SELECT learner_id as user_id FROM practice_attempts WHERE created_at >= ? AND created_at <= ?
                 UNION
                 SELECT user_id FROM usage_sessions WHERE started_at >= ? AND started_at <= ?
             ) AS combined_users
@@ -35,7 +35,7 @@ public class DashboardRepository {
             JOIN exercises e ON pa.exercise_id = e.id
             JOIN lessons l ON e.lesson_id = l.lesson_id
             JOIN instruments i ON l.instrument_id = i.id
-            WHERE pa.completed_at >= ? AND pa.completed_at <= ?
+            WHERE pa.created_at >= ? AND pa.created_at <= ?
             GROUP BY i.id, i.name
             ORDER BY practice_count DESC
             LIMIT 5
@@ -47,10 +47,10 @@ public class DashboardRepository {
         String dateFormat = getDateFormatForGranularity(granularity);
         String sql = String.format("""
             SELECT TO_CHAR(started_at, '%s') as period,
-                   AVG(EXTRACT(EPOCH FROM (ended_at - started_at))/60.0) as average_duration,
-                   SUM(EXTRACT(EPOCH FROM (ended_at - started_at))/60.0) as total_duration
-            FROM usage_sessions
-            WHERE ended_at IS NOT NULL AND started_at >= ? AND started_at <= ?
+                   AVG(duration_minutes) as average_duration,
+                   SUM(duration_minutes) as total_duration
+            FROM practice_sessions
+            WHERE started_at >= ? AND started_at <= ?
             GROUP BY TO_CHAR(started_at, '%s')
             ORDER BY period ASC
         """, dateFormat, dateFormat);
@@ -63,9 +63,9 @@ public class DashboardRepository {
         // For simplicity and efficiency, we compare user activity across periods.
         String sql = String.format("""
             WITH periods AS (
-                SELECT DISTINCT learner_user_id as user_id, TO_CHAR(completed_at, '%s') as period
-                FROM practice_attempts
-                WHERE completed_at >= ? AND completed_at <= ?
+                SELECT DISTINCT learner_id as user_id, TO_CHAR(started_at, '%s') as period
+                FROM practice_sessions
+                WHERE started_at >= ? AND started_at <= ?
                 UNION
                 SELECT DISTINCT user_id, TO_CHAR(started_at, '%s') as period
                 FROM usage_sessions
