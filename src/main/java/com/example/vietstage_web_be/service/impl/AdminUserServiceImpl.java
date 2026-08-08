@@ -39,6 +39,14 @@ public class AdminUserServiceImpl implements IAdminUserService {
 
     @Override
     public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, List<String> roles, String status, String sortBy, String sortDir) {
+        if (page < 0) page = 0;
+        if (size <= 0) size = 10;
+
+        List<String> allowedSortFields = List.of("createdAt", "fullName", "email", "active");
+        if (sortBy == null || !allowedSortFields.contains(sortBy)) {
+            sortBy = "createdAt";
+        }
+
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         
@@ -46,6 +54,15 @@ public class AdminUserServiceImpl implements IAdminUserService {
         if (status != null && !status.trim().isEmpty()) {
             if (status.equalsIgnoreCase("ACTIVE")) isActive = true;
             else if (status.equalsIgnoreCase("LOCKED")) isActive = false;
+            else throw new AppException(ErrorCode.BAD_REQUEST, "Trạng thái filter không hợp lệ");
+        }
+
+        if (roles != null && !roles.isEmpty()) {
+            for (String r : roles) {
+                if (!r.equalsIgnoreCase("ADMIN") && !r.equalsIgnoreCase("INSTRUCTOR") && !r.equalsIgnoreCase("LEARNER")) {
+                    throw new AppException(ErrorCode.BAD_REQUEST, "Role filter không hợp lệ");
+                }
+            }
         }
 
         Page<User> userPage = userRepository.searchUsers(search, roles, isActive, pageable);
