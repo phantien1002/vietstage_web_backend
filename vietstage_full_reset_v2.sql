@@ -483,9 +483,16 @@ CREATE TABLE usage_sessions (
 CREATE TABLE app_configs (
     id BIGSERIAL PRIMARY KEY,
     config_key         VARCHAR(120) NOT NULL UNIQUE,
-    config_value       JSONB NOT NULL,
+    config_value       VARCHAR(255) NOT NULL,
+    config_group       VARCHAR(50),
     description        TEXT,
-    updated_by_user_id BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+    value_type         VARCHAR(20),
+    min_value          DOUBLE PRECISION,
+    max_value          DOUBLE PRECISION,
+    step_value         DOUBLE PRECISION,
+    options            TEXT,
+    default_value      VARCHAR(255),
+    updated_by         BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -601,15 +608,15 @@ INSERT INTO instruments (name, description) VALUES
     ('Trống Chầu',     'Vietnamese traditional drum')
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO app_configs (config_key, config_value, description) VALUES
-    ('scoring.pitch_weight',        '0.35'::jsonb, 'Pitch contribution to the composite score'),
-    ('scoring.rhythm_weight',       '0.25'::jsonb, 'Rhythm contribution to the composite score'),
-    ('scoring.tonal_weight',        '0.15'::jsonb, 'Tonal-quality contribution where applicable'),
-    ('scoring.breath_weight',       '0.10'::jsonb, 'Breath contribution for wind instruments'),
-    ('scoring.dynamics_weight',     '0.15'::jsonb, 'Dynamics contribution to the composite score'),
-    ('feature.minigame_enabled',    'true'::jsonb, 'Global mini-game feature toggle'),
-    ('feature.adaptive_difficulty', 'true'::jsonb, 'Adaptive difficulty feature toggle'),
-    ('difficulty.rolling_window',   '10'::jsonb, 'Number of recent attempts used for adaptation')
+INSERT INTO app_configs (config_key, config_value, config_group, description, value_type, min_value, max_value, step_value, options, default_value) VALUES
+    ('scoring.pitch_weight',        '0.35', 'SCORING', 'Pitch contribution to the composite score', 'NUMBER', 0.0, 1.0, 0.05, NULL, '0.35'),
+    ('scoring.rhythm_weight',       '0.25', 'SCORING', 'Rhythm contribution to the composite score', 'NUMBER', 0.0, 1.0, 0.05, NULL, '0.25'),
+    ('scoring.tonal_weight',        '0.15', 'SCORING', 'Tonal-quality contribution where applicable', 'NUMBER', 0.0, 1.0, 0.05, NULL, '0.15'),
+    ('scoring.breath_weight',       '0.10', 'SCORING', 'Breath contribution for wind instruments', 'NUMBER', 0.0, 1.0, 0.05, NULL, '0.10'),
+    ('scoring.dynamics_weight',     '0.15', 'SCORING', 'Dynamics contribution to the composite score', 'NUMBER', 0.0, 1.0, 0.05, NULL, '0.15'),
+    ('feature.minigame_enabled',    'true', 'FEATURE', 'Global mini-game feature toggle', 'BOOLEAN', NULL, NULL, NULL, 'true,false', 'true'),
+    ('feature.adaptive_difficulty', 'true', 'FEATURE', 'Adaptive difficulty feature toggle', 'BOOLEAN', NULL, NULL, NULL, 'true,false', 'true'),
+    ('difficulty.rolling_window',   '10',   'DIFFICULTY', 'Number of recent attempts used for adaptation', 'NUMBER', 1, 100, 1, NULL, '10')
 ON CONFLICT (config_key) DO NOTHING;
 
 COMMIT;

@@ -24,6 +24,10 @@ public class ContentReview {
     private Lesson lesson;
 
     @ManyToOne
+    @JoinColumn(name = "media_asset_id")
+    private MediaAsset mediaAsset;
+
+    @ManyToOne
     @JoinColumn(name = "reviewer_user_id")
     private User reviewer;
 
