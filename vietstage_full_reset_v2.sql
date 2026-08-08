@@ -168,7 +168,7 @@ CREATE TABLE instructor_instruments (
 );
 
 CREATE TABLE techniques (
-    technique_id  BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     instrument_id BIGINT NOT NULL REFERENCES instruments(id) ON DELETE RESTRICT,
     name          VARCHAR(120) NOT NULL,
     description   TEXT,
@@ -223,7 +223,7 @@ CREATE TABLE media_assets (
 -- 5. EXERCISES AND PRACTICE ATTEMPTS
 -- =========================================================
 CREATE TABLE exercises (
-    exercise_id         BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     lesson_id           BIGINT NOT NULL REFERENCES lessons(lesson_id) ON DELETE RESTRICT,
     reference_asset_id  BIGINT REFERENCES media_assets(asset_id) ON DELETE SET NULL,
     beat_map_asset_id   BIGINT REFERENCES media_assets(asset_id) ON DELETE SET NULL,
@@ -239,7 +239,7 @@ CREATE TABLE exercises (
 );
 
 CREATE TABLE practice_attempts (
-    attempt_id          BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     client_uuid         UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     learner_user_id     BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     exercise_id         BIGINT NOT NULL REFERENCES exercises(exercise_id) ON DELETE RESTRICT,
@@ -262,7 +262,7 @@ CREATE TABLE practice_attempts (
 );
 
 CREATE TABLE instructor_feedback (
-    feedback_id         BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     attempt_id          BIGINT NOT NULL REFERENCES practice_attempts(attempt_id) ON DELETE RESTRICT,
     instructor_user_id  BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     comment             TEXT NOT NULL,
@@ -273,7 +273,7 @@ CREATE TABLE instructor_feedback (
 -- 6. QUIZZES
 -- =========================================================
 CREATE TABLE quizzes (
-    quiz_id       BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     lesson_id     BIGINT NOT NULL REFERENCES lessons(lesson_id) ON DELETE RESTRICT,
     title         VARCHAR(200) NOT NULL,
     description   TEXT,
@@ -285,7 +285,7 @@ CREATE TABLE quizzes (
 );
 
 CREATE TABLE quiz_questions (
-    question_id   BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     quiz_id       BIGINT NOT NULL REFERENCES quizzes(quiz_id) ON DELETE CASCADE,
     question_text TEXT NOT NULL,
     order_index   INTEGER NOT NULL DEFAULT 0,
@@ -294,14 +294,14 @@ CREATE TABLE quiz_questions (
 );
 
 CREATE TABLE quiz_options (
-    option_id     BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     question_id   BIGINT NOT NULL REFERENCES quiz_questions(question_id) ON DELETE CASCADE,
     option_text   TEXT NOT NULL,
     is_correct    BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE quiz_attempts (
-    attempt_id        BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     client_uuid       UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     learner_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     quiz_id           BIGINT NOT NULL REFERENCES quizzes(quiz_id) ON DELETE RESTRICT,
@@ -314,7 +314,7 @@ CREATE TABLE quiz_attempts (
 );
 
 CREATE TABLE quiz_answers (
-    answer_id           BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     attempt_id          BIGINT NOT NULL REFERENCES quiz_attempts(attempt_id) ON DELETE CASCADE,
     question_id         BIGINT NOT NULL REFERENCES quiz_questions(question_id) ON DELETE RESTRICT,
     selected_option_id  BIGINT NOT NULL REFERENCES quiz_options(option_id) ON DELETE RESTRICT,
@@ -325,7 +325,7 @@ CREATE TABLE quiz_answers (
 -- 7. MINI-GAME CHALLENGES
 -- =========================================================
 CREATE TABLE minigame_challenges (
-    challenge_id       BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     lesson_id          BIGINT NOT NULL REFERENCES lessons(lesson_id) ON DELETE RESTRICT,
     reference_asset_id BIGINT REFERENCES media_assets(asset_id) ON DELETE SET NULL,
     skill_level_id     BIGINT NOT NULL REFERENCES skill_levels(skill_level_id) ON DELETE RESTRICT,
@@ -345,7 +345,7 @@ CREATE TABLE minigame_challenges (
 );
 
 CREATE TABLE minigame_attempts (
-    attempt_id        BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     client_uuid       UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     learner_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     challenge_id      BIGINT NOT NULL REFERENCES minigame_challenges(challenge_id) ON DELETE RESTRICT,
@@ -381,7 +381,7 @@ CREATE TABLE learner_lesson_progress (
 -- 9. ACHIEVEMENTS AND COSMETIC REWARDS
 -- =========================================================
 CREATE TABLE achievements (
-    achievement_id BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name           VARCHAR(120) NOT NULL UNIQUE,
     description    TEXT,
     icon_url       TEXT,
@@ -396,7 +396,7 @@ CREATE TABLE learner_achievements (
 );
 
 CREATE TABLE cosmetic_items (
-    cosmetic_item_id BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name             VARCHAR(120) NOT NULL UNIQUE,
     item_type        VARCHAR(30) NOT NULL,
     asset_url        TEXT,
@@ -417,7 +417,7 @@ CREATE TABLE learner_cosmetics (
 -- 10. DAILY CHALLENGES AND STREAK-RELATED PROGRESS
 -- =========================================================
 CREATE TABLE daily_challenges (
-    challenge_id   BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     instrument_id  BIGINT REFERENCES instruments(id) ON DELETE RESTRICT,
     title          VARCHAR(200) NOT NULL,
     description    TEXT,
@@ -444,7 +444,7 @@ CREATE TABLE learner_daily_challenges (
 -- Each review targets exactly one lesson OR one media asset.
 -- =========================================================
 CREATE TABLE content_reviews (
-    review_id         BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     reviewer_user_id  BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     lesson_id         BIGINT REFERENCES lessons(lesson_id) ON DELETE RESTRICT,
     media_asset_id    BIGINT REFERENCES media_assets(asset_id) ON DELETE RESTRICT,
@@ -480,7 +480,7 @@ CREATE TABLE usage_sessions (
 -- 14. APPLICATION CONFIGURATION
 -- =========================================================
 CREATE TABLE app_configs (
-    config_id          BIGSERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     config_key         VARCHAR(120) NOT NULL UNIQUE,
     config_value       JSONB NOT NULL,
     description        TEXT,
