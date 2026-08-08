@@ -181,6 +181,7 @@ CREATE TABLE techniques (
 -- =========================================================
 CREATE TABLE lessons (
     lesson_id            BIGSERIAL PRIMARY KEY,
+    lesson_code          VARCHAR(50) UNIQUE,
     instrument_id        BIGINT NOT NULL REFERENCES instruments(instrument_id) ON DELETE RESTRICT,
     skill_level_id       BIGINT NOT NULL REFERENCES skill_levels(skill_level_id) ON DELETE RESTRICT,
     created_by_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
