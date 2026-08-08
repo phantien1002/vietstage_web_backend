@@ -680,3 +680,40 @@ INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id, descriptio
 ((SELECT user_id FROM users WHERE email = 'admin@vietstage.com'), 'APPROVE_LESSON', 'LESSON', '1', 'Phê duyệt bài giảng của giảng viên Trần Thị Thu Thủy', NOW() - INTERVAL '4 hours'),
 ((SELECT user_id FROM users WHERE email = 'saotruc.guru@vietstage.com'), 'UPDATE_PROFILE', 'USER', '4', 'Cập nhật ảnh đại diện mới', NOW() - INTERVAL '1 day'),
 ((SELECT user_id FROM users WHERE email = 'quang@vietstage.com'), 'CREATE_USER', 'USER', '3', 'Tạo tài khoản cho giảng viên Trần Thị Thu Thủy', NOW() - INTERVAL '10 days');
+
+-- MOCK DATA FOR METRICS (Dashboard)
+INSERT INTO usage_sessions (user_id, session_token, started_at, last_active_at, ip_address, user_agent, is_active) VALUES
+(3, 'tok_1', '2026-08-07T07:54:38.807Z', '2026-08-07T07:54:38.807Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_2', '2026-08-06T07:54:38.812Z', '2026-08-06T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_3', '2026-08-05T07:54:38.812Z', '2026-08-05T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_4', '2026-08-04T07:54:38.812Z', '2026-08-04T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_5', '2026-08-03T07:54:38.812Z', '2026-08-03T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_6', '2026-08-02T07:54:38.812Z', '2026-08-02T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_7', '2026-08-01T07:54:38.812Z', '2026-08-01T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_8', '2026-07-31T07:54:38.812Z', '2026-07-31T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_9', '2026-07-30T07:54:38.812Z', '2026-07-30T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
+(3, 'tok_10', '2026-07-29T07:54:38.812Z', '2026-07-29T07:54:38.812Z', '192.168.1.1', 'Mozilla', true);
+
+INSERT INTO practice_sessions (learner_id, started_at, ended_at, duration_minutes) VALUES
+(3, '2026-08-07T07:54:38.812Z', '2026-08-07T07:54:38.812Z', 11),
+(3, '2026-08-06T07:54:38.812Z', '2026-08-06T07:54:38.812Z', 12),
+(3, '2026-08-05T07:54:38.812Z', '2026-08-05T07:54:38.812Z', 13),
+(3, '2026-08-04T07:54:38.812Z', '2026-08-04T07:54:38.812Z', 14),
+(3, '2026-08-03T07:54:38.812Z', '2026-08-03T07:54:38.812Z', 15),
+(3, '2026-08-02T07:54:38.812Z', '2026-08-02T07:54:38.812Z', 16),
+(3, '2026-08-01T07:54:38.812Z', '2026-08-01T07:54:38.812Z', 17),
+(3, '2026-07-31T07:54:38.812Z', '2026-07-31T07:54:38.812Z', 18),
+(3, '2026-07-30T07:54:38.812Z', '2026-07-30T07:54:38.812Z', 19),
+(3, '2026-07-29T07:54:38.812Z', '2026-07-29T07:54:38.812Z', 20);
+
+INSERT INTO practice_attempts (session_id, learner_id, exercise_id, pitch_score, rhythm_score, dynamics_score, breath_score, tonal_quality_score, total_score, stars, points_earned, sync_status) VALUES
+(1, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(2, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(3, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(4, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(5, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(6, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(7, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(8, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(9, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
+(10, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED');
