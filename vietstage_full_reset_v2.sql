@@ -189,6 +189,7 @@ CREATE TABLE lessons (
     created_by_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     title                VARCHAR(200) NOT NULL,
     description          TEXT,
+    technical_notes      TEXT,
     status               VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     order_index          INTEGER NOT NULL DEFAULT 0,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -107,7 +107,7 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .instructor(instructorName)
                     .date(dateStr)
                     .assets(assets)
-                    .technicalNotes(lesson.getDescription()) // Mapping description to technical notes for now
+                    .technicalNotes(lesson.getTechnicalNotes()) 
                     .description(lesson.getDescription())
                     .status(lesson.getStatus() != null ? lesson.getStatus().toLowerCase() : "pending")
                     .feedback(feedback)

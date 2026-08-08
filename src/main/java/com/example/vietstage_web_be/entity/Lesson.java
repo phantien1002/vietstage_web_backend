@@ -35,8 +35,11 @@ public class Lesson {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "technical_notes", columnDefinition = "TEXT")
+    private String technicalNotes;
 
     @Column(name = "status")
     private String status;
