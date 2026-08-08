@@ -146,6 +146,7 @@ CREATE TABLE instruments (
     instrument_code VARCHAR(50) UNIQUE,
     name          VARCHAR(100) NOT NULL UNIQUE,
     description   TEXT,
+    guide_url     VARCHAR(255),
     icon_url      TEXT,
     is_active     BOOLEAN NOT NULL DEFAULT TRUE,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
