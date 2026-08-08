@@ -202,7 +202,7 @@ CREATE TABLE lessons (
 
 CREATE TABLE lesson_techniques (
     lesson_id     BIGINT NOT NULL REFERENCES lessons(lesson_id) ON DELETE CASCADE,
-    technique_id  BIGINT NOT NULL REFERENCES techniques(technique_id) ON DELETE RESTRICT,
+    technique_id  BIGINT NOT NULL REFERENCES techniques(id) ON DELETE RESTRICT,
     PRIMARY KEY (lesson_id, technique_id)
 );
 
@@ -244,7 +244,7 @@ CREATE TABLE practice_attempts (
     id BIGSERIAL PRIMARY KEY,
     client_uuid         UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     learner_user_id     BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    exercise_id         BIGINT NOT NULL REFERENCES exercises(exercise_id) ON DELETE RESTRICT,
+    exercise_id         BIGINT NOT NULL REFERENCES exercises(id) ON DELETE RESTRICT,
     started_at          TIMESTAMPTZ NOT NULL,
     completed_at        TIMESTAMPTZ NOT NULL,
     pitch_score         NUMERIC(5,2),
@@ -265,7 +265,7 @@ CREATE TABLE practice_attempts (
 
 CREATE TABLE instructor_feedback (
     id BIGSERIAL PRIMARY KEY,
-    attempt_id          BIGINT NOT NULL REFERENCES practice_attempts(attempt_id) ON DELETE RESTRICT,
+    attempt_id          BIGINT NOT NULL REFERENCES practice_attempts(id) ON DELETE RESTRICT,
     instructor_user_id  BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     comment             TEXT NOT NULL,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -288,7 +288,7 @@ CREATE TABLE quizzes (
 
 CREATE TABLE quiz_questions (
     id BIGSERIAL PRIMARY KEY,
-    quiz_id       BIGINT NOT NULL REFERENCES quizzes(quiz_id) ON DELETE CASCADE,
+    quiz_id       BIGINT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
     question_text TEXT NOT NULL,
     order_index   INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT ck_quiz_question_order CHECK (order_index >= 0),
@@ -297,7 +297,7 @@ CREATE TABLE quiz_questions (
 
 CREATE TABLE quiz_options (
     id BIGSERIAL PRIMARY KEY,
-    question_id   BIGINT NOT NULL REFERENCES quiz_questions(question_id) ON DELETE CASCADE,
+    question_id   BIGINT NOT NULL REFERENCES quiz_questions(id) ON DELETE CASCADE,
     option_text   TEXT NOT NULL,
     is_correct    BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -306,7 +306,7 @@ CREATE TABLE quiz_attempts (
     id BIGSERIAL PRIMARY KEY,
     client_uuid       UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     learner_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    quiz_id           BIGINT NOT NULL REFERENCES quizzes(quiz_id) ON DELETE RESTRICT,
+    quiz_id           BIGINT NOT NULL REFERENCES quizzes(id) ON DELETE RESTRICT,
     score             NUMERIC(5,2) NOT NULL,
     started_at        TIMESTAMPTZ NOT NULL,
     completed_at      TIMESTAMPTZ NOT NULL,
@@ -317,9 +317,9 @@ CREATE TABLE quiz_attempts (
 
 CREATE TABLE quiz_answers (
     id BIGSERIAL PRIMARY KEY,
-    attempt_id          BIGINT NOT NULL REFERENCES quiz_attempts(attempt_id) ON DELETE CASCADE,
-    question_id         BIGINT NOT NULL REFERENCES quiz_questions(question_id) ON DELETE RESTRICT,
-    selected_option_id  BIGINT NOT NULL REFERENCES quiz_options(option_id) ON DELETE RESTRICT,
+    attempt_id          BIGINT NOT NULL REFERENCES quiz_attempts(id) ON DELETE CASCADE,
+    question_id         BIGINT NOT NULL REFERENCES quiz_questions(id) ON DELETE RESTRICT,
+    selected_option_id  BIGINT NOT NULL REFERENCES quiz_options(id) ON DELETE RESTRICT,
     UNIQUE (attempt_id, question_id)
 );
 
@@ -350,7 +350,7 @@ CREATE TABLE minigame_attempts (
     id BIGSERIAL PRIMARY KEY,
     client_uuid       UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     learner_user_id   BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    challenge_id      BIGINT NOT NULL REFERENCES minigame_challenges(challenge_id) ON DELETE RESTRICT,
+    challenge_id      BIGINT NOT NULL REFERENCES minigame_challenges(id) ON DELETE RESTRICT,
     score             INTEGER NOT NULL DEFAULT 0,
     started_at        TIMESTAMPTZ NOT NULL,
     completed_at      TIMESTAMPTZ NOT NULL,
@@ -392,7 +392,7 @@ CREATE TABLE achievements (
 
 CREATE TABLE learner_achievements (
     learner_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    achievement_id  BIGINT NOT NULL REFERENCES achievements(achievement_id) ON DELETE RESTRICT,
+    achievement_id  BIGINT NOT NULL REFERENCES achievements(id) ON DELETE RESTRICT,
     earned_at       TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (learner_user_id, achievement_id)
 );
@@ -409,7 +409,7 @@ CREATE TABLE cosmetic_items (
 
 CREATE TABLE learner_cosmetics (
     learner_user_id  BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    cosmetic_item_id BIGINT NOT NULL REFERENCES cosmetic_items(cosmetic_item_id) ON DELETE RESTRICT,
+    cosmetic_item_id BIGINT NOT NULL REFERENCES cosmetic_items(id) ON DELETE RESTRICT,
     unlocked_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_equipped      BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (learner_user_id, cosmetic_item_id)
@@ -430,7 +430,7 @@ CREATE TABLE daily_challenges (
 
 CREATE TABLE learner_daily_challenges (
     learner_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-    challenge_id    BIGINT NOT NULL REFERENCES daily_challenges(challenge_id) ON DELETE RESTRICT,
+    challenge_id    BIGINT NOT NULL REFERENCES daily_challenges(id) ON DELETE RESTRICT,
     status          VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS',
     progress_value  NUMERIC(12,2) NOT NULL DEFAULT 0,
     completed_at    TIMESTAMPTZ,
@@ -682,38 +682,26 @@ INSERT INTO audit_logs (user_id, action_type, entity_type, entity_id, descriptio
 ((SELECT user_id FROM users WHERE email = 'quang@vietstage.com'), 'CREATE_USER', 'USER', '3', 'Tạo tài khoản cho giảng viên Trần Thị Thu Thủy', NOW() - INTERVAL '10 days');
 
 -- MOCK DATA FOR METRICS (Dashboard)
-INSERT INTO usage_sessions (user_id, session_token, started_at, last_active_at, ip_address, user_agent, is_active) VALUES
-(3, 'tok_1', '2026-08-07T07:54:38.807Z', '2026-08-07T07:54:38.807Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_2', '2026-08-06T07:54:38.812Z', '2026-08-06T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_3', '2026-08-05T07:54:38.812Z', '2026-08-05T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_4', '2026-08-04T07:54:38.812Z', '2026-08-04T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_5', '2026-08-03T07:54:38.812Z', '2026-08-03T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_6', '2026-08-02T07:54:38.812Z', '2026-08-02T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_7', '2026-08-01T07:54:38.812Z', '2026-08-01T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_8', '2026-07-31T07:54:38.812Z', '2026-07-31T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_9', '2026-07-30T07:54:38.812Z', '2026-07-30T07:54:38.812Z', '192.168.1.1', 'Mozilla', true),
-(3, 'tok_10', '2026-07-29T07:54:38.812Z', '2026-07-29T07:54:38.812Z', '192.168.1.1', 'Mozilla', true);
+INSERT INTO usage_sessions (user_id, platform, started_at, ended_at) VALUES
+(3, 'WEB', '2026-08-07T08:04:56.528Z', '2026-08-07T08:15:56.528Z'),
+(3, 'WEB', '2026-08-06T08:04:56.528Z', '2026-08-06T08:16:56.528Z'),
+(3, 'WEB', '2026-08-05T08:04:56.528Z', '2026-08-05T08:17:56.528Z'),
+(3, 'WEB', '2026-08-04T08:04:56.528Z', '2026-08-04T08:18:56.528Z'),
+(3, 'WEB', '2026-08-03T08:04:56.528Z', '2026-08-03T08:19:56.528Z'),
+(3, 'WEB', '2026-08-02T08:04:56.528Z', '2026-08-02T08:20:56.528Z'),
+(3, 'WEB', '2026-08-01T08:04:56.528Z', '2026-08-01T08:21:56.528Z'),
+(3, 'WEB', '2026-07-31T08:04:56.528Z', '2026-07-31T08:22:56.528Z'),
+(3, 'WEB', '2026-07-30T08:04:56.528Z', '2026-07-30T08:23:56.528Z'),
+(3, 'WEB', '2026-07-29T08:04:56.528Z', '2026-07-29T08:24:56.528Z');
 
-INSERT INTO practice_sessions (learner_id, started_at, ended_at, duration_minutes) VALUES
-(3, '2026-08-07T07:54:38.812Z', '2026-08-07T07:54:38.812Z', 11),
-(3, '2026-08-06T07:54:38.812Z', '2026-08-06T07:54:38.812Z', 12),
-(3, '2026-08-05T07:54:38.812Z', '2026-08-05T07:54:38.812Z', 13),
-(3, '2026-08-04T07:54:38.812Z', '2026-08-04T07:54:38.812Z', 14),
-(3, '2026-08-03T07:54:38.812Z', '2026-08-03T07:54:38.812Z', 15),
-(3, '2026-08-02T07:54:38.812Z', '2026-08-02T07:54:38.812Z', 16),
-(3, '2026-08-01T07:54:38.812Z', '2026-08-01T07:54:38.812Z', 17),
-(3, '2026-07-31T07:54:38.812Z', '2026-07-31T07:54:38.812Z', 18),
-(3, '2026-07-30T07:54:38.812Z', '2026-07-30T07:54:38.812Z', 19),
-(3, '2026-07-29T07:54:38.812Z', '2026-07-29T07:54:38.812Z', 20);
-
-INSERT INTO practice_attempts (session_id, learner_id, exercise_id, pitch_score, rhythm_score, dynamics_score, breath_score, tonal_quality_score, total_score, stars, points_earned, sync_status) VALUES
-(1, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(2, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(3, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(4, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(5, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(6, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(7, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(8, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(9, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
-(10, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED');
+INSERT INTO practice_attempts (learner_user_id, exercise_id, started_at, completed_at, pitch_score, rhythm_score, tonal_quality_score, breath_score, dynamics_score, composite_score) VALUES
+(3, 1, '2026-08-07T08:04:56.528Z', '2026-08-07T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-08-06T08:04:56.528Z', '2026-08-06T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-08-05T08:04:56.528Z', '2026-08-05T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-08-04T08:04:56.528Z', '2026-08-04T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-08-03T08:04:56.528Z', '2026-08-03T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-08-02T08:04:56.528Z', '2026-08-02T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-08-01T08:04:56.528Z', '2026-08-01T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-07-31T08:04:56.528Z', '2026-07-31T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-07-30T08:04:56.528Z', '2026-07-30T08:09:56.528Z', 80, 80, 80, 80, 80, 80),
+(3, 1, '2026-07-29T08:04:56.528Z', '2026-07-29T08:09:56.528Z', 80, 80, 80, 80, 80, 80);
