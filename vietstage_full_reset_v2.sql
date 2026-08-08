@@ -92,12 +92,13 @@ CREATE TABLE skill_levels (
 -- =========================================================
 CREATE TABLE users (
     user_id        BIGSERIAL PRIMARY KEY,
-      user_code      VARCHAR(50) UNIQUE,
-      role_id        BIGINT NOT NULL REFERENCES roles(role_id) ON DELETE RESTRICT,
+    user_code      VARCHAR(50) UNIQUE,
+    role_id        BIGINT NOT NULL REFERENCES roles(role_id) ON DELETE RESTRICT,
     email          VARCHAR(150) NOT NULL UNIQUE,
     password_hash  VARCHAR(255) NOT NULL,
     full_name      VARCHAR(150) NOT NULL,
     avatar_url     TEXT,
+    fcm_token      VARCHAR(500),
     is_active      BOOLEAN NOT NULL DEFAULT TRUE,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
