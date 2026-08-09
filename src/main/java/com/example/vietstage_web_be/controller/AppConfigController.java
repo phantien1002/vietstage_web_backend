@@ -39,6 +39,11 @@ public class AppConfigController {
     @PutMapping("/admin/configs/{key}")
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Cập nhật một cấu hình")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cập nhật thành công"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Xung đột dữ liệu (Optimistic Locking)")
+    })
     public ResponseEntity<BaseResponse<AppConfigResponse>> updateConfig(
             @PathVariable String key,
             @Valid @RequestBody ConfigUpdateRequest request,
