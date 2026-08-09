@@ -40,7 +40,8 @@ public enum ErrorCode {
     COSMETIC_NOT_OWNED(2020, "Bạn chưa sở hữu vật phẩm này", HttpStatus.FORBIDDEN),
     RESOURCE_NOT_FOUND(2021, "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
     FORBIDDEN(2022, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
-    BAD_REQUEST(2023, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST);
+    BAD_REQUEST(2023, "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
+    CONFLICT(2024, "Xung đột dữ liệu", HttpStatus.CONFLICT);
 
     private final int code;
     private final String message;
