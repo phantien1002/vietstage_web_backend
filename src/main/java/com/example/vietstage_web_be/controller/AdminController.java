@@ -43,13 +43,26 @@ public class AdminController {
 
     @GetMapping("/dashboard")
     public ApiResponse<DashboardStatsResponse> getDashboard(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime toDate,
             @RequestParam(defaultValue = "MONTH") String granularity) {
+        
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new com.example.vietstage_web_be.exception.AppException(com.example.vietstage_web_be.exception.ErrorCode.BAD_REQUEST, "Từ ngày không được lớn hơn Đến ngày");
+        }
+        
+        if (!"DAY".equalsIgnoreCase(granularity) && !"WEEK".equalsIgnoreCase(granularity) && !"MONTH".equalsIgnoreCase(granularity)) {
+            throw new com.example.vietstage_web_be.exception.AppException(com.example.vietstage_web_be.exception.ErrorCode.BAD_REQUEST, "Granularity chỉ chấp nhận DAY, WEEK, hoặc MONTH");
+        }
+
+        java.time.ZoneId zoneId = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDateTime from = fromDate != null ? fromDate.atZoneSameInstant(zoneId).toLocalDateTime() : null;
+        LocalDateTime to = toDate != null ? toDate.atZoneSameInstant(zoneId).toLocalDateTime() : null;
+
         return ApiResponse.<DashboardStatsResponse>builder()
                 .success(true)
                 .message("Success")
-                .data(adminDashboardService.getDashboardStats(fromDate, toDate, granularity))
+                .data(adminDashboardService.getDashboardStats(from, to, granularity.toUpperCase()))
                 .build();
     }
 

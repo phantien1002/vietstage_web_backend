@@ -12,11 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardStatsResponse {
-    private long totalUsers;
-    private long activeUsers; // new
-    private long totalRevenue;
-    private long totalLessons;
-    private long activeInstructors;
+    private long activeUsers; 
     
     private List<PopularInstrument> popularInstruments; // new
     private List<SessionDurationData> sessionDuration; // new

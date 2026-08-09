@@ -24,16 +24,9 @@ public class AdminDashboardServiceImpl implements IAdminDashboardService {
 
     @Override
     public DashboardStatsResponse getDashboardStats(LocalDateTime fromDate, LocalDateTime toDate, String granularity) {
-        if (fromDate == null) fromDate = LocalDateTime.of(2000, 1, 1, 0, 0);
+        if (fromDate == null) fromDate = LocalDateTime.now().minusDays(30);
         if (toDate == null) toDate = LocalDateTime.now();
         if (granularity == null || granularity.isEmpty()) granularity = "MONTH";
-
-        long totalUsers = userRepository.count();
-        long totalLessons = lessonRepository.count();
-
-        long activeInstructors = userRepository.findAll().stream()
-                .filter(u -> u.getRole() != null && "INSTRUCTOR".equalsIgnoreCase(u.getRole().getName()) && Boolean.TRUE.equals(u.getActive()))
-                .count();
 
         // 1. Active Users (using aggregate query)
         long activeUsersCount = dashboardRepository.getActiveUsers(fromDate, toDate);
@@ -73,11 +66,7 @@ public class AdminDashboardServiceImpl implements IAdminDashboardService {
                 .collect(Collectors.toList());
 
         return DashboardStatsResponse.builder()
-                .totalUsers(totalUsers)
                 .activeUsers(activeUsersCount)
-                .totalLessons(totalLessons)
-                .activeInstructors(activeInstructors)
-                .totalRevenue(0L) // Bỏ doanh thu ảo
                 .popularInstruments(popularInstruments)
                 .sessionDuration(sessionDuration)
                 .retention(retention)
