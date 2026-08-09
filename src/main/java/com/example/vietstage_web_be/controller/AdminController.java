@@ -41,14 +41,21 @@ public class AdminController {
     private final IAdminReviewService adminReviewService;
     private final IAdminDashboardService adminDashboardService;
 
+    @Operation(summary = "Lấy thống kê Dashboard Admin", description = "Lấy dữ liệu thống kê theo khoảng thời gian. Lưu ý: Khoảng cách giữa fromDate và toDate tối đa là 365 ngày.")
     @GetMapping("/dashboard")
     public ApiResponse<DashboardStatsResponse> getDashboard(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime toDate,
             @RequestParam(defaultValue = "MONTH") String granularity) {
         
-        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
-            throw new com.example.vietstage_web_be.exception.AppException(com.example.vietstage_web_be.exception.ErrorCode.BAD_REQUEST, "Từ ngày không được lớn hơn Đến ngày");
+        if (fromDate != null && toDate != null) {
+            if (fromDate.isAfter(toDate)) {
+                throw new com.example.vietstage_web_be.exception.AppException(com.example.vietstage_web_be.exception.ErrorCode.BAD_REQUEST, "Từ ngày không được lớn hơn Đến ngày");
+            }
+            long daysBetween = java.time.Duration.between(fromDate, toDate).toDays();
+            if (daysBetween > 365) {
+                throw new com.example.vietstage_web_be.exception.AppException(com.example.vietstage_web_be.exception.ErrorCode.BAD_REQUEST, "Khoảng thời gian truy vấn không được vượt quá 365 ngày");
+            }
         }
         
         if (!"DAY".equalsIgnoreCase(granularity) && !"WEEK".equalsIgnoreCase(granularity) && !"MONTH".equalsIgnoreCase(granularity)) {
