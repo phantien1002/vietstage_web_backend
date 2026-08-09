@@ -14,16 +14,16 @@ public class LessonSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // Always exclude DRAFT from admin reviews
+            predicates.add(criteriaBuilder.notEqual(
+                    criteriaBuilder.upper(root.get("status")), 
+                    "DRAFT"
+            ));
+
             if (StringUtils.hasText(status)) {
                 predicates.add(criteriaBuilder.equal(
                         criteriaBuilder.upper(root.get("status")), 
                         status.toUpperCase()
-                ));
-            } else {
-                // If no specific status is requested, exclude DRAFT from admin reviews
-                predicates.add(criteriaBuilder.notEqual(
-                        criteriaBuilder.upper(root.get("status")), 
-                        "DRAFT"
                 ));
             }
 
