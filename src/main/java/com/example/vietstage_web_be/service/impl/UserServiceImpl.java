@@ -108,35 +108,7 @@ public class UserServiceImpl implements IUserService {
                 .build();
     }
 
-    @Override
-    @Transactional
-    public AdminCreateResponse createAdmin(AdminCreateRequest request) {
-        if (UserRepository.existsByEmail(request.getEmail())) {
-            throw new AppException(ErrorCode.EMAIL_ALREADY_EXIST, "Email đã tồn tại");
-        }
-
-        Role role = RoleRepository.findByName("ADMIN")
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, "Vai trò ADMIN không tồn tại"));
-
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setFullName(request.getFullName());
-        user.setRole(role);
-        user.setActive(true);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-
-        User savedUser = UserRepository.save(user);
-        return AdminCreateResponse.builder()
-                .id(savedUser.getId())
-                .email(savedUser.getEmail())
-                .fullName(savedUser.getFullName())
-                .roleName(role.getName())
-                .isActive(savedUser.getActive())
-                .createdAt(savedUser.getCreatedAt())
-                .build();
-    }
+    
 
     private UserResponse toUserResponse(User user) {
         return UserResponse.builder()

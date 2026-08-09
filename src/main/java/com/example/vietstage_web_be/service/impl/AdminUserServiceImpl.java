@@ -165,6 +165,10 @@ public class AdminUserServiceImpl implements IAdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
 
+        if ("ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Không thể thao tác trạng thái lên Admin khác");
+        }
+
         if ("LOCKED".equalsIgnoreCase(status)) {
             user.setActive(false);
             AuditLog log = AuditLog.builder()
@@ -172,7 +176,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                     .actionType("UPDATE_STATUS")
                     .entityType("USER")
                     .entityId(user.getId().toString())
-                    .description("Tài khoản bị khóa bởi Admin")
+                    .description("Actor Admin (ID: " + currentUserId + ") thay đổi trạng thái từ ACTIVE thành LOCKED")
                     .createdAt(LocalDateTime.now())
                     .build();
             auditLogRepository.save(log);
@@ -183,7 +187,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                     .actionType("UPDATE_STATUS")
                     .entityType("USER")
                     .entityId(user.getId().toString())
-                    .description("Tài khoản được mở khóa bởi Admin")
+                    .description("Actor Admin (ID: " + currentUserId + ") thay đổi trạng thái từ LOCKED thành ACTIVE")
                     .createdAt(LocalDateTime.now())
                     .build();
             auditLogRepository.save(log);
@@ -208,11 +212,8 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
 
         String oldRole = user.getRole().getName();
-        if (oldRole.equalsIgnoreCase("ADMIN") && !newRole.equalsIgnoreCase("ADMIN")) {
-            long adminCount = userRepository.countByRoleName("ADMIN");
-            if (adminCount <= 1) {
-                throw new AppException(ErrorCode.BAD_REQUEST, "Không thể thu hồi quyền Admin duy nhất của hệ thống");
-            }
+        if ("ADMIN".equalsIgnoreCase(oldRole)) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Không thể thao tác role lên Admin khác");
         }
 
         Role role = roleRepository.findByName(newRole.toUpperCase())
@@ -226,7 +227,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 .actionType("UPDATE_ROLE")
                 .entityType("USER")
                 .entityId(user.getId().toString())
-                .description("Cập nhật role từ " + oldRole + " thành " + newRole)
+                .description("Actor Admin (ID: " + currentUserId + ") cấp nhật role từ " + oldRole + " thành " + newRole)
                 .createdAt(LocalDateTime.now())
                 .build();
         auditLogRepository.save(log);
@@ -256,13 +257,17 @@ public class AdminUserServiceImpl implements IAdminUserService {
 
     @Override
     @Transactional
-    public void resetPassword(Long id, String newPassword) {
+    public void resetPassword(Long id, String newPassword, Long currentUserId) {
         if (newPassword == null || newPassword.trim().isEmpty() || newPassword.length() < 6) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Mật khẩu mới phải có ít nhất 6 ký tự");
+            throw new AppException(ErrorCode.BAD_REQUEST, "Mật khẩu mới phải có ít nhất 8 ký tự và không chứa khoảng trắng");
         }
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Người dùng không tồn tại"));
+
+        if ("ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Không thể reset password của Admin khác");
+        }
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
@@ -272,7 +277,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
                 .actionType("RESET_PASSWORD")
                 .entityType("USER")
                 .entityId(user.getId().toString())
-                .description("Mật khẩu được cấp lại bởi Admin")
+                .description("Actor Admin (ID: " + currentUserId + ") đã reset password cho user này")
                 .createdAt(LocalDateTime.now())
                 .build();
         auditLogRepository.save(log);

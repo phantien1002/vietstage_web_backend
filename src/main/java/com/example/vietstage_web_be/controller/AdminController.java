@@ -110,11 +110,12 @@ public class AdminController {
 
     @PostMapping("/users/{id}/reset-password")
     public ApiResponse<Void> resetPassword(
+            @AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser,
             @PathVariable Long id,
-            @RequestBody java.util.Map<String, String> request) {
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.AdminResetPasswordRequest request) {
         
-        String newPassword = request.get("new_password");
-        adminUserService.resetPassword(id, newPassword);
+        String newPassword = request.getNewPassword();
+        adminUserService.resetPassword(id, newPassword, currentUser.getId());
         return ApiResponse.<Void>builder()
                 .success(true)
                 .message("Successfully reset password")
@@ -131,15 +132,7 @@ public class AdminController {
                 .build();
     }
 
-    @PostMapping("/create-admin")
-    public ApiResponse<AdminCreateResponse> createAdmin(
-            @Valid @RequestBody AdminCreateRequest request) {
 
-        return ApiResponse.<AdminCreateResponse>builder()
-                .message("Tạo tài khoản Admin thành công")
-                .data(userService.createAdmin(request))
-                .build();
-    }
 
     @GetMapping("/reviews")
     public ApiResponse<PageResponse<ReviewItemResponse>> getAllReviews(

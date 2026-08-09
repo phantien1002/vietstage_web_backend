@@ -33,9 +33,4 @@ public interface IUserService {
      */
     InstructorCreateResponse createInstructor(InstructorCreateRequest request);
 
-    /**
-     * Admin tạo Admin Account.
-     */
-    AdminCreateResponse createAdmin(AdminCreateRequest request);
 }
-

@@ -12,5 +12,5 @@ public interface IAdminUserService {
     void updateUserStatus(Long id, String status, Long currentUserId);
     void updateUserRole(Long id, String newRole, Long currentUserId);
     void updateUser(Long id, com.example.vietstage_web_be.dto.request.UpdateProfileRequest request);
-    void resetPassword(Long id, String newPassword);
+    void resetPassword(Long id, String newPassword, Long currentUserId);
 }
