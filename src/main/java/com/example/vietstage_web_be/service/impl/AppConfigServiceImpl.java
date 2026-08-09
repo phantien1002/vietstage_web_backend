@@ -63,8 +63,8 @@ public class AppConfigServiceImpl implements IAppConfigService {
         AppConfig config = appConfigRepository.findByConfigKey(key)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy cấu hình này"));
         
-        if (request.getVersion() != null && !request.getVersion().equals(config.getVersion())) {
-            throw new AppException(ErrorCode.CONFLICT, "Cấu hình đã bị thay đổi bởi người khác, vui lòng tải lại");
+        if (request.getVersion() == null || !request.getVersion().equals(config.getVersion())) {
+            throw new AppException(ErrorCode.CONFLICT, "Cấu hình đã được cập nhật bởi quản trị viên khác. Vui lòng tải lại dữ liệu.");
         }
 
         String value = request.getValue();
