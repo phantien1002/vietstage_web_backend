@@ -39,6 +39,7 @@ public class PracticeServiceImpl implements IPracticeService {
     private final ILeaderboardService leaderboardService;
     private final ILearnerProgressService progressService;
     private final LessonRepository lessonRepository;
+    private final AppConfigRepository appConfigRepository;
 
     @Override
     @Transactional
@@ -208,12 +209,22 @@ public class PracticeServiceImpl implements IPracticeService {
 
         BigDecimal total = pitch.add(rhythm).add(dyn).add(tonal).add(breath).divide(new BigDecimal("5"), 2, RoundingMode.HALF_UP);
         
-        int stars = 0;
-        if (total.compareTo(new BigDecimal("90")) >= 0) stars = 3;
-        else if (total.compareTo(new BigDecimal("70")) >= 0) stars = 2;
-        else if (total.compareTo(new BigDecimal("50")) >= 0) stars = 1;
+        // Fetch dynamic scoring thresholds from Config
+        BigDecimal star3Threshold = new BigDecimal(appConfigRepository.findByConfigKey("scoring.star3.threshold")
+                .map(AppConfig::getConfigValue).orElse("90"));
+        BigDecimal star2Threshold = new BigDecimal(appConfigRepository.findByConfigKey("scoring.star2.threshold")
+                .map(AppConfig::getConfigValue).orElse("70"));
+        BigDecimal star1Threshold = new BigDecimal(appConfigRepository.findByConfigKey("scoring.star1.threshold")
+                .map(AppConfig::getConfigValue).orElse("50"));
+        int multiplier = Integer.parseInt(appConfigRepository.findByConfigKey("scoring.points.multiplier")
+                .map(AppConfig::getConfigValue).orElse("10"));
 
-        int points = stars * 10; // Simple formula
+        int stars = 0;
+        if (total.compareTo(star3Threshold) >= 0) stars = 3;
+        else if (total.compareTo(star2Threshold) >= 0) stars = 2;
+        else if (total.compareTo(star1Threshold) >= 0) stars = 1;
+
+        int points = stars * multiplier; // Dynamic formula
 
         PracticeAttempt attempt = PracticeAttempt.builder()
                 .learner(learner)

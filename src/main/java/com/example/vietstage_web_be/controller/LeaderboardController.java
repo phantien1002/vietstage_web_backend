@@ -9,6 +9,10 @@ import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.ILeaderboardService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import com.example.vietstage_web_be.repository.AppConfigRepository;
+import com.example.vietstage_web_be.entity.AppConfig;
+import com.example.vietstage_web_be.exception.AppException;
+import com.example.vietstage_web_be.exception.ErrorCode;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,10 +30,20 @@ import java.util.List;
 public class LeaderboardController {
 
     private final ILeaderboardService leaderboardService;
+    private final AppConfigRepository appConfigRepository;
 
     @GetMapping("/leaderboards")
     public ResponseEntity<BaseResponse<List<LeaderboardEntryResponse>>> getTopLeaderboard(
             @RequestParam(defaultValue = "100") int top) {
+        
+        boolean isEnabled = appConfigRepository.findByConfigKey("feature.leaderboard.enabled")
+                .map(AppConfig::getConfigValue)
+                .map(Boolean::parseBoolean)
+                .orElse(true);
+        if (!isEnabled) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tính năng Leaderboard hiện đang bị tắt");
+        }
+
         List<LeaderboardEntryResponse> response = leaderboardService.getTopLeaderboard(top);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
@@ -38,6 +52,15 @@ public class LeaderboardController {
     @PreAuthorize("hasAuthority('LEARNER')")
     public ResponseEntity<BaseResponse<MyLeaderboardResponse>> getMyLeaderboard(
             @AuthenticationPrincipal(expression = "user") User learner) {
+        
+        boolean isEnabled = appConfigRepository.findByConfigKey("feature.leaderboard.enabled")
+                .map(AppConfig::getConfigValue)
+                .map(Boolean::parseBoolean)
+                .orElse(true);
+        if (!isEnabled) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tính năng Leaderboard hiện đang bị tắt");
+        }
+
         MyLeaderboardResponse response = leaderboardService.getMyLeaderboard(learner);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
