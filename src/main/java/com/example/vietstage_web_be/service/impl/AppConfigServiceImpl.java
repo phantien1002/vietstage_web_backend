@@ -55,14 +55,19 @@ public class AppConfigServiceImpl implements IAppConfigService {
 
     @Override
     @Transactional
-    public AppConfigResponse updateConfig(String key, String value, User updatedBy) {
+    public AppConfigResponse updateConfig(String key, com.example.vietstage_web_be.dto.request.ConfigUpdateRequest request, User updatedBy) {
         if (!ALLOWED_KEYS.contains(key)) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Không được phép sửa cấu hình này");
         }
 
         AppConfig config = appConfigRepository.findByConfigKey(key)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy cấu hình này"));
+        
+        if (request.getVersion() != null && !request.getVersion().equals(config.getVersion())) {
+            throw new AppException(ErrorCode.CONFLICT, "Cấu hình đã bị thay đổi bởi người khác, vui lòng tải lại");
+        }
 
+        String value = request.getValue();
         validateConfigValue(config, value);
 
         // Audit Log
@@ -156,6 +161,7 @@ public class AppConfigServiceImpl implements IAppConfigService {
                 .configGroup(config.getConfigGroup())
                 .updatedBy(config.getUpdatedBy() != null ? config.getUpdatedBy().getFullName() : null)
                 .updatedAt(config.getUpdatedAt())
+                .version(config.getVersion())
                 .build();
     }
 }

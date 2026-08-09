@@ -29,4 +29,6 @@ public class AppConfigResponse {
     
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
+    
+    private Long version;
 }

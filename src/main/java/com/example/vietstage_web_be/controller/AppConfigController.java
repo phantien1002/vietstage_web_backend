@@ -44,7 +44,7 @@ public class AppConfigController {
             @Valid @RequestBody ConfigUpdateRequest request,
             @AuthenticationPrincipal(expression = "user") User user) {
         
-        AppConfigResponse response = appConfigService.updateConfig(key, request.getValue(), user);
+        AppConfigResponse response = appConfigService.updateConfig(key, request, user);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 

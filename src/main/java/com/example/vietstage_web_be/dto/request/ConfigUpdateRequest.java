@@ -12,4 +12,6 @@ public class ConfigUpdateRequest {
     
     @NotBlank(message = "Giá trị cấu hình không được để trống")
     private String value;
+    
+    private Long version;
 }

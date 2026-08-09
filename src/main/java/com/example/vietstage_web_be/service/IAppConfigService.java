@@ -10,7 +10,7 @@ public interface IAppConfigService {
 
     List<AppConfigResponse> getAllConfigs(String group);
 
-    AppConfigResponse updateConfig(String key, String value, User updatedBy);
+    AppConfigResponse updateConfig(String key, com.example.vietstage_web_be.dto.request.ConfigUpdateRequest request, User updatedBy);
 
     Map<String, String> getPublicConfigs(String group);
 }
