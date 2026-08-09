@@ -27,7 +27,7 @@ public class AppConfigServiceImpl implements IAppConfigService {
 
     private final AppConfigRepository appConfigRepository;
     private final ConfigAuditLogRepository auditLogRepository;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final List<String> ALLOWED_GROUPS = Arrays.asList("scoring", "difficulty", "feature");
     private static final List<String> ALLOWED_KEYS = Arrays.asList(
