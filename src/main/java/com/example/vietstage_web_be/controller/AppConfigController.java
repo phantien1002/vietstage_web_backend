@@ -30,6 +30,7 @@ public class AppConfigController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Lấy tất cả cấu hình hệ thống (Dành cho Admin)")
     public ResponseEntity<BaseResponse<List<AppConfigResponse>>> getAllConfigs(
+            @io.swagger.v3.oas.annotations.Parameter(schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"scoring", "difficulty", "feature"}))
             @RequestParam(required = false) String group) {
         
         List<AppConfigResponse> responses = appConfigService.getAllConfigs(group);

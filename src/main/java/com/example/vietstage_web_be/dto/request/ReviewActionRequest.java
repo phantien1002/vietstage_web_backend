@@ -16,4 +16,8 @@ public class ReviewActionRequest {
     @NotBlank(message = "Phản hồi từ chối là bắt buộc")
     @Size(max = 1000, message = "Phản hồi không được vượt quá 1000 ký tự")
     private String feedback;
+
+    public void setFeedback(String feedback) {
+        this.feedback = feedback != null ? feedback.trim() : null;
+    }
 }

@@ -14,5 +14,6 @@ import lombok.NoArgsConstructor;
 public class UserStatusUpdateRequest {
     @NotBlank(message = "Trạng thái không được để trống")
     @Pattern(regexp = "^(?i)(ACTIVE|LOCKED)$", message = "Trạng thái phải là ACTIVE hoặc LOCKED")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ACTIVE", "LOCKED"})
     private String status;
 }

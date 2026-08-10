@@ -44,6 +44,7 @@ public class DashboardStatsResponse {
     @AllArgsConstructor
     public static class RetentionData {
         private String period;
+        @io.swagger.v3.oas.annotations.media.Schema(description = "Tỷ lệ giữ chân người dùng (%) (Thang 0-100)")
         private Double retentionRate;
     }
 }

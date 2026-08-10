@@ -14,5 +14,6 @@ import lombok.NoArgsConstructor;
 public class UserRoleUpdateRequest {
     @NotBlank(message = "Role is required")
     @Pattern(regexp = "^(?i)(LEARNER|INSTRUCTOR)$", message = "Role must be LEARNER or INSTRUCTOR")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"LEARNER", "INSTRUCTOR"})
     private String role;
 }

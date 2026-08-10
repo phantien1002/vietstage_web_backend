@@ -111,6 +111,12 @@ public class AppConfigServiceImpl implements IAppConfigService {
                     if (config.getMaxValue() != null && numVal > config.getMaxValue()) {
                         throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị lớn nhất cho phép là " + config.getMaxValue());
                     }
+                    if (config.getStepValue() != null && config.getStepValue() > 0) {
+                        double count = numVal / config.getStepValue();
+                        if (Math.abs(count - Math.round(count)) > 0.0001) {
+                            throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị phải tuân thủ bước nhảy (step) là " + config.getStepValue());
+                        }
+                    }
                 } catch (NumberFormatException e) {
                     throw new AppException(ErrorCode.BAD_REQUEST, "Giá trị phải là một số hợp lệ");
                 }

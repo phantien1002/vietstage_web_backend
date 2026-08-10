@@ -44,8 +44,11 @@ public class AdminController {
     @Operation(summary = "Lấy thống kê Dashboard Admin", description = "Lấy dữ liệu thống kê theo khoảng thời gian. Lưu ý: Khoảng cách giữa fromDate và toDate tối đa là 365 ngày.")
     @GetMapping("/dashboard")
     public ApiResponse<DashboardStatsResponse> getDashboard(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Ngày bắt đầu (ISO-8601 Date-Time)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime fromDate,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Ngày kết thúc (ISO-8601 Date-Time)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime toDate,
+            @io.swagger.v3.oas.annotations.Parameter(schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"DAY", "WEEK", "MONTH"}))
             @RequestParam(defaultValue = "MONTH") String granularity) {
         
         if (fromDate != null && toDate != null) {
@@ -158,6 +161,7 @@ public class AdminController {
     public ApiResponse<PageResponse<ReviewItemResponse>> getAllReviews(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @io.swagger.v3.oas.annotations.Parameter(schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"PENDING", "APPROVED", "REJECTED"}))
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long instructorId,
