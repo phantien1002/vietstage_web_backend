@@ -75,6 +75,8 @@ public class LessonServiceImpl implements ILessonService {
         String initialStatus = "DRAFT";
         if ("PENDING".equalsIgnoreCase(request.getStatus())) {
             initialStatus = "PENDING";
+        } else if ("APPROVED".equalsIgnoreCase(request.getStatus()) || "REJECTED".equalsIgnoreCase(request.getStatus())) {
+            throw new AppException(ErrorCode.LESSON_STATUS_FORBIDDEN);
         }
 
         Lesson lesson = Lesson.builder()

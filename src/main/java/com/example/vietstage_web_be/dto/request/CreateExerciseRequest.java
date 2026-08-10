@@ -19,10 +19,12 @@ public class CreateExerciseRequest {
 
     private Long beatMapAssetId;
 
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Ngưỡng đạt (0-100)", minimum = "0.00", maximum = "100.00")
     @DecimalMin("0.00")
     @DecimalMax("100.00")
     private Double passThreshold;
 
-    @Min(0)
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Thứ tự bài tập", minimum = "1")
+    @Min(1)
     private Integer orderIndex;
 }

@@ -5,15 +5,16 @@ import com.example.vietstage_web_be.dto.request.UpdateExerciseRequest;
 import com.example.vietstage_web_be.dto.response.ExerciseResponse;
 import com.example.vietstage_web_be.entity.Exercise;
 
+import com.example.vietstage_web_be.entity.User;
 import java.util.List;
 
 public interface IExerciseService {
     List<ExerciseResponse> getExercisesByLesson(Long lessonId);
 
-    ExerciseResponse createExercise(Long lessonId, CreateExerciseRequest request);
+    ExerciseResponse createExercise(User instructor, Long lessonId, CreateExerciseRequest request);
 
-    ExerciseResponse updateExercise(Long exerciseId, UpdateExerciseRequest request);
+    ExerciseResponse updateExercise(User instructor, Long exerciseId, UpdateExerciseRequest request);
 
-    void deleteExercise(Long exerciseId);
+    void deleteExercise(User instructor, Long exerciseId);
 }
 
