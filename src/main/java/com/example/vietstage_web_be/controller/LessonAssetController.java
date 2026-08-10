@@ -40,7 +40,9 @@ public class LessonAssetController {
     public ResponseEntity<BaseResponse<LessonAssetResponse>> uploadAsset(
             @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
+            @io.swagger.v3.oas.annotations.Parameter(description = "File upload (Audio: MP3/WAV max 20MB. Sheet: PNG/JPEG/WebP max 5MB)") 
             @RequestParam("file") MultipartFile file,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Loại tài nguyên", schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"REFERENCE_AUDIO", "SHEET_MUSIC"}))
             @RequestParam("type") String type,
             @RequestParam(value = "tempo_bpm", required = false) Integer tempoBpm,
             @RequestParam(value = "duration_sec", required = false) Integer durationSec) {
