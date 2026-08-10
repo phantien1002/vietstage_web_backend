@@ -95,6 +95,7 @@ public class ProgressController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate toDate,
             @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Nhóm theo thời gian", schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"DAY", "WEEK", "MONTH"}))
             @RequestParam(required = false) String groupBy) {
 
         InstructorPracticeAttemptRequest filterRequest = InstructorPracticeAttemptRequest.builder()
