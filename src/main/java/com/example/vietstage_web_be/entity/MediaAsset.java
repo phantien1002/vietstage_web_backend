@@ -41,4 +41,7 @@ public class MediaAsset {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    
+    @Column(name = "mime_type")
+    private String mimeType;
 }

@@ -22,7 +22,7 @@ public class LessonTechniqueController {
     private final ILessonTechniqueService techniqueService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority(''INSTRUCTOR'')")
+    @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<BaseResponse<String>> addTechnique(
             @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,
@@ -33,7 +33,7 @@ public class LessonTechniqueController {
     }
 
     @DeleteMapping("/{techniqueId}")
-    @PreAuthorize("hasAuthority(''INSTRUCTOR'')")
+    @PreAuthorize("hasAuthority('INSTRUCTOR')")
     public ResponseEntity<Void> removeTechnique(
             @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,

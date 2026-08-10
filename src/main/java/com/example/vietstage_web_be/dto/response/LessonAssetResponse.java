@@ -16,4 +16,9 @@ public class LessonAssetResponse {
     
     @JsonProperty("duration_sec")
     private Integer durationSec;
+    
+    private String title;
+    
+    @JsonProperty("mime_type")
+    private String mimeType;
 }

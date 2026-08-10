@@ -32,8 +32,9 @@ public class LessonAssetController {
         return ResponseEntity.ok(BaseResponse.success(assetService.getLessonAssets(lessonId, type)));
     }
 
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('INSTRUCTOR')")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Tải file media cho bài học", description = "Tải lên MP3/WAV hoặc PNG/JPEG/WebP")
     public ResponseEntity<BaseResponse<LessonAssetResponse>> uploadAsset(
             @AuthenticationPrincipal(expression = "user") User instructor,
             @PathVariable Long lessonId,

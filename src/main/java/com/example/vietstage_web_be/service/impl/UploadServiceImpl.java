@@ -27,7 +27,7 @@ public class UploadServiceImpl implements IUploadService {
                 throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, "File is empty");
             }
 
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
             
             // Get the secure URL from Cloudinary response
             return uploadResult.get("secure_url").toString();

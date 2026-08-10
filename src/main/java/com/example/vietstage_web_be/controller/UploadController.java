@@ -21,7 +21,7 @@ public class UploadController {
 
     private final IUploadService uploadService;
 
-    @PostMapping
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('LEARNER', 'INSTRUCTOR', 'ADMIN')")
     @Operation(summary = "Tải file lên Cloudinary", description = "Trả về URL bảo mật của file sau khi tải lên thành công")
     public ResponseEntity<ApiResponse<String>> uploadFile(@RequestParam("file") MultipartFile file) {
