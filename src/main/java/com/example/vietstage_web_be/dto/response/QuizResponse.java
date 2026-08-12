@@ -10,6 +10,9 @@ import lombok.Data;
 public class QuizResponse {
     private Long id;
     private String title;
+    private String questionType;
+    private String note;
+    private String audioUrl;
     private String question;
     private String options; // JSON string array
     

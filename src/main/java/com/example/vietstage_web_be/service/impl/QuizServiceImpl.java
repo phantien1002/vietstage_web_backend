@@ -14,6 +14,9 @@ import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizRepository;
 import com.example.vietstage_web_be.service.IQuizService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +34,7 @@ public class QuizServiceImpl implements IQuizService {
     private final QuizRepository quizRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser) {
@@ -40,6 +44,9 @@ public class QuizServiceImpl implements IQuizService {
             QuizResponse.QuizResponseBuilder builder = QuizResponse.builder()
                     .id(quiz.getId())
                     .title(quiz.getTitle())
+                    .questionType(quiz.getQuestionType())
+                    .note(quiz.getNote())
+                    .audioUrl(quiz.getAudioUrl())
                     .question(quiz.getQuestion())
                     .options(quiz.getOptions())
                     .orderIndex(quiz.getOrderIndex());
@@ -55,12 +62,17 @@ public class QuizServiceImpl implements IQuizService {
 
     @Override
     public QuizResponse createQuiz(Long lessonId, QuizRequest request) {
+        validateQuizRequest(request);
+        
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         Quiz quiz = Quiz.builder()
                 .lesson(lesson)
                 .title(request.getTitle())
+                .questionType(request.getQuestionType())
+                .note(request.getNote())
+                .audioUrl(request.getAudioUrl())
                 .question(request.getQuestion())
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
@@ -73,6 +85,9 @@ public class QuizServiceImpl implements IQuizService {
         return QuizResponse.builder()
                 .id(quiz.getId())
                 .title(quiz.getTitle())
+                .questionType(quiz.getQuestionType())
+                .note(quiz.getNote())
+                .audioUrl(quiz.getAudioUrl())
                 .question(quiz.getQuestion())
                 .options(quiz.getOptions())
                 .correctAnswer(quiz.getCorrectAnswer())
@@ -82,10 +97,15 @@ public class QuizServiceImpl implements IQuizService {
 
     @Override
     public QuizResponse updateQuiz(Long id, QuizRequest request) {
+        validateQuizRequest(request);
+        
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND)); 
 
         quiz.setTitle(request.getTitle());
+        quiz.setQuestionType(request.getQuestionType());
+        quiz.setNote(request.getNote());
+        quiz.setAudioUrl(request.getAudioUrl());
         quiz.setQuestion(request.getQuestion());
         quiz.setOptions(request.getOptions());
         quiz.setCorrectAnswer(request.getCorrectAnswer());
@@ -96,6 +116,9 @@ public class QuizServiceImpl implements IQuizService {
         return QuizResponse.builder()
                 .id(quiz.getId())
                 .title(quiz.getTitle())
+                .questionType(quiz.getQuestionType())
+                .note(quiz.getNote())
+                .audioUrl(quiz.getAudioUrl())
                 .question(quiz.getQuestion())
                 .options(quiz.getOptions())
                 .correctAnswer(quiz.getCorrectAnswer())
@@ -116,7 +139,10 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
 
-        boolean isCorrect = quiz.getCorrectAnswer().equals(request.getSelectedAnswer());
+        String selectedAnswer = request.getSelectedAnswer() != null ? request.getSelectedAnswer().trim() : "";
+        String correctAnswer = quiz.getCorrectAnswer() != null ? quiz.getCorrectAnswer().trim() : "";
+        
+        boolean isCorrect = correctAnswer.equals(selectedAnswer);
         BigDecimal score = isCorrect ? BigDecimal.valueOf(100.0) : BigDecimal.ZERO;
         Integer pointsEarned = isCorrect ? 10 : 0; // Configurable logic can be added later
 
@@ -161,5 +187,25 @@ public class QuizServiceImpl implements IQuizService {
                 .pointsEarned(attempt.getIsCorrect() ? 10 : 0)
                 .attemptedAt(attempt.getAttemptedAt())
                 .build());
+    }
+    
+    private void validateQuizRequest(QuizRequest request) {
+        if ("NOTE_IDENTIFICATION".equals(request.getQuestionType())) {
+            if (request.getNote() == null || request.getNote().trim().isEmpty()) {
+                throw new AppException(ErrorCode.BAD_REQUEST); // TODO: You might want a specific error code for missing note
+            }
+        }
+
+        try {
+            List<String> options = objectMapper.readValue(request.getOptions(), new TypeReference<List<String>>() {});
+            if (options == null || options.size() < 4) {
+                throw new AppException(ErrorCode.BAD_REQUEST); // Options must have at least 4 items
+            }
+            if (!options.contains(request.getCorrectAnswer())) {
+                throw new AppException(ErrorCode.BAD_REQUEST); // Correct answer must be exactly one of the options
+            }
+        } catch (JsonProcessingException e) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Options must be a valid JSON string array
+        }
     }
 }

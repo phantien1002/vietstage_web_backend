@@ -9,6 +9,14 @@ public class QuizRequest {
     @NotBlank(message = "Title is required")
     private String title;
 
+    @NotBlank(message = "Question type is required")
+    @jakarta.validation.constraints.Pattern(regexp = "^(NOTE_IDENTIFICATION|GENERAL)$", message = "Question type must be NOTE_IDENTIFICATION or GENERAL")
+    private String questionType;
+
+    private String note;
+
+    private String audioUrl;
+
     @NotBlank(message = "Question is required")
     private String question;
 

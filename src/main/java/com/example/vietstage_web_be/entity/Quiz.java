@@ -27,6 +27,15 @@ public class Quiz {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "question_type", nullable = false)
+    private String questionType = "GENERAL";
+
+    @Column(name = "note")
+    private String note;
+
+    @Column(name = "audio_url")
+    private String audioUrl;
+
     @Column(name = "question", nullable = false)
     private String question;
 
