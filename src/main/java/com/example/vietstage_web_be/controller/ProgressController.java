@@ -4,6 +4,7 @@ import com.example.vietstage_web_be.dto.request.InstructorPracticeAttemptRequest
 import com.example.vietstage_web_be.dto.response.*;
 import com.example.vietstage_web_be.service.IInstructorService;
 import com.example.vietstage_web_be.service.ILearnerProgressService;
+import com.example.vietstage_web_be.service.IQuizService;
 import org.springframework.data.domain.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import java.util.List;
 public class ProgressController {
     private final ILearnerProgressService progressService;
     private final IInstructorService instructorService;
+    private final IQuizService quizService;
 
     @GetMapping("/users/me/progress")
     @PreAuthorize("hasRole('LEARNER')")
@@ -130,5 +132,7 @@ public class ProgressController {
                 .data(pageResponse)
                 .build());
     }
+
+    //còn cần thêm controller cho user get dc quizzes dựa theo skill level và learner id
 }
 

@@ -1,7 +1,10 @@
 package com.example.vietstage_web_be.service.impl;
 
+import com.example.vietstage_web_be.dto.request.LearnerQuizRequest;
 import com.example.vietstage_web_be.dto.request.QuizAttemptRequest;
 import com.example.vietstage_web_be.dto.request.QuizRequest;
+import com.example.vietstage_web_be.dto.response.LearnerProgressItemResponse;
+import com.example.vietstage_web_be.dto.response.LearnerQuizProgressResponse;
 import com.example.vietstage_web_be.dto.response.QuizAttemptResponse;
 import com.example.vietstage_web_be.dto.response.QuizResponse;
 import com.example.vietstage_web_be.entity.Lesson;
@@ -10,9 +13,8 @@ import com.example.vietstage_web_be.entity.QuizAttempt;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
-import com.example.vietstage_web_be.repository.LessonRepository;
-import com.example.vietstage_web_be.repository.QuizAttemptRepository;
-import com.example.vietstage_web_be.repository.QuizRepository;
+import com.example.vietstage_web_be.repository.*;
+import com.example.vietstage_web_be.service.ILearnerProgressService;
 import com.example.vietstage_web_be.service.IQuizService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +35,9 @@ public class QuizServiceImpl implements IQuizService {
     private final QuizRepository quizRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
+    private final InstrumentRepository instrumentRepository;
+    private final ILearnerProgressService learnerProgressService;
 
     @Override
     public List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser) {
@@ -156,5 +163,203 @@ public class QuizServiceImpl implements IQuizService {
                 .pointsEarned(attempt.getIsCorrect() ? 10 : 0)
                 .attemptedAt(attempt.getAttemptedAt())
                 .build());
+    }
+
+    @Override
+    public LearnerQuizProgressResponse createQuizByLearnerLever(LearnerQuizRequest request) {
+        Lesson lesson = lessonRepository.findById(request.getLessonId())
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (lesson.getSkillLevel() == null){
+            throw new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND);
+        }
+
+        Quiz quiz = new Quiz();
+        quiz.setLesson(lesson);
+        quiz.setQuestion(request.getQuestion());
+        quiz.setOptions(request.getOptions());
+        quiz.setCorrectAnswer(request.getCorrectAnswer());
+        quiz.setOrderIndex(request.getOrderIndex());
+        quiz.setCreatedAt(LocalDateTime.now());
+
+        Quiz savedQuiz = quizRepository.save(quiz);
+
+        return LearnerQuizProgressResponse.builder()
+                .id(savedQuiz.getId())
+                .lessonId(savedQuiz.getLesson().getId())
+                .lessonCode(savedQuiz.getLesson().getLessonCode())
+                .skillLevelId(savedQuiz.getLesson().getSkillLevel().getId())
+                .levelCode(savedQuiz.getLesson().getSkillLevel().getLevelCode())
+                .levelOrderIndex(savedQuiz.getLesson().getSkillLevel().getOrderIndex())
+                .question(savedQuiz.getQuestion())
+                .options(savedQuiz.getOptions())
+                .correctAnswer(savedQuiz.getCorrectAnswer())
+                .orderIndex(savedQuiz.getOrderIndex())
+                .createAt(savedQuiz.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public LearnerQuizProgressResponse updateQuizByLearnerLevel(Long quizId, LearnerQuizRequest request) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
+
+        Lesson lesson = lessonRepository.findById(request.getLessonId())
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (lesson.getSkillLevel() == null){
+            throw new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND);
+        }
+
+        quiz.setLesson(lesson);
+        quiz.setQuestion(request.getQuestion());
+        quiz.setOptions(request.getOptions());
+        quiz.setCorrectAnswer(request.getCorrectAnswer());
+        quiz.setOrderIndex(request.getOrderIndex());
+
+        Quiz updatedQuiz = quizRepository.save(quiz);
+
+        return LearnerQuizProgressResponse.builder()
+                .id(updatedQuiz.getId())
+                .lessonId(updatedQuiz.getLesson().getId())
+                .lessonCode(updatedQuiz.getLesson().getLessonCode())
+                .skillLevelId(updatedQuiz.getLesson().getSkillLevel().getId())
+                .levelCode(updatedQuiz.getLesson().getSkillLevel().getLevelCode())
+                .levelOrderIndex(updatedQuiz.getLesson().getSkillLevel().getOrderIndex())
+                .question(updatedQuiz.getQuestion())
+                .options(updatedQuiz.getOptions())
+                .correctAnswer(updatedQuiz.getCorrectAnswer())
+                .orderIndex(updatedQuiz.getOrderIndex())
+                .createAt(updatedQuiz.getCreatedAt())
+                .updateAt(LocalDateTime.now())
+                .build();
+    }
+
+
+    @Override
+    public List<LearnerQuizProgressResponse> getQuizzesByLearnerLevel(Long learnerId, Long instrumentId, Long skillLevelId) {
+        //chưa hoàn thiện cho toàn bộ chỉ mới là cơ bản ý tưởng, cần sửa lại cho hoàn chỉnh nhất
+
+        List<LearnerProgressItemResponse> progressList = learnerProgressService.getLearnerProgress(learnerId, instrumentId, skillLevelId);
+        List<Long> completedLessonIds = new ArrayList<>();
+
+        for (LearnerProgressItemResponse progressItem : progressList) {
+            if (Boolean.TRUE.equals(progressItem.getCompleted())) {
+                completedLessonIds.add(progressItem.getLessonId());
+            }
+        }
+
+        if (completedLessonIds.isEmpty()) return new ArrayList<>();
+
+        List<Lesson> completedLessons = lessonRepository.findAllById(completedLessonIds);
+
+        Short highestCompletedLevel = null;
+
+        for (Lesson lesson : completedLessons) {
+            if (lesson.getSkillLevel() == null) continue;
+
+            Short levelOrderIndex = lesson.getSkillLevel().getOrderIndex();
+
+            if (levelOrderIndex == null) continue;
+
+            if (highestCompletedLevel == null || levelOrderIndex > highestCompletedLevel) highestCompletedLevel = levelOrderIndex;
+        }
+
+        if (highestCompletedLevel == null) return new ArrayList<>();
+
+        List<Quiz> quizzes = quizRepository.findByMaxLearnerLevel(highestCompletedLevel);
+
+        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+
+        for (Quiz quiz : quizzes) {
+            if (quiz.getQuestion() == null) continue;
+
+            if (quiz.getLesson().getSkillLevel() == null) continue;
+
+            responseList.add(
+                    LearnerQuizProgressResponse.builder()
+                            .id(quiz.getId())
+                            .lessonId(quiz.getLesson().getId())
+                            .lessonCode(quiz.getLesson().getLessonCode())
+                            .skillLevelId(quiz.getLesson().getSkillLevel().getId())
+                            .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
+                            .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
+                            .question(quiz.getQuestion())
+                            .options(quiz.getOptions())
+                            .correctAnswer(quiz.getCorrectAnswer())
+                            .orderIndex(quiz.getOrderIndex())
+                            .createAt(quiz.getCreatedAt())
+                            .build()
+            );
+        }
+
+        return responseList;
+    }
+
+    //cần sửa lại sao cho learner get quizess
+    @Override
+    public List<LearnerQuizProgressResponse> getQuizzesByLevel(Long skillLevelId) {
+        List<Quiz> quizzes = quizRepository.findBySkillLevelId(skillLevelId);
+
+        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+
+        for (Quiz quiz : quizzes) {
+            if (quiz.getQuestion() == null) continue;
+
+            if (quiz.getLesson().getSkillLevel() == null) continue;
+
+            responseList.add(
+                    LearnerQuizProgressResponse.builder()
+                            .id(quiz.getId())
+                            .lessonId(quiz.getLesson().getId())
+                            .lessonCode(quiz.getLesson().getLessonCode())
+                            .skillLevelId(quiz.getLesson().getSkillLevel().getId())
+                            .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
+                            .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
+                            .question(quiz.getQuestion())
+                            .options(quiz.getOptions())
+                            .correctAnswer(quiz.getCorrectAnswer())
+                            .orderIndex(quiz.getOrderIndex())
+                            .createAt(quiz.getCreatedAt())
+                            .build()
+            );
+        }
+
+        return responseList;
+    }
+
+    //cần sửa cho learner get quizzes theo lesson nếu cần thiết
+    @Override
+    public List<LearnerQuizProgressResponse> getQuizzesByLesson(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (lesson.getSkillLevel() == null) {
+            throw new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND);
+        }
+
+        List<Quiz> quizzes = quizRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+
+        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+
+        for (Quiz quiz : quizzes) {
+            responseList.add(
+                    LearnerQuizProgressResponse.builder()
+                            .id(quiz.getId())
+                            .lessonId(quiz.getLesson().getId())
+                            .lessonCode(quiz.getLesson().getLessonCode())
+                            .skillLevelId(quiz.getLesson().getSkillLevel().getId())
+                            .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
+                            .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
+                            .question(quiz.getQuestion())
+                            .options(quiz.getOptions())
+                            .correctAnswer(quiz.getCorrectAnswer())
+                            .orderIndex(quiz.getOrderIndex())
+                            .createAt(quiz.getCreatedAt())
+                            .build()
+            );
+        }
+
+        return responseList;
     }
 }

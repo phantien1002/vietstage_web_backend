@@ -1,7 +1,9 @@
 package com.example.vietstage_web_be.service;
 
+import com.example.vietstage_web_be.dto.request.LearnerQuizRequest;
 import com.example.vietstage_web_be.dto.request.QuizAttemptRequest;
 import com.example.vietstage_web_be.dto.request.QuizRequest;
+import com.example.vietstage_web_be.dto.response.LearnerQuizProgressResponse;
 import com.example.vietstage_web_be.dto.response.QuizAttemptResponse;
 import com.example.vietstage_web_be.dto.response.QuizResponse;
 import com.example.vietstage_web_be.entity.User;
@@ -18,4 +20,16 @@ public interface IQuizService {
     
     QuizAttemptResponse submitAttempt(Long quizId, QuizAttemptRequest request, User learner);
     Page<QuizAttemptResponse> getAttempts(Long quizId, Pageable pageable, User learner);
+
+    /*Instructor*/
+    LearnerQuizProgressResponse createQuizByLearnerLever(LearnerQuizRequest request);
+
+    LearnerQuizProgressResponse updateQuizByLearnerLevel(Long quizId, LearnerQuizRequest request);
+
+    List<LearnerQuizProgressResponse> getQuizzesByLearnerLevel(Long learnerId, Long instrumentId, Long skillLevelId);
+
+    /*Learner*/
+    List<LearnerQuizProgressResponse> getQuizzesByLevel(Long skillLevelId);
+
+    List<LearnerQuizProgressResponse> getQuizzesByLesson(Long lessonId);
 }
