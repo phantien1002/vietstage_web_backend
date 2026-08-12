@@ -24,6 +24,9 @@ public class Quiz {
     @JoinColumn(name = "lesson_id", nullable = false)
     private Lesson lesson;
 
+    @Column(name = "title", nullable = false)
+    private String title;
+
     @Column(name = "question", nullable = false)
     private String question;
 

@@ -6,6 +6,9 @@ import lombok.Data;
 
 @Data
 public class QuizRequest {
+    @NotBlank(message = "Title is required")
+    private String title;
+
     @NotBlank(message = "Question is required")
     private String question;
 

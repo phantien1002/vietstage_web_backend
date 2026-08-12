@@ -39,6 +39,7 @@ public class QuizServiceImpl implements IQuizService {
         return quizzes.stream().map(quiz -> {
             QuizResponse.QuizResponseBuilder builder = QuizResponse.builder()
                     .id(quiz.getId())
+                    .title(quiz.getTitle())
                     .question(quiz.getQuestion())
                     .options(quiz.getOptions())
                     .orderIndex(quiz.getOrderIndex());
@@ -59,6 +60,7 @@ public class QuizServiceImpl implements IQuizService {
 
         Quiz quiz = Quiz.builder()
                 .lesson(lesson)
+                .title(request.getTitle())
                 .question(request.getQuestion())
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
@@ -70,6 +72,7 @@ public class QuizServiceImpl implements IQuizService {
 
         return QuizResponse.builder()
                 .id(quiz.getId())
+                .title(quiz.getTitle())
                 .question(quiz.getQuestion())
                 .options(quiz.getOptions())
                 .correctAnswer(quiz.getCorrectAnswer())
@@ -82,6 +85,7 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND)); 
 
+        quiz.setTitle(request.getTitle());
         quiz.setQuestion(request.getQuestion());
         quiz.setOptions(request.getOptions());
         quiz.setCorrectAnswer(request.getCorrectAnswer());
@@ -91,6 +95,7 @@ public class QuizServiceImpl implements IQuizService {
 
         return QuizResponse.builder()
                 .id(quiz.getId())
+                .title(quiz.getTitle())
                 .question(quiz.getQuestion())
                 .options(quiz.getOptions())
                 .correctAnswer(quiz.getCorrectAnswer())

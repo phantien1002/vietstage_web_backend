@@ -9,6 +9,7 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class QuizResponse {
     private Long id;
+    private String title;
     private String question;
     private String options; // JSON string array
     
