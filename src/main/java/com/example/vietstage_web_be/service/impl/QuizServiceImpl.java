@@ -34,7 +34,7 @@ public class QuizServiceImpl implements IQuizService {
     private final QuizRepository quizRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
-    private final ObjectMapper objectMapper;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser) {
