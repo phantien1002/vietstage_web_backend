@@ -49,12 +49,8 @@ public class QuizServiceImpl implements IQuizService {
                     .audioUrl(quiz.getAudioUrl())
                     .question(quiz.getQuestion())
                     .options(quiz.getOptions())
-                    .orderIndex(quiz.getOrderIndex());
-                    
-            // Only return correctAnswer if the user is INSTRUCTOR or ADMIN
-            if (currentUser != null && (currentUser.getRole().getName().equals("INSTRUCTOR") || currentUser.getRole().getName().equals("ADMIN"))) {
-                builder.correctAnswer(quiz.getCorrectAnswer());
-            }
+                    .orderIndex(quiz.getOrderIndex())
+                    .correctAnswer(quiz.getCorrectAnswer());
             
             return builder.build();
         }).collect(Collectors.toList());
