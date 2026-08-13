@@ -12,26 +12,5 @@ import java.util.List;
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
     List<Quiz> findByLessonIdOrderByOrderIndexAsc(Long lessonId);
 
-    @Query("""
-        SELECT q
-        FROM Quiz q
-        JOIN FETCH q.lesson l
-        JOIN FETCH l.skillLevel sl
-        WHERE sl.orderIndex <= :maxLevel
-        ORDER BY sl.orderIndex ASC,
-                 l.orderIndex ASC,
-                 q.orderIndex ASC
-    """)
-    List<Quiz> findByMaxLearnerLevel(@Param("maxLevel") Short maxLevel);
-
-    @Query("""
-            SELECT q
-            FROM Quiz q
-            JOIN FETCH q.lesson l
-            JOIN FETCH l.skillLevel sl
-            WHERE sl.id = :skillLevelId
-            ORDER BY l.orderIndex ASC,
-                     q.orderIndex ASC
-            """)
-    List<Quiz> findBySkillLevelId(@Param("skillLevelId") Long skillLevelId);
+    List<Quiz> findByInstrumentIdAndSkillLevelId(Long instrumentId, Long skillLevelId);
 }

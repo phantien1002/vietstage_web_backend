@@ -132,7 +132,5 @@ public class ProgressController {
                 .data(pageResponse)
                 .build());
     }
-
-    //còn cần thêm controller cho user get dc quizzes dựa theo skill level và learner id
 }
 

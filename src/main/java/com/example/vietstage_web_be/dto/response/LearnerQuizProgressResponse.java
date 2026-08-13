@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,6 +16,8 @@ public class LearnerQuizProgressResponse {
     private Long id;
     private Long lessonId;
     private String lessonCode;
+    private Long instrumentId;
+    private String instrumentCode;
     private Long skillLevelId;
     private String levelCode;
     private Short levelOrderIndex;
@@ -24,4 +27,10 @@ public class LearnerQuizProgressResponse {
     private Integer orderIndex;
     private LocalDateTime createAt;
     private LocalDateTime updateAt;
+
+    private Boolean attempted;
+    private String selectedAnswer;
+    private Boolean correct;
+    private BigDecimal score;
+    private LocalDateTime attemptedAt;
 }

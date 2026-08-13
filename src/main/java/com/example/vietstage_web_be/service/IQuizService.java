@@ -26,10 +26,9 @@ public interface IQuizService {
 
     LearnerQuizProgressResponse updateQuizByLearnerLevel(Long quizId, LearnerQuizRequest request);
 
-    List<LearnerQuizProgressResponse> getQuizzesByLearnerLevel(Long learnerId, Long instrumentId, Long skillLevelId);
+    List<LearnerQuizProgressResponse> getQuizzesByLearnerLevel(Long learnerId, Long instrumentId);
 
     /*Learner*/
-    List<LearnerQuizProgressResponse> getQuizzesByLevel(Long skillLevelId);
-
-    List<LearnerQuizProgressResponse> getQuizzesByLesson(Long lessonId);
+    List<LearnerQuizProgressResponse> getQuizzes(Long learnerId, Long instrumentId, Long lessonId
+    );
 }

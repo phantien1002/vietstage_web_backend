@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> {
     @Query("SELECT COUNT(qa) FROM QuizAttempt qa " +
@@ -14,5 +16,7 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     Integer countQuizAttemptsByLessonAndLearner(@Param("lessonId") Long lessonId, @Param("learnerId") Long learnerId);
 
     org.springframework.data.domain.Page<QuizAttempt> findByQuizIdAndLearnerIdOrderByAttemptedAtDesc(Long quizId, Long learnerId, org.springframework.data.domain.Pageable pageable);
+
+    Optional<QuizAttempt> findTopByQuizIdAndLearnerIdOrderByAttemptedAtDesc(Long quizId, Long learnerId);
 }
 

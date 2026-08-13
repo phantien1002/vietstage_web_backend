@@ -7,10 +7,7 @@ import com.example.vietstage_web_be.dto.response.LearnerProgressItemResponse;
 import com.example.vietstage_web_be.dto.response.LearnerQuizProgressResponse;
 import com.example.vietstage_web_be.dto.response.QuizAttemptResponse;
 import com.example.vietstage_web_be.dto.response.QuizResponse;
-import com.example.vietstage_web_be.entity.Lesson;
-import com.example.vietstage_web_be.entity.Quiz;
-import com.example.vietstage_web_be.entity.QuizAttempt;
-import com.example.vietstage_web_be.entity.User;
+import com.example.vietstage_web_be.entity.*;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.*;
@@ -23,9 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +31,6 @@ public class QuizServiceImpl implements IQuizService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
-    private final InstrumentRepository instrumentRepository;
     private final ILearnerProgressService learnerProgressService;
 
     @Override
@@ -167,10 +161,21 @@ public class QuizServiceImpl implements IQuizService {
 
     @Override
     public LearnerQuizProgressResponse createQuizByLearnerLever(LearnerQuizRequest request) {
+        User learner = userRepository.findById(request.getLearnerId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
         Lesson lesson = lessonRepository.findById(request.getLessonId())
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        if (lesson.getSkillLevel() == null){
+        if (lesson.getInstrument() == null
+            || lesson.getInstrument().getId() == null
+            || !lesson.getInstrument().getId().equals(request.getInstrumentId())) {
+            throw new AppException(ErrorCode.INSTRUMENT_NOT_FOUND);
+        }
+
+        SkillLevel learnerCurrentLevel = getCurrentLearnerLevel(request.getLearnerId(), request.getInstrumentId());
+
+        if (lesson.getSkillLevel() == null || !lesson.getSkillLevel().getId().equals(learnerCurrentLevel.getId())) {
             throw new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND);
         }
 
@@ -204,10 +209,22 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
 
+        User learner = userRepository.findById(request.getLearnerId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
         Lesson lesson = lessonRepository.findById(request.getLessonId())
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        if (lesson.getSkillLevel() == null){
+        if (lesson.getInstrument() == null
+            || lesson.getInstrument().getId() == null
+            || !lesson.getInstrument().getId().equals(request.getInstrumentId())) {
+            throw new AppException(ErrorCode.INSTRUMENT_NOT_FOUND);
+        }
+
+        SkillLevel learnerCurrentLevel = getCurrentLearnerLevel(request.getLearnerId(), request.getInstrumentId());
+
+        if (lesson.getSkillLevel() == null
+            || !lesson.getSkillLevel().getId().equals(learnerCurrentLevel.getId())) {
             throw new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND);
         }
 
@@ -217,149 +234,191 @@ public class QuizServiceImpl implements IQuizService {
         quiz.setCorrectAnswer(request.getCorrectAnswer());
         quiz.setOrderIndex(request.getOrderIndex());
 
-        Quiz updatedQuiz = quizRepository.save(quiz);
+        quiz = quizRepository.save(quiz);
 
         return LearnerQuizProgressResponse.builder()
-                .id(updatedQuiz.getId())
-                .lessonId(updatedQuiz.getLesson().getId())
-                .lessonCode(updatedQuiz.getLesson().getLessonCode())
-                .skillLevelId(updatedQuiz.getLesson().getSkillLevel().getId())
-                .levelCode(updatedQuiz.getLesson().getSkillLevel().getLevelCode())
-                .levelOrderIndex(updatedQuiz.getLesson().getSkillLevel().getOrderIndex())
-                .question(updatedQuiz.getQuestion())
-                .options(updatedQuiz.getOptions())
-                .correctAnswer(updatedQuiz.getCorrectAnswer())
-                .orderIndex(updatedQuiz.getOrderIndex())
-                .createAt(updatedQuiz.getCreatedAt())
+                .id(quiz.getId())
+                .lessonId(quiz.getLesson().getId())
+                .lessonCode(quiz.getLesson().getLessonCode())
+                .skillLevelId(quiz.getLesson().getSkillLevel().getId())
+                .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
+                .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
+                .question(quiz.getQuestion())
+                .options(quiz.getOptions())
+                .correctAnswer(quiz.getCorrectAnswer())
+                .orderIndex(quiz.getOrderIndex())
+                .createAt(quiz.getCreatedAt())
                 .updateAt(LocalDateTime.now())
                 .build();
     }
 
+    @Override
+    public List<LearnerQuizProgressResponse> getQuizzesByLearnerLevel(Long learnerId, Long instrumentId) {
+        SkillLevel currentLevel = getCurrentLearnerLevel(learnerId, instrumentId);
+
+        List<Quiz> quizList = quizRepository.findByInstrumentIdAndSkillLevelId(instrumentId, currentLevel.getId());
+
+        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+
+        for (Quiz quiz : quizList) {
+            Lesson lesson = quiz.getLesson();
+
+            responseList.add(
+                    LearnerQuizProgressResponse.builder()
+                            .id(quiz.getId())
+                            .lessonId(lesson.getId())
+                            .levelCode(lesson.getLessonCode())
+                            .instrumentId(lesson.getInstrument().getId())
+                            .instrumentCode(lesson.getInstrument().getInstrumentCode())
+                            .skillLevelId(lesson.getSkillLevel().getId())
+                            .lessonCode(lesson.getSkillLevel().getLevelCode())
+                            .levelOrderIndex(lesson.getSkillLevel().getOrderIndex())
+                            .question(quiz.getQuestion())
+                            .options(quiz.getOptions())
+                            .correctAnswer(quiz.getCorrectAnswer())
+                            .orderIndex(quiz.getOrderIndex())
+                            .build()
+            );
+        }
+
+        return responseList;
+    }
 
     @Override
-    public List<LearnerQuizProgressResponse> getQuizzesByLearnerLevel(Long learnerId, Long instrumentId, Long skillLevelId) {
-        //chưa hoàn thiện cho toàn bộ chỉ mới là cơ bản ý tưởng, cần sửa lại cho hoàn chỉnh nhất
+    public List<LearnerQuizProgressResponse> getQuizzes(Long learnerId, Long instrumentId, Long lessonId) {
+        List<Quiz> quizzes;
 
-        List<LearnerProgressItemResponse> progressList = learnerProgressService.getLearnerProgress(learnerId, instrumentId, skillLevelId);
-        List<Long> completedLessonIds = new ArrayList<>();
+        if (learnerId != null) {
+            Lesson lesson = lessonRepository.findById(lessonId)
+                    .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        for (LearnerProgressItemResponse progressItem : progressList) {
-            if (Boolean.TRUE.equals(progressItem.getCompleted())) {
-                completedLessonIds.add(progressItem.getLessonId());
+            if (lesson.getInstrument() == null
+                || !lesson.getInstrument().getId().equals(instrumentId)) {
+                throw new AppException(ErrorCode.INSTRUMENT_NOT_FOUND);
+            }
+            quizzes = quizRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+        }else {
+            SkillLevel currentLevel = getCurrentLearnerLevel(learnerId, instrumentId);
+
+            quizzes = quizRepository.findByInstrumentIdAndSkillLevelId(instrumentId, currentLevel.getId());
+        }
+
+        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+
+        for (Quiz quiz : quizzes) {
+            Lesson lesson = quiz.getLesson();
+
+            Optional<QuizAttempt> attempt = quizAttemptRepository.findTopByQuizIdAndLearnerIdOrderByAttemptedAtDesc(quiz.getId(), learnerId);
+
+            if (attempt.isPresent()) {
+                QuizAttempt quizAttempt = attempt.get();
+
+                responseList.add(
+                        LearnerQuizProgressResponse.builder()
+                                .id(quiz.getId())
+                                .lessonId(lesson.getId())
+                                .lessonCode(lesson.getLessonCode())
+                                .instrumentId(lesson.getInstrument().getId())
+                                .instrumentCode(lesson.getInstrument().getInstrumentCode())
+                                .skillLevelId(lesson.getSkillLevel().getId())
+                                .levelCode(lesson.getSkillLevel().getLevelCode())
+                                .levelOrderIndex(lesson.getSkillLevel().getOrderIndex())
+                                .question(quiz.getQuestion())
+                                .options(quiz.getOptions())
+                                .correctAnswer(quiz.getCorrectAnswer())
+                                .orderIndex(quiz.getOrderIndex())
+                                .attempted(true)
+                                .selectedAnswer(quizAttempt.getSelectedAnswer())
+                                .correct(quizAttempt.getIsCorrect())
+                                .score(quizAttempt.getScore())
+                                .attemptedAt(quizAttempt.getAttemptedAt())
+                                .build()
+                );
+            }else {
+                responseList.add(
+                        LearnerQuizProgressResponse.builder()
+                                .id(quiz.getId())
+                                .lessonId(lesson.getId())
+                                .lessonCode(lesson.getLessonCode())
+                                .instrumentId(lesson.getInstrument().getId())
+                                .instrumentCode(lesson.getInstrument().getInstrumentCode())
+                                .skillLevelId(lesson.getSkillLevel().getId())
+                                .levelCode(lesson.getSkillLevel().getLevelCode())
+                                .levelOrderIndex(lesson.getSkillLevel().getOrderIndex())
+                                .question(quiz.getQuestion())
+                                .options(quiz.getOptions())
+                                .correctAnswer(quiz.getCorrectAnswer())
+                                .orderIndex(quiz.getOrderIndex())
+                                .attempted(false)
+                                .selectedAnswer(null)
+                                .correct(null)
+                                .score(null)
+                                .attemptedAt(null)
+                                .build()
+                );
             }
         }
 
-        if (completedLessonIds.isEmpty()) return new ArrayList<>();
+        return responseList;
+    }
 
-        List<Lesson> completedLessons = lessonRepository.findAllById(completedLessonIds);
+    private SkillLevel getCurrentLearnerLevel(Long learnerId, Long instrumentId) {
+        List<Lesson> lessons = lessonRepository.findByInstrumentId(instrumentId);
 
-        Short highestCompletedLevel = null;
+        if (lessons.isEmpty()){
+            throw new AppException(ErrorCode.LESSON_NOT_FOUND);
+        }
 
-        for (Lesson lesson : completedLessons) {
+        Map<Long, List<Lesson>> lessonsByLevel = new LinkedHashMap<>();
+
+        for (Lesson lesson : lessons){
             if (lesson.getSkillLevel() == null) continue;
 
-            Short levelOrderIndex = lesson.getSkillLevel().getOrderIndex();
-
-            if (levelOrderIndex == null) continue;
-
-            if (highestCompletedLevel == null || levelOrderIndex > highestCompletedLevel) highestCompletedLevel = levelOrderIndex;
+            lessonsByLevel.computeIfAbsent(lesson.getSkillLevel().getId(), k -> new ArrayList<>()).add(lesson);
         }
 
-        if (highestCompletedLevel == null) return new ArrayList<>();
+        List<List<Lesson>> levels = new  ArrayList<>(lessonsByLevel.values());
 
-        List<Quiz> quizzes = quizRepository.findByMaxLearnerLevel(highestCompletedLevel);
+        levels.sort(Comparator.comparing(levelLessons -> levelLessons.get(0).getSkillLevel().getOrderIndex()));
 
-        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+        SkillLevel currentLevel = levels.get(0).get(0).getSkillLevel();
 
-        for (Quiz quiz : quizzes) {
-            if (quiz.getQuestion() == null) continue;
+        for (List<Lesson> levelLessons : levels){
+            SkillLevel level = levelLessons.get(0).getSkillLevel();
 
-            if (quiz.getLesson().getSkillLevel() == null) continue;
+            List<LearnerProgressItemResponse> progressList = learnerProgressService.getLearnerProgress(learnerId, instrumentId, level.getId());
 
-            responseList.add(
-                    LearnerQuizProgressResponse.builder()
-                            .id(quiz.getId())
-                            .lessonId(quiz.getLesson().getId())
-                            .lessonCode(quiz.getLesson().getLessonCode())
-                            .skillLevelId(quiz.getLesson().getSkillLevel().getId())
-                            .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
-                            .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
-                            .question(quiz.getQuestion())
-                            .options(quiz.getOptions())
-                            .correctAnswer(quiz.getCorrectAnswer())
-                            .orderIndex(quiz.getOrderIndex())
-                            .createAt(quiz.getCreatedAt())
-                            .build()
-            );
+            long totalLessons = levelLessons.size();
+
+            long completedLessons = progressList.stream().filter(
+                    item -> Boolean.TRUE.equals(item.getCompleted())
+            ).count();
+
+            if (totalLessons > 0 && completedLessons == totalLessons){
+                currentLevel = level;
+            }else {
+                break;
+            }
         }
 
-        return responseList;
-    }
+        for (int i = 0; i < levels.size(); i++) {
+            SkillLevel level = levels.get(i).get(0).getSkillLevel();
 
-    //cần sửa lại sao cho learner get quizess
-    @Override
-    public List<LearnerQuizProgressResponse> getQuizzesByLevel(Long skillLevelId) {
-        List<Quiz> quizzes = quizRepository.findBySkillLevelId(skillLevelId);
+            if (level.getId().equals(currentLevel.getId())){
+                if (i + 1 < levels.size()){
+                    List<LearnerProgressItemResponse> progressList = learnerProgressService.getLearnerProgress(learnerId, instrumentId, level.getId());
 
-        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
+                    long completed = progressList.stream().filter(
+                            item -> Boolean.TRUE.equals(item.getCompleted())
+                    ).count();
 
-        for (Quiz quiz : quizzes) {
-            if (quiz.getQuestion() == null) continue;
-
-            if (quiz.getLesson().getSkillLevel() == null) continue;
-
-            responseList.add(
-                    LearnerQuizProgressResponse.builder()
-                            .id(quiz.getId())
-                            .lessonId(quiz.getLesson().getId())
-                            .lessonCode(quiz.getLesson().getLessonCode())
-                            .skillLevelId(quiz.getLesson().getSkillLevel().getId())
-                            .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
-                            .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
-                            .question(quiz.getQuestion())
-                            .options(quiz.getOptions())
-                            .correctAnswer(quiz.getCorrectAnswer())
-                            .orderIndex(quiz.getOrderIndex())
-                            .createAt(quiz.getCreatedAt())
-                            .build()
-            );
+                    if (completed == levels.get(i).size()){
+                        currentLevel = levels.get(i + 1).get(0).getSkillLevel();
+                    }
+                }
+                break;
+            }
         }
-
-        return responseList;
-    }
-
-    //cần sửa cho learner get quizzes theo lesson nếu cần thiết
-    @Override
-    public List<LearnerQuizProgressResponse> getQuizzesByLesson(Long lessonId) {
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
-
-        if (lesson.getSkillLevel() == null) {
-            throw new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND);
-        }
-
-        List<Quiz> quizzes = quizRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
-
-        List<LearnerQuizProgressResponse> responseList = new ArrayList<>();
-
-        for (Quiz quiz : quizzes) {
-            responseList.add(
-                    LearnerQuizProgressResponse.builder()
-                            .id(quiz.getId())
-                            .lessonId(quiz.getLesson().getId())
-                            .lessonCode(quiz.getLesson().getLessonCode())
-                            .skillLevelId(quiz.getLesson().getSkillLevel().getId())
-                            .levelCode(quiz.getLesson().getSkillLevel().getLevelCode())
-                            .levelOrderIndex(quiz.getLesson().getSkillLevel().getOrderIndex())
-                            .question(quiz.getQuestion())
-                            .options(quiz.getOptions())
-                            .correctAnswer(quiz.getCorrectAnswer())
-                            .orderIndex(quiz.getOrderIndex())
-                            .createAt(quiz.getCreatedAt())
-                            .build()
-            );
-        }
-
-        return responseList;
+        return currentLevel;
     }
 }

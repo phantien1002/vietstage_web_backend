@@ -53,47 +53,4 @@ public class InstructorController {
                 .build()
         );
     }
-
-    @PostMapping("/quizzes")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ApiResponse<LearnerQuizProgressResponse>> createQuiz(@Valid @RequestBody LearnerQuizRequest request){
-        LearnerQuizProgressResponse response = quizService.createQuizByLearnerLever(request);
-
-        return ResponseEntity.ok(
-                ApiResponse.<LearnerQuizProgressResponse>builder()
-                        .success(true)
-                        .message("Learner quiz has been created successfully")
-                        .data(response)
-                        .build()
-        );
-    }
-
-    @PutMapping("/quizzes/{quizId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ApiResponse<LearnerQuizProgressResponse>> updateQuiz(@PathVariable Long quizId,
-                                                                               @Valid @RequestBody LearnerQuizRequest request){
-        LearnerQuizProgressResponse response = quizService.updateQuizByLearnerLevel(quizId, request);
-
-        return ResponseEntity.ok(
-                ApiResponse.<LearnerQuizProgressResponse>builder()
-                        .success(true)
-                        .message("Learner quiz has been updated successfully")
-                        .data(response)
-                        .build()
-        );
-    }
-
-    @GetMapping("/quizzes/{levelId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ApiResponse<List<LearnerQuizProgressResponse>>> getQuiz(@PathVariable Long learnerId, Long instrumentId,  Long skillLevelId){
-        List<LearnerQuizProgressResponse> responses = quizService.getQuizzesByLearnerLevel(learnerId, instrumentId, skillLevelId);
-
-        return ResponseEntity.ok(
-                ApiResponse.<List<LearnerQuizProgressResponse>>builder()
-                        .success(true)
-                        .message("Learner quiz has been updated successfully")
-                        .data(responses)
-                        .build()
-        );
-    }
 }

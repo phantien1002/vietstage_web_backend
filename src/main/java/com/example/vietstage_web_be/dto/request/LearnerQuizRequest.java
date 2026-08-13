@@ -12,8 +12,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LearnerQuizRequest {
+    @NotNull(message = "Learner ID is required")
+    private Long learnerId;
+
     @NotNull(message = "Lesson ID is required")
     private Long lessonId;
+
+    @NotNull(message = "Instrument ID is required")
+    private Long instrumentId;
 
     @NotBlank(message = "Question is required")
     private String question;
