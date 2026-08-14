@@ -13,6 +13,8 @@ public class MinigameChallengeResponse {
     private Integer maxScore;
     private Integer orderIndex;
     
+    private Long referenceAssetId;
+    
     // We omit referenceAssetId and just return contentJson as specified in my plan
     private String contentJson;
 }

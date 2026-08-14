@@ -18,4 +18,7 @@ public class MinigameAttemptRequest {
 
     @NotNull(message = "Completed at is required")
     private LocalDateTime completedAt;
+    
+    // Optional because RHYTHM_MATCH might not use it or client scores it
+    private java.util.Map<String, String> answers;
 }
