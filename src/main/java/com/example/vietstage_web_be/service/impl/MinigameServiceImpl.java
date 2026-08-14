@@ -66,6 +66,8 @@ public class MinigameServiceImpl implements IMinigameService {
                     .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         }
 
+        validateContentForMelodyComplete(request.getChallengeType(), request.getContentJson());
+        
         MinigameChallenge challenge = MinigameChallenge.builder()
                 .lesson(lesson)
                 .title(request.getTitle())
@@ -94,6 +96,8 @@ public class MinigameServiceImpl implements IMinigameService {
                     .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         }
 
+        validateContentForMelodyComplete(request.getChallengeType(), request.getContentJson());
+        
         challenge.setTitle(request.getTitle());
         challenge.setChallengeType(request.getChallengeType());
         challenge.setContentJson(request.getContentJson());
@@ -151,8 +155,9 @@ public class MinigameServiceImpl implements IMinigameService {
                         if (isCorrect) correctCount++;
                     }
                     
+                    double percentage = 0.0;
                     if (totalAnswers > 0) {
-                        double percentage = (double) correctCount / totalAnswers;
+                        percentage = (double) correctCount / totalAnswers;
                         score = (int) Math.round(percentage * challenge.getMaxScore());
                     } else {
                         score = 0;
@@ -163,9 +168,11 @@ public class MinigameServiceImpl implements IMinigameService {
                     int star2 = getAppConfigInt("scoring.star2.threshold", 70);
                     int star3 = getAppConfigInt("scoring.star3.threshold", 90);
                     
-                    if (score >= star3) starsEarned = 3;
-                    else if (score >= star2) starsEarned = 2;
-                    else if (score >= star1) starsEarned = 1;
+                    double percentageScore = percentage * 100.0;
+                    
+                    if (percentageScore >= star3) starsEarned = 3;
+                    else if (percentageScore >= star2) starsEarned = 2;
+                    else if (percentageScore >= star1) starsEarned = 1;
                     else starsEarned = 0;
                 }
             } catch (Exception e) {
@@ -269,6 +276,26 @@ public class MinigameServiceImpl implements IMinigameService {
     private void validateChallengeType(String type) {
         if (!"RHYTHM_MATCH".equals(type) && !"MELODY_COMPLETE".equals(type)) {
             throw new AppException(ErrorCode.MINIGAME_INVALID_TYPE);
+        }
+    }
+    
+    private void validateContentForMelodyComplete(String challengeType, String contentJson) {
+        if ("MELODY_COMPLETE".equals(challengeType)) {
+            if (contentJson == null || contentJson.trim().isEmpty()) {
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+            try {
+                JsonNode root = objectMapper.readTree(contentJson);
+                if (!root.has("audio_asset_id")) {
+                    throw new AppException(ErrorCode.BAD_REQUEST);
+                }
+                Long audioAssetId = root.get("audio_asset_id").asLong();
+                mediaAssetRepository.findById(audioAssetId)
+                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+            } catch (Exception e) {
+                if (e instanceof AppException) throw (AppException) e;
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
         }
     }
     
