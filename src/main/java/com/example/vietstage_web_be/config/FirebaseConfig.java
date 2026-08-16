@@ -10,7 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 @Slf4j
@@ -18,6 +20,9 @@ public class FirebaseConfig {
 
     @Value("${firebase.config.path}")
     private String firebaseConfigPath;
+
+    @Value("${firebase.config.json:#{null}}")
+    private String firebaseConfigJson;
 
     private final ResourceLoader resourceLoader;
 
@@ -28,9 +33,15 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() {
         try {
-            log.info("Initializing Firebase with path: {}", firebaseConfigPath);
-            Resource resource = resourceLoader.getResource(firebaseConfigPath);
-            InputStream serviceAccount = resource.getInputStream();
+            InputStream serviceAccount;
+            if (firebaseConfigJson != null && !firebaseConfigJson.trim().isEmpty()) {
+                log.info("Initializing Firebase with JSON string from environment variable (FIREBASE_CONFIG_JSON)");
+                serviceAccount = new ByteArrayInputStream(firebaseConfigJson.getBytes(StandardCharsets.UTF_8));
+            } else {
+                log.info("Initializing Firebase with path: {}", firebaseConfigPath);
+                Resource resource = resourceLoader.getResource(firebaseConfigPath);
+                serviceAccount = resource.getInputStream();
+            }
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
