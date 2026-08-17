@@ -617,11 +617,7 @@ INSERT INTO app_configs (config_key, config_value, config_group, description, va
     ('scoring.dynamics_weight',     '0.15', 'SCORING', 'Dynamics contribution to the composite score', 'NUMBER', 0.0, 1.0, 0.05, NULL, '0.15'),
     ('feature.minigame_enabled',    'true', 'FEATURE', 'Global mini-game feature toggle', 'BOOLEAN', NULL, NULL, NULL, 'true,false', 'true'),
     ('feature.adaptive_difficulty', 'true', 'FEATURE', 'Adaptive difficulty feature toggle', 'BOOLEAN', NULL, NULL, NULL, 'true,false', 'true'),
-    ('difficulty.rolling_window',   '10',   'DIFFICULTY', 'Number of recent attempts used for adaptation', 'NUMBER', 1, 100, 1, NULL, '10'),
-    ('scoring.star1.threshold',     '50',   'SCORING', 'Minimum score to get 1 star', 'NUMBER', 0, 100, 1, NULL, '50'),
-    ('scoring.star2.threshold',     '70',   'SCORING', 'Minimum score to get 2 stars', 'NUMBER', 0, 100, 1, NULL, '70'),
-    ('scoring.star3.threshold',     '90',   'SCORING', 'Minimum score to get 3 stars', 'NUMBER', 0, 100, 1, NULL, '90'),
-    ('scoring.points.multiplier',   '5',    'SCORING', 'Multiplier for star points', 'NUMBER', 1, 100, 1, NULL, '5')
+    ('difficulty.rolling_window',   '10',   'DIFFICULTY', 'Number of recent attempts used for adaptation', 'NUMBER', 1, 100, 1, NULL, '10')
 ON CONFLICT (config_key) DO NOTHING;
 
 COMMIT;

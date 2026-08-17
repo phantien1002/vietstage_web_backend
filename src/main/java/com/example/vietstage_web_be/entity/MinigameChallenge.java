@@ -23,9 +23,6 @@ public class MinigameChallenge {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_id", nullable = false)
     private Lesson lesson;
-    
-    @Column(name = "reference_asset_id")
-    private Long referenceAssetId;
 
     @Column(name = "title", nullable = false)
     private String title;

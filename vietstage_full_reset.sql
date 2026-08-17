@@ -594,11 +594,7 @@ INSERT INTO app_configs (config_key, config_value, description) VALUES
     ('scoring.dynamics_weight',     '0.15'::jsonb, 'Dynamics contribution to the composite score'),
     ('feature.minigame_enabled',    'true'::jsonb, 'Global mini-game feature toggle'),
     ('feature.adaptive_difficulty', 'true'::jsonb, 'Adaptive difficulty feature toggle'),
-    ('difficulty.rolling_window',   '10'::jsonb, 'Number of recent attempts used for adaptation'),
-    ('scoring.star1.threshold',     '50'::jsonb, 'Minimum score to get 1 star'),
-    ('scoring.star2.threshold',     '70'::jsonb, 'Minimum score to get 2 stars'),
-    ('scoring.star3.threshold',     '90'::jsonb, 'Minimum score to get 3 stars'),
-    ('scoring.points.multiplier',   '5'::jsonb, 'Multiplier for star points')
+    ('difficulty.rolling_window',   '10'::jsonb, 'Number of recent attempts used for adaptation')
 ON CONFLICT (config_key) DO NOTHING;
 
 COMMIT;
@@ -808,11 +804,7 @@ INSERT INTO app_configs (config_key, config_value, description) VALUES
     ('scoring.dynamics_weight',     '0.15'::jsonb, 'Dynamics contribution to the composite score'),
     ('feature.minigame_enabled',    'true'::jsonb, 'Global mini-game feature toggle'),
     ('feature.adaptive_difficulty', 'true'::jsonb, 'Adaptive difficulty feature toggle'),
-    ('difficulty.rolling_window',   '10'::jsonb, 'Number of recent attempts used for adaptation'),
-    ('scoring.star1.threshold',     '50'::jsonb, 'Minimum score to get 1 star'),
-    ('scoring.star2.threshold',     '70'::jsonb, 'Minimum score to get 2 stars'),
-    ('scoring.star3.threshold',     '90'::jsonb, 'Minimum score to get 3 stars'),
-    ('scoring.points.multiplier',   '5'::jsonb, 'Multiplier for star points')
+    ('difficulty.rolling_window',   '10'::jsonb, 'Number of recent attempts used for adaptation')
 ON CONFLICT (config_key) DO NOTHING;
 
 COMMIT;

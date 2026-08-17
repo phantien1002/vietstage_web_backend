@@ -16,8 +16,4 @@ public class MinigameAttemptResponse {
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
     private Integer pointsEarned;
-    
-    // For MELODY_COMPLETE
-    private java.util.Map<String, Boolean> answerResults;
-    private java.util.Map<String, String> correctAnswers;
 }

@@ -49,13 +49,8 @@ public class QuizServiceImpl implements IQuizService {
                     .audioUrl(quiz.getAudioUrl())
                     .question(quiz.getQuestion())
                     .options(quiz.getOptions())
-                    .orderIndex(quiz.getOrderIndex());
-                    
-            if (currentUser != null && "LEARNER".equals(currentUser.getRole().getName())) {
-                builder.correctAnswer(null);
-            } else {
-                builder.correctAnswer(quiz.getCorrectAnswer());
-            }
+                    .orderIndex(quiz.getOrderIndex())
+                    .correctAnswer(quiz.getCorrectAnswer());
             
             return builder.build();
         }).collect(Collectors.toList());
@@ -167,7 +162,6 @@ public class QuizServiceImpl implements IQuizService {
                 .score(attempt.getScore())
                 .pointsEarned(pointsEarned)
                 .attemptedAt(attempt.getAttemptedAt())
-                .correctAnswer(quiz.getCorrectAnswer())
                 .build();
     }
 
@@ -188,7 +182,6 @@ public class QuizServiceImpl implements IQuizService {
                 // We'll set it to 0 for historical fetches unless added to DB.
                 .pointsEarned(attempt.getIsCorrect() ? 10 : 0)
                 .attemptedAt(attempt.getAttemptedAt())
-                .correctAnswer(attempt.getQuiz().getCorrectAnswer())
                 .build());
     }
     
