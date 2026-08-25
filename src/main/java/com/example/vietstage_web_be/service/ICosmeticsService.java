@@ -9,9 +9,10 @@ import java.util.List;
 
 public interface ICosmeticsService {
     List<CosmeticItemResponse> getAllCosmeticItems(String itemType);
+    List<CosmeticItemResponse> getAllCosmeticItemsForAdmin(String itemType, String status);
     MyCosmeticsResponse getMyCosmetics(User learner);
     EquipCosmeticResponse equipCosmetic(User learner, Long cosmeticId, boolean isEquipped);
-    CosmeticItemResponse createCosmetic(com.example.vietstage_web_be.dto.request.CosmeticRequest request);
-    CosmeticItemResponse updateCosmetic(Long id, com.example.vietstage_web_be.dto.request.CosmeticRequest request);
-    void deleteCosmetic(Long id);
+    CosmeticItemResponse createCosmeticItem(com.example.vietstage_web_be.dto.request.CreateCosmeticRequest request);
+    CosmeticItemResponse updateCosmeticItem(Long id, com.example.vietstage_web_be.dto.request.UpdateCosmeticRequest request);
+    void deleteCosmeticItem(Long id);
 }

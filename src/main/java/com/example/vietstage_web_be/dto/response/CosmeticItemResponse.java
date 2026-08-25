@@ -12,4 +12,5 @@ public class CosmeticItemResponse {
     private String unlockType;
     private Integer unlockValue;
     private String assetUrl;
+    private String status;
 }

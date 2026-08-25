@@ -21,14 +21,21 @@ public class CosmeticItem {
     private String name;
 
     @Column(name = "item_type", nullable = false)
-    private String itemType; // ROOM_DECOR | INSTRUMENT_SKIN | AVATAR_SKIN
+    @Builder.Default
+    private String itemType = "ROOM_DECOR"; // ROOM_DECOR | INSTRUMENT_SKIN | AVATAR_SKIN
 
     @Column(name = "asset_url")
     private String assetUrl;
 
     @Column(name = "unlock_type")
-    private String unlockType; // ACHIEVEMENT | STARS | POINTS | DEFAULT
+    @Builder.Default
+    private String unlockType = "STARS"; // ACHIEVEMENT | STARS | POINTS | DEFAULT
 
     @Column(name = "unlock_value")
-    private Integer unlockValue;
+    @Builder.Default
+    private Integer unlockValue = 0;
+
+    @Column(name = "status")
+    @Builder.Default
+    private String status = "ACTIVE";
 }

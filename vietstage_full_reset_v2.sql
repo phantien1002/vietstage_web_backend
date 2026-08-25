@@ -402,7 +402,9 @@ CREATE TABLE cosmetic_items (
     name             VARCHAR(120) NOT NULL UNIQUE,
     item_type        VARCHAR(30) NOT NULL,
     asset_url        TEXT,
-    unlock_condition JSONB,
+    unlock_type      VARCHAR(30) DEFAULT 'STARS',
+    unlock_value     INT DEFAULT 0,
+    status           VARCHAR(20) DEFAULT 'ACTIVE',
     CONSTRAINT ck_cosmetic_type
         CHECK (item_type IN ('ROOM_DECOR', 'AVATAR_SKIN', 'INSTRUMENT_SKIN'))
 );
@@ -717,3 +719,13 @@ INSERT INTO practice_attempts (session_id, learner_id, exercise_id, pitch_score,
 (8, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
 (9, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED'),
 (10, 3, 1, 80, 80, 80, 80, 80, 80, 3, 10, 'SYNCED');
+INSERT INTO cosmetic_items (name, item_type, asset_url, unlock_type, unlock_value, status) VALUES
+('Jade Gold Background', 'ROOM_DECOR', 'res://Slide_Assets/bg_jade_gold.jpg', 'STARS', 10, 'ACTIVE'),
+('Traditional Room', 'ROOM_DECOR', 'res://Slide_Assets/bg_traditional_room.jpg', 'STARS', 20, 'ACTIVE'),
+('Decorations', 'ROOM_DECOR', 'res://Slide_Assets/decorations.jpg', 'STARS', 5, 'ACTIVE'),
+('Dan Tranh Polaroid', 'ROOM_DECOR', 'res://Slide_Assets/polaroid_dantranh.jpg', 'STARS', 5, 'ACTIVE'),
+('Sao Truc Polaroid', 'ROOM_DECOR', 'res://Slide_Assets/polaroid_saotruc.jpg', 'STARS', 5, 'ACTIVE'),
+('Bamboo Leaf', 'ROOM_DECOR', 'res://Slide_Assets/single_bamboo_leaf.jpg', 'STARS', 2, 'ACTIVE'),
+('Pressed Flower', 'ROOM_DECOR', 'res://Slide_Assets/single_pressed_flower.jpg', 'STARS', 2, 'ACTIVE'),
+('Washi Tape', 'ROOM_DECOR', 'res://Slide_Assets/single_washi_tape.jpg', 'STARS', 2, 'ACTIVE')
+ON CONFLICT (name) DO NOTHING;

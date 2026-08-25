@@ -50,27 +50,36 @@ public class CosmeticController {
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
-    @PostMapping("/cosmetics")
+    @GetMapping("/admin/cosmetics")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<BaseResponse<CosmeticItemResponse>> createCosmetic(
-            @Valid @RequestBody com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
-        CosmeticItemResponse response = cosmeticsService.createCosmetic(request);
+    public ResponseEntity<BaseResponse<List<CosmeticItemResponse>>> getAllCosmeticsForAdmin(
+            @RequestParam(required = false) String item_type,
+            @RequestParam(required = false) String status) {
+        List<CosmeticItemResponse> response = cosmeticsService.getAllCosmeticItemsForAdmin(item_type, status);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
-    @PutMapping("/cosmetics/{id}")
+    @PostMapping("/admin/cosmetics")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<BaseResponse<CosmeticItemResponse>> createCosmetic(
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.CreateCosmeticRequest request) {
+        CosmeticItemResponse response = cosmeticsService.createCosmeticItem(request);
+        return ResponseEntity.ok(BaseResponse.success(response));
+    }
+
+    @PutMapping("/admin/cosmetics/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<BaseResponse<CosmeticItemResponse>> updateCosmetic(
             @PathVariable Long id,
-            @Valid @RequestBody com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
-        CosmeticItemResponse response = cosmeticsService.updateCosmetic(id, request);
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.UpdateCosmeticRequest request) {
+        CosmeticItemResponse response = cosmeticsService.updateCosmeticItem(id, request);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
-    @DeleteMapping("/cosmetics/{id}")
+    @DeleteMapping("/admin/cosmetics/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<BaseResponse<String>> deleteCosmetic(@PathVariable Long id) {
-        cosmeticsService.deleteCosmetic(id);
+        cosmeticsService.deleteCosmeticItem(id);
         return ResponseEntity.ok(BaseResponse.success("Deleted successfully"));
     }
 }

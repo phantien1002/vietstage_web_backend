@@ -30,7 +30,22 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     public List<CosmeticItemResponse> getAllCosmeticItems(String itemType) {
         List<CosmeticItem> items;
         if (itemType != null && !itemType.isBlank()) {
+            items = cosmeticItemRepository.findByItemTypeAndStatus(itemType, "ACTIVE");
+        } else {
+            items = cosmeticItemRepository.findByStatus("ACTIVE");
+        }
+        return items.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CosmeticItemResponse> getAllCosmeticItemsForAdmin(String itemType, String status) {
+        List<CosmeticItem> items;
+        if (itemType != null && !itemType.isBlank() && status != null && !status.isBlank()) {
+            items = cosmeticItemRepository.findByItemTypeAndStatus(itemType, status);
+        } else if (itemType != null && !itemType.isBlank()) {
             items = cosmeticItemRepository.findByItemType(itemType);
+        } else if (status != null && !status.isBlank()) {
+            items = cosmeticItemRepository.findByStatus(status);
         } else {
             items = cosmeticItemRepository.findAll();
         }
@@ -39,7 +54,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
 
     @Override
     public MyCosmeticsResponse getMyCosmetics(User learner) {
-        List<CosmeticItem> allItems = cosmeticItemRepository.findAll();
+        List<CosmeticItem> allActiveItems = cosmeticItemRepository.findByStatus("ACTIVE");
         List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
 
         Set<Long> ownedItemIds = ownedCosmetics.stream()
@@ -58,7 +73,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                         .build())
                 .collect(Collectors.toList());
 
-        List<CosmeticItemResponse> locked = allItems.stream()
+        List<CosmeticItemResponse> locked = allActiveItems.stream()
                 .filter(item -> !ownedItemIds.contains(item.getId()))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -99,45 +114,43 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     }
 
     @Override
-    public CosmeticItemResponse createCosmetic(com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
+    public CosmeticItemResponse createCosmeticItem(com.example.vietstage_web_be.dto.request.CreateCosmeticRequest request) {
         CosmeticItem item = CosmeticItem.builder()
                 .name(request.getName())
-                .itemType(request.getItemType())
+                .itemType(request.getItemType() != null ? request.getItemType() : "ROOM_DECOR")
                 .assetUrl(request.getAssetUrl())
-                .unlockType(request.getUnlockType())
-                .unlockValue(request.getUnlockValue())
+                .unlockType(request.getUnlockType() != null ? request.getUnlockType() : "STARS")
+                .unlockValue(request.getUnlockValue() != null ? request.getUnlockValue() : 0)
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .build();
         cosmeticItemRepository.save(item);
         return mapToResponse(item);
     }
 
     @Override
-    public CosmeticItemResponse updateCosmetic(Long id, com.example.vietstage_web_be.dto.request.CosmeticRequest request) {
+    public CosmeticItemResponse updateCosmeticItem(Long id, com.example.vietstage_web_be.dto.request.UpdateCosmeticRequest request) {
         CosmeticItem item = cosmeticItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)); // Or create a generic NOT_FOUND
         
-        item.setName(request.getName());
-        item.setItemType(request.getItemType());
-        item.setAssetUrl(request.getAssetUrl());
-        item.setUnlockType(request.getUnlockType());
-        item.setUnlockValue(request.getUnlockValue());
+        if (request.getName() != null) item.setName(request.getName());
+        if (request.getItemType() != null) item.setItemType(request.getItemType());
+        if (request.getAssetUrl() != null) item.setAssetUrl(request.getAssetUrl());
+        if (request.getUnlockType() != null) item.setUnlockType(request.getUnlockType());
+        if (request.getUnlockValue() != null) item.setUnlockValue(request.getUnlockValue());
+        if (request.getStatus() != null) item.setStatus(request.getStatus());
         
         cosmeticItemRepository.save(item);
         return mapToResponse(item);
     }
 
     @Override
-    public void deleteCosmetic(Long id) {
+    public void deleteCosmeticItem(Long id) {
         CosmeticItem item = cosmeticItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         
-        // Remove relationships in learner_cosmetics before deleting the item
-        List<LearnerCosmetic> learnerCosmetics = learnerCosmeticRepository.findAll().stream()
-                .filter(lc -> lc.getCosmeticItem().getId().equals(id))
-                .collect(Collectors.toList());
-        learnerCosmeticRepository.deleteAll(learnerCosmetics);
-        
-        cosmeticItemRepository.delete(item);
+        // Soft delete
+        item.setStatus("INACTIVE");
+        cosmeticItemRepository.save(item);
     }
 
     private CosmeticItemResponse mapToResponse(CosmeticItem item) {
@@ -148,6 +161,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .unlockType(item.getUnlockType())
                 .unlockValue(item.getUnlockValue())
                 .assetUrl(item.getAssetUrl())
+                .status(item.getStatus())
                 .build();
     }
 }

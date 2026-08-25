@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CosmeticItemRepository extends JpaRepository<CosmeticItem, Long> {
     List<CosmeticItem> findByItemType(String itemType);
+    List<CosmeticItem> findByItemTypeAndStatus(String itemType, String status);
+    List<CosmeticItem> findByStatus(String status);
 }

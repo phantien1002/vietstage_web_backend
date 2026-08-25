@@ -383,7 +383,9 @@ CREATE TABLE cosmetic_items (
     name             VARCHAR(120) NOT NULL UNIQUE,
     item_type        VARCHAR(30) NOT NULL,
     asset_url        TEXT,
-    unlock_condition JSONB,
+    unlock_type      VARCHAR(30) DEFAULT 'STARS',
+    unlock_value     INT DEFAULT 0,
+    status           VARCHAR(20) DEFAULT 'ACTIVE',
     CONSTRAINT ck_cosmetic_type
         CHECK (item_type IN ('ROOM_DECOR', 'AVATAR_SKIN', 'INSTRUMENT_SKIN'))
 );
