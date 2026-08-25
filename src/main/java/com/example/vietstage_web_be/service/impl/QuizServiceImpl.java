@@ -14,6 +14,7 @@ import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizRepository;
 import com.example.vietstage_web_be.service.IQuizService;
+import com.example.vietstage_web_be.service.ILeaderboardService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,6 +36,7 @@ public class QuizServiceImpl implements IQuizService {
     private final QuizRepository quizRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
+    private final ILeaderboardService leaderboardService;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -131,6 +134,7 @@ public class QuizServiceImpl implements IQuizService {
     }
 
     @Override
+    @Transactional
     public QuizAttemptResponse submitAttempt(Long quizId, QuizAttemptRequest request, User learner) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
@@ -152,6 +156,8 @@ public class QuizServiceImpl implements IQuizService {
                 .build();
 
         attempt = quizAttemptRepository.save(attempt);
+        
+        leaderboardService.addPoints(learner, pointsEarned, "QUIZ");
 
         return QuizAttemptResponse.builder()
                 .id(attempt.getId())

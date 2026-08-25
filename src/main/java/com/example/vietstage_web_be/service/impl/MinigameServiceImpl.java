@@ -14,10 +14,12 @@ import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.MinigameAttemptRepository;
 import com.example.vietstage_web_be.repository.MinigameChallengeRepository;
 import com.example.vietstage_web_be.service.IMinigameService;
+import com.example.vietstage_web_be.service.ILeaderboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +32,7 @@ public class MinigameServiceImpl implements IMinigameService {
     private final MinigameChallengeRepository challengeRepository;
     private final MinigameAttemptRepository attemptRepository;
     private final LessonRepository lessonRepository;
+    private final ILeaderboardService leaderboardService;
 
     @Override
     public List<MinigameChallengeResponse> getMinigamesByLesson(Long lessonId) {
@@ -82,6 +85,7 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     @Override
+    @Transactional
     public MinigameAttemptResponse submitAttempt(Long minigameId, MinigameAttemptRequest request, User learner) {
         MinigameChallenge challenge = challengeRepository.findById(minigameId)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
@@ -100,6 +104,8 @@ public class MinigameServiceImpl implements IMinigameService {
                 .build();
 
         attempt = attemptRepository.save(attempt);
+        
+        leaderboardService.addPoints(learner, pointsEarned, "MINI_GAME");
 
         return MinigameAttemptResponse.builder()
                 .id(attempt.getId())
