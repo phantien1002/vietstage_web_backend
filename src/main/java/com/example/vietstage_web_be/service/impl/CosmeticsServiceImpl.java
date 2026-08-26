@@ -19,12 +19,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse;
+import com.example.vietstage_web_be.entity.AuditLog;
+import com.example.vietstage_web_be.entity.LearnerProfile;
+import com.example.vietstage_web_be.repository.AuditLogRepository;
+import com.example.vietstage_web_be.repository.LearnerProfileRepository;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class CosmeticsServiceImpl implements ICosmeticsService {
 
     private final CosmeticItemRepository cosmeticItemRepository;
     private final LearnerCosmeticRepository learnerCosmeticRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
+    private final AuditLogRepository auditLogRepository;
 
     @Override
     public List<CosmeticItemResponse> getAllCosmeticItems(String itemType) {
@@ -56,6 +66,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     public MyCosmeticsResponse getMyCosmetics(User learner) {
         List<CosmeticItem> allActiveItems = cosmeticItemRepository.findByStatus("ACTIVE");
         List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
+        LearnerProfile profile = learnerProfileRepository.findById(learner.getId()).orElse(null);
 
         Set<Long> ownedItemIds = ownedCosmetics.stream()
                 .map(lc -> lc.getCosmeticItem().getId())
@@ -79,6 +90,8 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .collect(Collectors.toList());
 
         return MyCosmeticsResponse.builder()
+                .totalStars(profile != null ? profile.getTotalStars() : 0)
+                .spendableStars(profile != null ? profile.getSpendableStars() : 0)
                 .owned(owned)
                 .locked(locked)
                 .build();
@@ -92,6 +105,10 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .filter(lc -> lc.getCosmeticItem().getId().equals(cosmeticId))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.COSMETIC_NOT_OWNED));
+
+        if (!"ACTIVE".equals(targetCosmetic.getCosmeticItem().getStatus())) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Should not equip inactive items
+        }
 
         if (isEquipped) {
             // Auto unequip other items of the same type
@@ -110,6 +127,65 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
         return EquipCosmeticResponse.builder()
                 .cosmeticId(cosmeticId)
                 .isEquipped(isEquipped)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public PurchaseCosmeticResponse purchaseCosmetic(User learner, Long cosmeticId) {
+        CosmeticItem item = cosmeticItemRepository.findById(cosmeticId)
+                .orElseThrow(() -> new AppException(ErrorCode.COSMETIC_NOT_FOUND));
+
+        if (!"ACTIVE".equals(item.getStatus())) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Item not available
+        }
+
+        boolean alreadyOwned = learnerCosmeticRepository.findByLearnerId(learner.getId()).stream()
+                .anyMatch(lc -> lc.getCosmeticItem().getId().equals(cosmeticId));
+        
+        if (alreadyOwned) {
+            throw new AppException(ErrorCode.BAD_REQUEST); // Already owned
+        }
+
+        LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        if (item.getUnlockValue() > 0) {
+            if (profile.getSpendableStars() < item.getUnlockValue()) {
+                throw new AppException(ErrorCode.BAD_REQUEST); // Not enough stars
+            }
+            // Deduct stars
+            profile.setSpendableStars(profile.getSpendableStars() - item.getUnlockValue());
+            learnerProfileRepository.save(profile);
+            
+            // Log transaction
+            AuditLog auditLog = AuditLog.builder()
+                    .user(learner)
+                    .actionType("COSMETIC_PURCHASE")
+                    .entityType("COSMETIC_ITEM")
+                    .entityId(String.valueOf(item.getId()))
+                    .description("Purchased cosmetic item: " + item.getName() + " for " + item.getUnlockValue() + " stars")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            auditLogRepository.save(auditLog);
+        }
+
+        // Add ownership record
+        LearnerCosmetic ownership = LearnerCosmetic.builder()
+                .learner(learner)
+                .cosmeticItem(item)
+                .isEquipped(false)
+                .build();
+        learnerCosmeticRepository.save(ownership);
+
+        return PurchaseCosmeticResponse.builder()
+                .success(true)
+                .message("Mở khóa vật phẩm thành công")
+                .data(PurchaseCosmeticResponse.PurchaseData.builder()
+                        .cosmeticId(item.getId())
+                        .remainingStars(profile.getSpendableStars())
+                        .isEquipped(false)
+                        .build())
                 .build();
     }
 

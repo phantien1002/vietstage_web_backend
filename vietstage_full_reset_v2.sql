@@ -123,6 +123,7 @@ CREATE TABLE learner_profiles (
     longest_streak          INTEGER NOT NULL DEFAULT 0,
     total_points            INTEGER NOT NULL DEFAULT 0,
     total_stars             INTEGER NOT NULL DEFAULT 0,
+    spendable_stars         INTEGER NOT NULL DEFAULT 0,
     last_practice_date      DATE,
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_learner_profile_time CHECK (total_practice_seconds >= 0),

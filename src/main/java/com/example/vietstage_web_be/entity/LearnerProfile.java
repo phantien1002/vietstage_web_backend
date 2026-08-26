@@ -32,6 +32,10 @@ public class LearnerProfile {
     @Builder.Default
     private Integer totalStars = 0;
 
+    @Column(name = "spendable_stars", nullable = false)
+    @Builder.Default
+    private Integer spendableStars = 0;
+
     @Column(name = "current_streak", nullable = false)
     @Builder.Default
     private Integer currentStreak = 0;

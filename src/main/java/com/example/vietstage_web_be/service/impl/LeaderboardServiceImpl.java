@@ -141,6 +141,11 @@ public class LeaderboardServiceImpl implements ILeaderboardService {
             return newProfile;
         });
         profile.setTotalPoints(profile.getTotalPoints() + points);
+        
+        // Also increase stars based on points (1 point = 1 star for now)
+        profile.setTotalStars(profile.getTotalStars() + points);
+        profile.setSpendableStars(profile.getSpendableStars() + points);
+        
         learnerProfileRepository.save(profile);
 
         // 3. Update Redis ZSET

@@ -50,6 +50,15 @@ public class CosmeticController {
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
+    @PostMapping("/users/me/cosmetics/{cosmeticId}/purchase")
+    @PreAuthorize("hasAuthority('LEARNER')")
+    public ResponseEntity<BaseResponse<com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse>> purchaseCosmetic(
+            @AuthenticationPrincipal(expression = "user") User learner,
+            @PathVariable Long cosmeticId) {
+        com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse response = cosmeticsService.purchaseCosmetic(learner, cosmeticId);
+        return ResponseEntity.ok(BaseResponse.success(response));
+    }
+
     @GetMapping("/admin/cosmetics")
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<BaseResponse<List<CosmeticItemResponse>>> getAllCosmeticsForAdmin(

@@ -1,0 +1,1 @@
+$retryCount = 0; while ($retryCount -lt 15) { try { Invoke-RestMethod -Uri http://localhost:8080/v3/api-docs | ConvertTo-Json -Depth 10 > deployed-openapi.json; break } catch { Start-Sleep -Seconds 2; $retryCount = $retryCount + 1 } }
