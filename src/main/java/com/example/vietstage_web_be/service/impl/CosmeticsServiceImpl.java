@@ -69,7 +69,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     public MyCosmeticsResponse getMyCosmetics(User learner) {
         List<CosmeticItem> allActiveItems = cosmeticItemRepository.findByStatus("ACTIVE");
         List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
-        LearnerProfile profile = learnerProfileRepository.findById(learner.getId()).orElse(null);
+        LearnerProfile profile = getOrCreateLearnerProfile(learner);
 
         Set<Long> ownedItemIds = ownedCosmetics.stream()
                 .map(lc -> lc.getCosmeticItem().getId())
@@ -143,8 +143,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
             throw new AppException(ErrorCode.BAD_REQUEST); // Item not available
         }
         
-        LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        LearnerProfile profile = getOrCreateLearnerProfile(learner);
 
         java.util.Optional<LearnerCosmetic> existingOwnership = learnerCosmeticRepository.findByLearnerId(learner.getId()).stream()
                 .filter(lc -> lc.getCosmeticItem().getId().equals(cosmeticId))
@@ -203,8 +202,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
 
     @Override
     public com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest getCosmeticLayout(User learner) {
-        LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        LearnerProfile profile = getOrCreateLearnerProfile(learner);
         
         if (profile.getCosmeticLayout() == null || profile.getCosmeticLayout().isBlank()) {
             return new com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest(java.util.Collections.emptyList());
@@ -219,8 +217,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
 
     @Override
     public com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest saveCosmeticLayout(User learner, com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest layout) {
-        LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        LearnerProfile profile = getOrCreateLearnerProfile(learner);
         
         try {
             String jsonLayout = objectMapper.writeValueAsString(layout);
@@ -282,5 +279,18 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .assetUrl(item.getAssetUrl())
                 .status(item.getStatus())
                 .build();
+    }
+
+    private LearnerProfile getOrCreateLearnerProfile(User learner) {
+        return learnerProfileRepository.findById(learner.getId())
+                .orElseGet(() -> {
+                    LearnerProfile newProfile = LearnerProfile.builder()
+                            .userId(learner.getId())
+                            .user(learner)
+                            .totalStars(0)
+                            .spendableStars(0)
+                            .build();
+                    return learnerProfileRepository.save(newProfile);
+                });
     }
 }
