@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse;
 import com.example.vietstage_web_be.entity.AuditLog;
@@ -35,6 +37,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     private final LearnerCosmeticRepository learnerCosmeticRepository;
     private final LearnerProfileRepository learnerProfileRepository;
     private final AuditLogRepository auditLogRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<CosmeticItemResponse> getAllCosmeticItems(String itemType) {
@@ -132,23 +135,34 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
 
     @Override
     @Transactional
-    public PurchaseCosmeticResponse purchaseCosmetic(User learner, Long cosmeticId) {
+    public PurchaseCosmeticResponse purchaseCosmetic(User learner, Long cosmeticId, com.example.vietstage_web_be.dto.request.PurchaseCosmeticRequest request) {
         CosmeticItem item = cosmeticItemRepository.findById(cosmeticId)
                 .orElseThrow(() -> new AppException(ErrorCode.COSMETIC_NOT_FOUND));
 
         if (!"ACTIVE".equals(item.getStatus())) {
             throw new AppException(ErrorCode.BAD_REQUEST); // Item not available
         }
-
-        boolean alreadyOwned = learnerCosmeticRepository.findByLearnerId(learner.getId()).stream()
-                .anyMatch(lc -> lc.getCosmeticItem().getId().equals(cosmeticId));
         
-        if (alreadyOwned) {
-            throw new AppException(ErrorCode.BAD_REQUEST); // Already owned
-        }
-
         LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        java.util.Optional<LearnerCosmetic> existingOwnership = learnerCosmeticRepository.findByLearnerId(learner.getId()).stream()
+                .filter(lc -> lc.getCosmeticItem().getId().equals(cosmeticId))
+                .findFirst();
+
+        if (existingOwnership.isPresent()) {
+            LearnerCosmetic ownership = existingOwnership.get();
+            if (request != null && request.getClientRequestId() != null && request.getClientRequestId().equals(ownership.getClientRequestId())) {
+                return PurchaseCosmeticResponse.builder()
+                        .cosmeticId(item.getId())
+                        .totalStars(profile.getTotalStars())
+                        .spendableStars(profile.getSpendableStars())
+                        .isEquipped(ownership.getIsEquipped())
+                        .build();
+            } else {
+                throw new AppException(ErrorCode.BAD_REQUEST); // Already owned
+            }
+        }
 
         if (item.getUnlockValue() > 0) {
             if (profile.getSpendableStars() < item.getUnlockValue()) {
@@ -175,18 +189,47 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .learner(learner)
                 .cosmeticItem(item)
                 .isEquipped(false)
+                .clientRequestId(request != null ? request.getClientRequestId() : null)
                 .build();
         learnerCosmeticRepository.save(ownership);
 
         return PurchaseCosmeticResponse.builder()
-                .success(true)
-                .message("Mở khóa vật phẩm thành công")
-                .data(PurchaseCosmeticResponse.PurchaseData.builder()
-                        .cosmeticId(item.getId())
-                        .remainingStars(profile.getSpendableStars())
-                        .isEquipped(false)
-                        .build())
+                .cosmeticId(item.getId())
+                .totalStars(profile.getTotalStars())
+                .spendableStars(profile.getSpendableStars())
+                .isEquipped(false)
                 .build();
+    }
+
+    @Override
+    public com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest getCosmeticLayout(User learner) {
+        LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        if (profile.getCosmeticLayout() == null || profile.getCosmeticLayout().isBlank()) {
+            return new com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest(java.util.Collections.emptyList());
+        }
+        
+        try {
+            return objectMapper.readValue(profile.getCosmeticLayout(), com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest.class);
+        } catch (JsonProcessingException e) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest saveCosmeticLayout(User learner, com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest layout) {
+        LearnerProfile profile = learnerProfileRepository.findById(learner.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        try {
+            String jsonLayout = objectMapper.writeValueAsString(layout);
+            profile.setCosmeticLayout(jsonLayout);
+            learnerProfileRepository.save(profile);
+            return layout;
+        } catch (JsonProcessingException e) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
     }
 
     @Override

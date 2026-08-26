@@ -52,10 +52,28 @@ public class CosmeticController {
 
     @PostMapping("/users/me/cosmetics/{cosmeticId}/purchase")
     @PreAuthorize("hasAuthority('LEARNER')")
-    public ResponseEntity<BaseResponse<com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse>> purchaseCosmetic(
+    public ResponseEntity<com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse> purchaseCosmetic(
             @AuthenticationPrincipal(expression = "user") User learner,
-            @PathVariable Long cosmeticId) {
-        com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse response = cosmeticsService.purchaseCosmetic(learner, cosmeticId);
+            @PathVariable Long cosmeticId,
+            @RequestBody(required = false) com.example.vietstage_web_be.dto.request.PurchaseCosmeticRequest request) {
+        com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse response = cosmeticsService.purchaseCosmetic(learner, cosmeticId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users/me/cosmetics/layout")
+    @PreAuthorize("hasAuthority('LEARNER')")
+    public ResponseEntity<BaseResponse<com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest>> getCosmeticLayout(
+            @AuthenticationPrincipal(expression = "user") User learner) {
+        com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest response = cosmeticsService.getCosmeticLayout(learner);
+        return ResponseEntity.ok(BaseResponse.success(response));
+    }
+
+    @PutMapping("/users/me/cosmetics/layout")
+    @PreAuthorize("hasAuthority('LEARNER')")
+    public ResponseEntity<BaseResponse<com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest>> saveCosmeticLayout(
+            @AuthenticationPrincipal(expression = "user") User learner,
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest request) {
+        com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest response = cosmeticsService.saveCosmeticLayout(learner, request);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 

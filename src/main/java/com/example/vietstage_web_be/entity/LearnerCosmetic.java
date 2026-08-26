@@ -33,4 +33,7 @@ public class LearnerCosmetic {
 
     @Column(name = "is_equipped")
     private Boolean isEquipped;
+
+    @Column(name = "client_request_id")
+    private String clientRequestId;
 }

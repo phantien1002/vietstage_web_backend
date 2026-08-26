@@ -12,5 +12,6 @@ public class LearnerCosmeticResponse {
     private String unlockType;
     private Integer unlockValue;
     private String assetUrl;
+    @com.fasterxml.jackson.annotation.JsonProperty("isEquipped")
     private Boolean isEquipped;
 }

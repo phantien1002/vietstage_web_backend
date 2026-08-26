@@ -50,6 +50,9 @@ public class LearnerProfile {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "cosmetic_layout", columnDefinition = "TEXT")
+    private String cosmeticLayout;
+
     @OneToOne
     @MapsId
     @JoinColumn(name = "user_id")

@@ -7,9 +7,9 @@ import lombok.Data;
 @Data
 @Builder
 public class EquipCosmeticResponse {
-    @JsonProperty("cosmetic_id")
+    @JsonProperty("cosmeticId")
     private Long cosmeticId;
     
-    @JsonProperty("is_equipped")
+    @JsonProperty("isEquipped")
     private Boolean isEquipped;
 }
