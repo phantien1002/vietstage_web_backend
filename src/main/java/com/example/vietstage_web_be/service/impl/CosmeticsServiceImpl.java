@@ -37,7 +37,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     private final LearnerCosmeticRepository learnerCosmeticRepository;
     private final LearnerProfileRepository learnerProfileRepository;
     private final AuditLogRepository auditLogRepository;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public List<CosmeticItemResponse> getAllCosmeticItems(String itemType) {
