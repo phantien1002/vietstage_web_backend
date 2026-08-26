@@ -40,6 +40,7 @@ public class CosmeticLayoutRequest {
         private Double scale;
         
         @NotNull(message = "zIndex is required")
+        @com.fasterxml.jackson.annotation.JsonProperty("zindex")
         private Integer zIndex;
     }
 }

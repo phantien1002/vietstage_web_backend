@@ -9,5 +9,6 @@ public class PurchaseCosmeticResponse {
     private Long cosmeticId;
     private Integer totalStars;
     private Integer spendableStars;
+    @com.fasterxml.jackson.annotation.JsonProperty("isEquipped")
     private boolean isEquipped;
 }
