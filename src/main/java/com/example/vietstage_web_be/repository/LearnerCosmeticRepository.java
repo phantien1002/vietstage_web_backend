@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface LearnerCosmeticRepository extends JpaRepository<LearnerCosmetic, LearnerCosmeticsId> {
     List<LearnerCosmetic> findByLearnerId(Long learnerId);
+    long countByCosmeticItemId(Long cosmeticItemId);
 }

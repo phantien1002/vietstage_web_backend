@@ -219,6 +219,24 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     public com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest saveCosmeticLayout(User learner, com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest layout) {
         LearnerProfile profile = getOrCreateLearnerProfile(learner);
         
+        if (layout.getItems() != null) {
+            List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
+            Set<Long> ownedIds = ownedCosmetics.stream()
+                    .filter(lc -> "ACTIVE".equals(lc.getCosmeticItem().getStatus()))
+                    .map(lc -> lc.getCosmeticItem().getId())
+                    .collect(Collectors.toSet());
+            
+            Set<Long> layoutIds = new java.util.HashSet<>();
+            for (com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest.LayoutItem item : layout.getItems()) {
+                if (!layoutIds.add(item.getCosmeticId())) {
+                    throw new AppException(ErrorCode.BAD_REQUEST); // Duplicate cosmeticId in layout
+                }
+                if (!ownedIds.contains(item.getCosmeticId())) {
+                    throw new AppException(ErrorCode.COSMETIC_NOT_OWNED); // Item not owned or inactive
+                }
+            }
+        }
+
         try {
             String jsonLayout = objectMapper.writeValueAsString(layout);
             profile.setCosmeticLayout(jsonLayout);
@@ -264,9 +282,14 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
         CosmeticItem item = cosmeticItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         
-        // Soft delete
-        item.setStatus("INACTIVE");
-        cosmeticItemRepository.save(item);
+        long ownersCount = learnerCosmeticRepository.countByCosmeticItemId(id);
+        if (ownersCount == 0) {
+            cosmeticItemRepository.delete(item);
+        } else {
+            // Soft delete
+            item.setStatus("INACTIVE");
+            cosmeticItemRepository.save(item);
+        }
     }
 
     private CosmeticItemResponse mapToResponse(CosmeticItem item) {

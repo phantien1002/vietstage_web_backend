@@ -52,12 +52,12 @@ public class CosmeticController {
 
     @PostMapping("/users/me/cosmetics/{cosmeticId}/purchase")
     @PreAuthorize("hasAuthority('LEARNER')")
-    public ResponseEntity<com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse> purchaseCosmetic(
+    public ResponseEntity<BaseResponse<com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse>> purchaseCosmetic(
             @AuthenticationPrincipal(expression = "user") User learner,
             @PathVariable Long cosmeticId,
-            @RequestBody(required = false) com.example.vietstage_web_be.dto.request.PurchaseCosmeticRequest request) {
+            @Valid @RequestBody com.example.vietstage_web_be.dto.request.PurchaseCosmeticRequest request) {
         com.example.vietstage_web_be.dto.response.PurchaseCosmeticResponse response = cosmeticsService.purchaseCosmetic(learner, cosmeticId, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(BaseResponse.success(response, "Mở khóa vật phẩm thành công"));
     }
 
     @GetMapping("/users/me/cosmetics/layout")

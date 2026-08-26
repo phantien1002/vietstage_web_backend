@@ -21,4 +21,12 @@ public class BaseResponse<T> {
                 .data(data)
                 .build();
     }
+    
+    public static <T> BaseResponse<T> success(T data, String message) {
+        return BaseResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .data(data)
+                .build();
+    }
 }
