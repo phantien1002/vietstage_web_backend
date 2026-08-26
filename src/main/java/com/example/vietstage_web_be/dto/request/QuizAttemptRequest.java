@@ -7,4 +7,6 @@ import lombok.Data;
 public class QuizAttemptRequest {
     @NotBlank(message = "Selected answer is required")
     private String selectedAnswer;
+    
+    private String clientAttemptId;
 }

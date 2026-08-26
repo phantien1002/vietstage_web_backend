@@ -39,4 +39,7 @@ public class QuizAttempt {
 
     @Column(name = "attempted_at")
     private LocalDateTime attemptedAt;
+
+    @Column(name = "client_attempt_id", unique = true)
+    private String clientAttemptId;
 }

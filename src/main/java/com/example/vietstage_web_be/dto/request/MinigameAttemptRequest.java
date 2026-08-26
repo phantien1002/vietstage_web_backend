@@ -10,8 +10,7 @@ public class MinigameAttemptRequest {
     @NotNull(message = "Score is required")
     private Integer score;
 
-    @NotNull(message = "Stars earned is required")
-    private Integer starsEarned;
+    private String clientAttemptId;
 
     @NotNull(message = "Started at is required")
     private LocalDateTime startedAt;

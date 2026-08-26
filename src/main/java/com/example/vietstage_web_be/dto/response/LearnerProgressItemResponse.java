@@ -11,7 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LearnerProgressItemResponse {
     private Long lessonId;
+    private String lessonCode;
+    private String instrumentCode;
+    private String levelCode;
+    private Integer orderIndex;
     private String title;
     private Integer stars;
+    private java.math.BigDecimal highestScore;
     private Boolean completed;
+    private java.util.Date completedAt;
 }

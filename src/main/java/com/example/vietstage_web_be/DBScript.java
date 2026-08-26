@@ -13,6 +13,7 @@ public class DBScript {
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("ALTER TABLE learner_profiles ADD COLUMN IF NOT EXISTS total_points INTEGER DEFAULT 0");
             stmt.executeUpdate("ALTER TABLE learner_profiles ADD COLUMN IF NOT EXISTS total_stars INTEGER DEFAULT 0");
+            stmt.executeUpdate("ALTER TABLE learner_profiles ADD COLUMN IF NOT EXISTS spendable_stars INTEGER DEFAULT 0");
             System.out.println("Alter table success!");
         } catch (Exception e) {
             e.printStackTrace();

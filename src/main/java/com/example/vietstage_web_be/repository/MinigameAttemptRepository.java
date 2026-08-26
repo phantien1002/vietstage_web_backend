@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MinigameAttemptRepository extends JpaRepository<MinigameAttempt, Long> {
     Page<MinigameAttempt> findByChallengeIdAndLearnerIdOrderByCompletedAtDesc(Long challengeId, Long learnerId, Pageable pageable);
+    
+    java.util.Optional<MinigameAttempt> findByClientAttemptId(String clientAttemptId);
 }

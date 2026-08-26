@@ -19,4 +19,9 @@ public class QuizAttemptResponse {
     
     // Add pointsEarned if required by API doc "201 -> {is_correct, score, points_earned}"
     private Integer pointsEarned;
+    
+    private Integer starsEarned;
+    private Integer totalStars;
+    private Integer spendableStars;
+    private Integer totalPoints;
 }

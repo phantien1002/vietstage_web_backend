@@ -14,5 +14,7 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     Integer countQuizAttemptsByLessonAndLearner(@Param("lessonId") Long lessonId, @Param("learnerId") Long learnerId);
 
     org.springframework.data.domain.Page<QuizAttempt> findByQuizIdAndLearnerIdOrderByAttemptedAtDesc(Long quizId, Long learnerId, org.springframework.data.domain.Pageable pageable);
+
+    java.util.Optional<QuizAttempt> findByClientAttemptId(String clientAttemptId);
 }
 

@@ -41,4 +41,7 @@ public class MinigameAttempt {
 
     @Column(name = "sync_status")
     private String syncStatus;
+
+    @Column(name = "client_attempt_id", unique = true)
+    private String clientAttemptId;
 }

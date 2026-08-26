@@ -44,10 +44,82 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
                     .title((String) row[1])
                     .stars(((Number) row[2]).intValue())
                     .completed((Boolean) row[3])
+                    .lessonCode((String) row[4])
+                    .instrumentCode((String) row[5])
+                    .levelCode((String) row[6])
+                    .orderIndex(row[7] != null ? ((Number) row[7]).intValue() : null)
+                    .highestScore(row[8] != null ? (java.math.BigDecimal) row[8] : null)
+                    .completedAt(row[9] != null ? (java.util.Date) row[9] : null)
                     .build());
         }
 
         return responseList;
+    }
+
+    @Override
+    @Transactional
+    public com.example.vietstage_web_be.dto.response.LessonCompletionResponse completeLesson(Long learnerId, Long lessonId, com.example.vietstage_web_be.dto.request.LessonCompletionRequest request) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found: " + lessonId));
+        
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        
+        LessonCompletion completion = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId)
+                .orElse(LessonCompletion.builder()
+                        .lesson(lesson)
+                        .learner(profile.getUser())
+                        .status("LOCKED")
+                        .stars(0)
+                        .build());
+        
+        if (request.getClientAttemptId() != null && request.getClientAttemptId().equals(completion.getLastClientAttemptId())) {
+            return buildLessonCompletionResponse(lessonId, completion, profile, 0);
+        }
+        
+        // Calculate stars based on score
+        int newStars = 0;
+        if (request.getScore() != null) {
+            double score = request.getScore().doubleValue();
+            if (score >= 90) newStars = 3;
+            else if (score >= 70) newStars = 2;
+            else if (score >= 50) newStars = 1;
+        }
+        
+        int starsEarned = Math.max(0, newStars - completion.getStars());
+        
+        if (starsEarned > 0) {
+            profile.setTotalStars(profile.getTotalStars() + starsEarned);
+            profile.setSpendableStars(profile.getSpendableStars() + starsEarned);
+            learnerProfileRepository.save(profile);
+            completion.setStars(newStars);
+        }
+        
+        if (completion.getBestScore() == null || (request.getScore() != null && request.getScore().compareTo(completion.getBestScore()) > 0)) {
+            completion.setBestScore(request.getScore());
+        }
+        
+        completion.setStatus("COMPLETED");
+        if (completion.getCompletedAt() == null) {
+            completion.setCompletedAt(request.getCompletedAt() != null ? request.getCompletedAt() : new java.util.Date());
+        }
+        completion.setLastClientAttemptId(request.getClientAttemptId());
+        
+        lessonCompletionRepository.save(completion);
+        
+        return buildLessonCompletionResponse(lessonId, completion, profile, starsEarned);
+    }
+    
+    private com.example.vietstage_web_be.dto.response.LessonCompletionResponse buildLessonCompletionResponse(Long lessonId, LessonCompletion completion, LearnerProfile profile, int starsEarned) {
+        return com.example.vietstage_web_be.dto.response.LessonCompletionResponse.builder()
+                .lessonId(lessonId)
+                .completed(completion.getCompleted())
+                .lessonStars(completion.getStars())
+                .starsEarned(starsEarned)
+                .totalStars(profile.getTotalStars())
+                .spendableStars(profile.getSpendableStars())
+                .totalPoints(profile.getTotalPoints())
+                .build();
     }
 
     @Override
@@ -82,9 +154,11 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Integer currentStreak = profile != null ? profile.getCurrentStreak() : 0;
         Integer longestStreak = profile != null ? profile.getLongestStreak() : 0;
         Integer totalPoints = profile != null ? profile.getTotalPoints() : 0;
+        Integer spendableStars = profile != null ? profile.getSpendableStars() : 0;
 
         return LearnerProgressSummaryResponse.builder()
                 .totalStars(totalStars != null ? totalStars : 0)
+                .spendableStars(spendableStars != null ? spendableStars : 0)
                 .completedLessons(completedLessons != null ? completedLessons : 0L)
                 .currentStreak(currentStreak)
                 .longestStreak(longestStreak)

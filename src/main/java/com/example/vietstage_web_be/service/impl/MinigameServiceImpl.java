@@ -90,32 +90,73 @@ public class MinigameServiceImpl implements IMinigameService {
         MinigameChallenge challenge = challengeRepository.findById(minigameId)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
 
-        // Note: As specified, "Cộng điểm; check achievements/cosmetics; leaderboard cập nhật trong Redis"
-        // The points logic can be further elaborated, for now, we will assign points based on starsEarned as a stub.
-        Integer pointsEarned = request.getStarsEarned() * 5; // e.g., 5 points per star
+        com.example.vietstage_web_be.entity.LearnerProfile profile = com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).findByUserId(learner.getId()).orElse(null);
+
+        if (request.getClientAttemptId() != null) {
+            java.util.Optional<MinigameAttempt> existingAttempt = attemptRepository.findByClientAttemptId(request.getClientAttemptId());
+            if (existingAttempt.isPresent()) {
+                MinigameAttempt attempt = existingAttempt.get();
+                return MinigameAttemptResponse.builder()
+                        .id(attempt.getId())
+                        .minigameId(challenge.getId())
+                        .learnerId(learner.getId())
+                        .score(attempt.getScore())
+                        .starsEarned(0) // Return 0 earned for retry
+                        .totalStars(profile != null ? profile.getTotalStars() : 0)
+                        .spendableStars(profile != null ? profile.getSpendableStars() : 0)
+                        .totalPoints(profile != null ? profile.getTotalPoints() : 0)
+                        .startedAt(attempt.getStartedAt())
+                        .completedAt(attempt.getCompletedAt())
+                        .pointsEarned(attempt.getStarsEarned() * 5)
+                        .build();
+            }
+        }
+
+        // Calculate stars based on score (e.g. maxScore == 3 stars)
+        int starsEarned = 0;
+        if (challenge.getMaxScore() != null && challenge.getMaxScore() > 0 && request.getScore() != null) {
+            double ratio = (double) request.getScore() / challenge.getMaxScore();
+            if (ratio >= 0.9) starsEarned = 3;
+            else if (ratio >= 0.7) starsEarned = 2;
+            else if (ratio >= 0.5) starsEarned = 1;
+        }
+
+        Integer pointsEarned = starsEarned * 5;
 
         MinigameAttempt attempt = MinigameAttempt.builder()
                 .challenge(challenge)
                 .learner(learner)
                 .score(request.getScore())
-                .starsEarned(request.getStarsEarned())
+                .starsEarned(starsEarned)
                 .startedAt(request.getStartedAt())
                 .completedAt(request.getCompletedAt())
+                .clientAttemptId(request.getClientAttemptId())
                 .build();
 
         attempt = attemptRepository.save(attempt);
         
-        leaderboardService.addPoints(learner, pointsEarned, "MINI_GAME");
+        if (pointsEarned > 0) {
+            leaderboardService.addPoints(learner, pointsEarned, "MINI_GAME");
+        }
+        
+        if (profile != null && starsEarned > 0) {
+            profile.setTotalStars(profile.getTotalStars() + starsEarned);
+            profile.setSpendableStars(profile.getSpendableStars() + starsEarned);
+            com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).save(profile);
+        }
 
         return MinigameAttemptResponse.builder()
                 .id(attempt.getId())
                 .minigameId(challenge.getId())
                 .learnerId(learner.getId())
                 .score(attempt.getScore())
-                .starsEarned(attempt.getStarsEarned())
+                .starsEarned(starsEarned)
                 .startedAt(attempt.getStartedAt())
                 .completedAt(attempt.getCompletedAt())
                 .pointsEarned(pointsEarned)
+                .totalStars(profile != null ? profile.getTotalStars() : 0)
+                .spendableStars(profile != null ? profile.getSpendableStars() : 0)
+                .totalPoints(profile != null ? profile.getTotalPoints() : 0)
                 .build();
     }
 

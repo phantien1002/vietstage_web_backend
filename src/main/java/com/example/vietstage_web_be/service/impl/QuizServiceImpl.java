@@ -139,12 +139,36 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
 
+        com.example.vietstage_web_be.entity.LearnerProfile profile = com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).findByUserId(learner.getId()).orElse(null);
+
+        if (request.getClientAttemptId() != null) {
+            java.util.Optional<QuizAttempt> existingAttempt = quizAttemptRepository.findByClientAttemptId(request.getClientAttemptId());
+            if (existingAttempt.isPresent()) {
+                QuizAttempt attempt = existingAttempt.get();
+                return QuizAttemptResponse.builder()
+                        .id(attempt.getId())
+                        .quizId(quiz.getId())
+                        .learnerId(learner.getId())
+                        .selectedAnswer(attempt.getSelectedAnswer())
+                        .isCorrect(attempt.getIsCorrect())
+                        .score(attempt.getScore())
+                        .pointsEarned(attempt.getIsCorrect() ? 10 : 0)
+                        .starsEarned(0)
+                        .totalStars(profile != null ? profile.getTotalStars() : 0)
+                        .spendableStars(profile != null ? profile.getSpendableStars() : 0)
+                        .totalPoints(profile != null ? profile.getTotalPoints() : 0)
+                        .attemptedAt(attempt.getAttemptedAt())
+                        .build();
+            }
+        }
+
         String selectedAnswer = request.getSelectedAnswer() != null ? request.getSelectedAnswer().trim() : "";
         String correctAnswer = quiz.getCorrectAnswer() != null ? quiz.getCorrectAnswer().trim() : "";
         
         boolean isCorrect = correctAnswer.equals(selectedAnswer);
         BigDecimal score = isCorrect ? BigDecimal.valueOf(100.0) : BigDecimal.ZERO;
-        Integer pointsEarned = isCorrect ? 10 : 0; // Configurable logic can be added later
+        Integer pointsEarned = isCorrect ? 10 : 0;
+        Integer starsEarned = isCorrect ? 2 : 0; // Simple logic: 2 stars if correct, 0 otherwise
 
         QuizAttempt attempt = QuizAttempt.builder()
                 .quiz(quiz)
@@ -153,11 +177,20 @@ public class QuizServiceImpl implements IQuizService {
                 .isCorrect(isCorrect)
                 .score(score)
                 .attemptedAt(LocalDateTime.now())
+                .clientAttemptId(request.getClientAttemptId())
                 .build();
 
         attempt = quizAttemptRepository.save(attempt);
         
-        leaderboardService.addPoints(learner, pointsEarned, "QUIZ");
+        if (pointsEarned > 0) {
+            leaderboardService.addPoints(learner, pointsEarned, "QUIZ");
+        }
+        
+        if (profile != null && starsEarned > 0) {
+            profile.setTotalStars(profile.getTotalStars() + starsEarned);
+            profile.setSpendableStars(profile.getSpendableStars() + starsEarned);
+            com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).save(profile);
+        }
 
         return QuizAttemptResponse.builder()
                 .id(attempt.getId())
@@ -167,6 +200,10 @@ public class QuizServiceImpl implements IQuizService {
                 .isCorrect(attempt.getIsCorrect())
                 .score(attempt.getScore())
                 .pointsEarned(pointsEarned)
+                .starsEarned(starsEarned)
+                .totalStars(profile != null ? profile.getTotalStars() : 0)
+                .spendableStars(profile != null ? profile.getSpendableStars() : 0)
+                .totalPoints(profile != null ? profile.getTotalPoints() : 0)
                 .attemptedAt(attempt.getAttemptedAt())
                 .build();
     }

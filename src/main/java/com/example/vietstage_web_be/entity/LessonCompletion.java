@@ -61,6 +61,9 @@ public class LessonCompletion {
     @Column(name = "completed_at")
     private Date completedAt;
 
+    @Column(name = "last_client_attempt_id")
+    private String lastClientAttemptId;
+
     @Column(name = "updated_at", nullable = false)
     private Date updatedAt;
 }

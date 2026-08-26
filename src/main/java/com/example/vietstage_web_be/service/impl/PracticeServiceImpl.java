@@ -219,12 +219,8 @@ public class PracticeServiceImpl implements IPracticeService {
         int multiplier = Integer.parseInt(appConfigRepository.findByConfigKey("scoring.points.multiplier")
                 .map(AppConfig::getConfigValue).orElse("10"));
 
-        int stars = 0;
-        if (total.compareTo(star3Threshold) >= 0) stars = 3;
-        else if (total.compareTo(star2Threshold) >= 0) stars = 2;
-        else if (total.compareTo(star1Threshold) >= 0) stars = 1;
-
-        int points = stars * multiplier; // Dynamic formula
+        int stars = 0; // Practice API doesn't award stars, only records performance
+        int points = 0; // Points and stars are awarded at Lesson Completion
 
         PracticeAttempt attempt = PracticeAttempt.builder()
                 .learner(learner)
@@ -244,7 +240,7 @@ public class PracticeServiceImpl implements IPracticeService {
                 .build();
         
         attemptRepository.save(attempt);
-        leaderboardService.addPoints(learner, points, "PRACTICE");
+        // Do not call leaderboardService.addPoints here, deferred to Lesson completion
 
         return PracticeAttemptResponse.builder()
                 .id(attempt.getId())

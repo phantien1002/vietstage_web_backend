@@ -16,4 +16,7 @@ public class MinigameAttemptResponse {
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
     private Integer pointsEarned;
+    private Integer totalStars;
+    private Integer spendableStars;
+    private Integer totalPoints;
 }

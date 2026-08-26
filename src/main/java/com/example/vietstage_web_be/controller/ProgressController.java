@@ -25,6 +25,20 @@ public class ProgressController {
     private final ILearnerProgressService progressService;
     private final IInstructorService instructorService;
 
+    @PostMapping("/users/me/lessons/{lessonId}/complete")
+    @PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<ApiResponse<LessonCompletionResponse>> completeLesson(
+            @PathVariable("lessonId") Long lessonId,
+            @RequestBody com.example.vietstage_web_be.dto.request.LessonCompletionRequest request,
+            @AuthenticationPrincipal(expression = "user") User currentUser) {
+        
+        LessonCompletionResponse response = progressService.completeLesson(currentUser.getId(), lessonId, request);
+        return ResponseEntity.ok(ApiResponse.<LessonCompletionResponse>builder()
+                .message("Lesson completed successfully")
+                .data(response)
+                .build());
+    }
+
     @GetMapping("/users/me/progress")
     @PreAuthorize("hasRole('LEARNER')")
     public ResponseEntity<ApiResponse<List<LearnerProgressItemResponse>>> getLearnerProgress(

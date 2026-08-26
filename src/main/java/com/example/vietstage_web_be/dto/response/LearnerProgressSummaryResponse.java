@@ -14,6 +14,9 @@ public class LearnerProgressSummaryResponse {
     @JsonProperty("total_stars")
     private Integer totalStars;
     
+    @JsonProperty("spendable_stars")
+    private Integer spendableStars;
+    
     @JsonProperty("completed_lessons")
     private Long completedLessons;
     

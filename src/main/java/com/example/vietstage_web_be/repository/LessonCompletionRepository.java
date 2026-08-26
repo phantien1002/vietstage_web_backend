@@ -11,7 +11,9 @@ import java.util.Optional;
 
 @Repository
 public interface LessonCompletionRepository extends JpaRepository<LessonCompletion,Long> {
-    @Query("SELECT l.id AS lessonId, l.title AS title, COALESCE(lc.stars, 0) AS stars, CASE WHEN lc.status = 'COMPLETED' THEN true ELSE false END AS completed " +
+    @Query("SELECT l.id AS lessonId, l.title AS title, COALESCE(lc.stars, 0) AS stars, CASE WHEN lc.status = 'COMPLETED' THEN true ELSE false END AS completed, " +
+           "l.lessonCode AS lessonCode, l.instrument.instrumentCode AS instrumentCode, l.skillLevel.levelCode AS levelCode, l.orderIndex AS orderIndex, " +
+           "lc.bestScore AS highestScore, lc.completedAt AS completedAt " +
             "FROM Lesson l " +
             "LEFT JOIN LessonCompletion lc ON l.id = lc.lesson.id AND lc.learner.id = :learnerId " +
             "WHERE (:instrumentId IS NULL OR l.instrument.id = :instrumentId) " +
