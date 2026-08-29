@@ -12,9 +12,9 @@ import java.util.List;
 
 public interface IMinigameService {
     List<MinigameChallengeResponse> getMinigamesByLesson(Long lessonId);
-    MinigameChallengeResponse createMinigame(Long lessonId, MinigameChallengeRequest request);
-    MinigameChallengeResponse updateMinigame(Long id, MinigameChallengeRequest request);
-    void deleteMinigame(Long id);
+    MinigameChallengeResponse createMinigame(User actor, Long lessonId, MinigameChallengeRequest request);
+    MinigameChallengeResponse updateMinigame(User actor, Long id, MinigameChallengeRequest request);
+    void deleteMinigame(User actor, Long id);
     
     MinigameAttemptResponse submitAttempt(Long minigameId, MinigameAttemptRequest request, User learner);
     Page<MinigameAttemptResponse> getAttempts(Long minigameId, Pageable pageable, User learner);

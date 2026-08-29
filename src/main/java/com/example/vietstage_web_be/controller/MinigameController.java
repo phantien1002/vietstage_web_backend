@@ -41,8 +41,9 @@ public class MinigameController {
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<BaseResponse<MinigameChallengeResponse>> createMinigame(
             @PathVariable Long id,
-            @Valid @RequestBody MinigameChallengeRequest request) {
-        MinigameChallengeResponse response = minigameService.createMinigame(id, request);
+            @Valid @RequestBody MinigameChallengeRequest request,
+            @AuthenticationPrincipal(expression = "user") User actor) {
+        MinigameChallengeResponse response = minigameService.createMinigame(actor, id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
     }
 
@@ -50,15 +51,18 @@ public class MinigameController {
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<BaseResponse<MinigameChallengeResponse>> updateMinigame(
             @PathVariable Long id,
-            @Valid @RequestBody MinigameChallengeRequest request) {
-        MinigameChallengeResponse response = minigameService.updateMinigame(id, request);
+            @Valid @RequestBody MinigameChallengeRequest request,
+            @AuthenticationPrincipal(expression = "user") User actor) {
+        MinigameChallengeResponse response = minigameService.updateMinigame(actor, id, request);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
     @DeleteMapping("/minigames/{id}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteMinigame(@PathVariable Long id) {
-        minigameService.deleteMinigame(id);
+    public ResponseEntity<Void> deleteMinigame(
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "user") User actor) {
+        minigameService.deleteMinigame(actor, id);
         return ResponseEntity.noContent().build();
     }
 
