@@ -41,8 +41,8 @@ public class AppConfigServiceImpl implements IAppConfigService {
 
     @jakarta.annotation.PostConstruct
     public void initDefaultConfigs() {
-        seedConfigIfAbsent("scoring.quiz.points", "10", "scoring", "Điểm kinh nghiệm (XP) thưởng cho mỗi câu trắc nghiệm đúng", "NUMBER", 0.0, 100.0, 1.0, "10", true);
-        seedConfigIfAbsent("scoring.quiz.stars", "2", "scoring", "Số sao thưởng cho mỗi câu trắc nghiệm đúng", "NUMBER", 0.0, 10.0, 1.0, "2", true);
+        seedConfigIfAbsent("scoring.quiz.points", "10", "scoring", "Điểm kinh nghiệm (XP) thưởng cho mỗi câu trắc nghiệm đúng", "NUMBER", 1.0, 100.0, 1.0, "10", true);
+        seedConfigIfAbsent("scoring.quiz.stars", "2", "scoring", "Số sao thưởng cho mỗi câu trắc nghiệm đúng", "NUMBER", 1.0, 10.0, 1.0, "2", true);
         String legacyPointsPerStar = appConfigRepository.findByConfigKey("scoring.minigame.multiplier")
                 .map(AppConfig::getConfigValue).orElse("5");
         seedConfigIfAbsent("scoring.minigame.points_per_star", legacyPointsPerStar, "scoring", "Điểm kinh nghiệm (XP) thưởng cho mỗi sao Mini Game", "NUMBER", 0.0, 50.0, 1.0, "5", true);

@@ -146,16 +146,8 @@ public class QuizServiceImpl implements IQuizService {
 
         com.example.vietstage_web_be.entity.LearnerProfile profile = learnerProfileRepository.findByUserId(learner.getId()).orElse(null);
 
-        int configuredPoints = 10;
-        int configuredStars = 2;
-        try {
-            configuredPoints = appConfigRepository.findByConfigKey("scoring.quiz.points")
-                    .map(c -> (int) Math.round(Double.parseDouble(c.getConfigValue())))
-                    .orElse(10);
-            configuredStars = appConfigRepository.findByConfigKey("scoring.quiz.stars")
-                    .map(c -> (int) Math.round(Double.parseDouble(c.getConfigValue())))
-                    .orElse(2);
-        } catch (Exception ignored) {}
+        int configuredPoints = positiveRewardConfig("scoring.quiz.points", 10);
+        int configuredStars = positiveRewardConfig("scoring.quiz.stars", 2);
 
         if (request.getClientAttemptId() != null) {
             java.util.Optional<QuizAttempt> existingAttempt = quizAttemptRepository
@@ -251,6 +243,22 @@ public class QuizServiceImpl implements IQuizService {
                 .starsEarned(attempt.getStarsEarned() != null ? attempt.getStarsEarned() : 0)
                 .attemptedAt(attempt.getAttemptedAt())
                 .build());
+    }
+
+    /**
+     * A correct quiz answer must not be recorded as a successful reward with
+     * zero XP or zero stars. Older installations may contain a zero/invalid
+     * config value, so use the product default until an admin corrects it.
+     */
+    private int positiveRewardConfig(String key, int fallback) {
+        try {
+            return appConfigRepository.findByConfigKey(key)
+                    .map(config -> (int) Math.round(Double.parseDouble(config.getConfigValue())))
+                    .filter(value -> value > 0)
+                    .orElse(fallback);
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     private boolean canViewCorrectAnswer(User user) {
