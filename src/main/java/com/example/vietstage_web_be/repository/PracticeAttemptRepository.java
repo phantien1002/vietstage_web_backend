@@ -31,6 +31,8 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
     
     java.util.Optional<PracticeAttempt> findByClientUuid(String clientUuid);
 
+    java.util.Optional<PracticeAttempt> findByIdAndLearnerId(Long id, Long learnerId);
+
     @Query("SELECT pa FROM PracticeAttempt pa " +
             "JOIN FETCH pa.exercise e " +
             "LEFT JOIN FETCH e.lesson l " +

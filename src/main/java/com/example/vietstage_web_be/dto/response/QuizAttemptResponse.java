@@ -24,4 +24,7 @@ public class QuizAttemptResponse {
     private Integer totalStars;
     private Integer spendableStars;
     private Integer totalPoints;
+
+    /** Returned only after the learner has submitted this attempt. */
+    private String correctAnswer;
 }

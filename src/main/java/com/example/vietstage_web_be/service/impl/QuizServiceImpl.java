@@ -10,7 +10,9 @@ import com.example.vietstage_web_be.entity.QuizAttempt;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
+import com.example.vietstage_web_be.repository.AppConfigRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
+import com.example.vietstage_web_be.repository.LearnerProfileRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizRepository;
 import com.example.vietstage_web_be.service.IQuizService;
@@ -37,6 +39,8 @@ public class QuizServiceImpl implements IQuizService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
     private final ILeaderboardService leaderboardService;
+    private final AppConfigRepository appConfigRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -53,7 +57,8 @@ public class QuizServiceImpl implements IQuizService {
                     .question(quiz.getQuestion())
                     .options(quiz.getOptions())
                     .orderIndex(quiz.getOrderIndex())
-                    .correctAnswer(quiz.getCorrectAnswer());
+                    // Answers are authoring data. A learner receives it only after submitting.
+                    .correctAnswer(canViewCorrectAnswer(currentUser) ? quiz.getCorrectAnswer() : null);
             
             return builder.build();
         }).collect(Collectors.toList());
@@ -139,12 +144,27 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
 
-        com.example.vietstage_web_be.entity.LearnerProfile profile = com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).findByUserId(learner.getId()).orElse(null);
+        com.example.vietstage_web_be.entity.LearnerProfile profile = learnerProfileRepository.findByUserId(learner.getId()).orElse(null);
+
+        int configuredPoints = 10;
+        int configuredStars = 2;
+        try {
+            configuredPoints = appConfigRepository.findByConfigKey("scoring.quiz.points")
+                    .map(c -> (int) Math.round(Double.parseDouble(c.getConfigValue())))
+                    .orElse(10);
+            configuredStars = appConfigRepository.findByConfigKey("scoring.quiz.stars")
+                    .map(c -> (int) Math.round(Double.parseDouble(c.getConfigValue())))
+                    .orElse(2);
+        } catch (Exception ignored) {}
 
         if (request.getClientAttemptId() != null) {
-            java.util.Optional<QuizAttempt> existingAttempt = quizAttemptRepository.findByClientAttemptId(request.getClientAttemptId());
+            java.util.Optional<QuizAttempt> existingAttempt = quizAttemptRepository
+                    .findByClientAttemptIdAndLearnerId(request.getClientAttemptId(), learner.getId());
             if (existingAttempt.isPresent()) {
                 QuizAttempt attempt = existingAttempt.get();
+                if (!attempt.getQuiz().getId().equals(quiz.getId())) {
+                    throw new AppException(ErrorCode.BAD_REQUEST, "Mã attempt đã được dùng cho một câu hỏi khác");
+                }
                 return QuizAttemptResponse.builder()
                         .id(attempt.getId())
                         .quizId(quiz.getId())
@@ -152,12 +172,13 @@ public class QuizServiceImpl implements IQuizService {
                         .selectedAnswer(attempt.getSelectedAnswer())
                         .isCorrect(attempt.getIsCorrect())
                         .score(attempt.getScore())
-                        .pointsEarned(attempt.getIsCorrect() ? 10 : 0)
-                        .starsEarned(0)
+                        .pointsEarned(attempt.getPointsEarned() != null ? attempt.getPointsEarned() : (attempt.getIsCorrect() ? 10 : 0))
+                        .starsEarned(attempt.getStarsEarned() != null ? attempt.getStarsEarned() : 0)
                         .totalStars(profile != null ? profile.getTotalStars() : 0)
                         .spendableStars(profile != null ? profile.getSpendableStars() : 0)
                         .totalPoints(profile != null ? profile.getTotalPoints() : 0)
                         .attemptedAt(attempt.getAttemptedAt())
+                        .correctAnswer(quiz.getCorrectAnswer())
                         .build();
             }
         }
@@ -167,8 +188,8 @@ public class QuizServiceImpl implements IQuizService {
         
         boolean isCorrect = correctAnswer.equals(selectedAnswer);
         BigDecimal score = isCorrect ? BigDecimal.valueOf(100.0) : BigDecimal.ZERO;
-        Integer pointsEarned = isCorrect ? 10 : 0;
-        Integer starsEarned = isCorrect ? 2 : 0; // Simple logic: 2 stars if correct, 0 otherwise
+        Integer pointsEarned = isCorrect ? configuredPoints : 0;
+        Integer starsEarned = isCorrect ? configuredStars : 0;
 
         QuizAttempt attempt = QuizAttempt.builder()
                 .quiz(quiz)
@@ -176,6 +197,8 @@ public class QuizServiceImpl implements IQuizService {
                 .selectedAnswer(request.getSelectedAnswer())
                 .isCorrect(isCorrect)
                 .score(score)
+                .pointsEarned(pointsEarned)
+                .starsEarned(starsEarned)
                 .attemptedAt(LocalDateTime.now())
                 .clientAttemptId(request.getClientAttemptId())
                 .build();
@@ -189,7 +212,7 @@ public class QuizServiceImpl implements IQuizService {
         if (profile != null && starsEarned > 0) {
             profile.setTotalStars(profile.getTotalStars() + starsEarned);
             profile.setSpendableStars(profile.getSpendableStars() + starsEarned);
-            com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).save(profile);
+            learnerProfileRepository.save(profile);
         }
 
         return QuizAttemptResponse.builder()
@@ -205,6 +228,7 @@ public class QuizServiceImpl implements IQuizService {
                 .spendableStars(profile != null ? profile.getSpendableStars() : 0)
                 .totalPoints(profile != null ? profile.getTotalPoints() : 0)
                 .attemptedAt(attempt.getAttemptedAt())
+                .correctAnswer(quiz.getCorrectAnswer())
                 .build();
     }
 
@@ -223,9 +247,16 @@ public class QuizServiceImpl implements IQuizService {
                 // but let's just return what is available or a mock for now.
                 // For a proper solution, pointsEarned might need to be stored on QuizAttempt or joined from point_transactions.
                 // We'll set it to 0 for historical fetches unless added to DB.
-                .pointsEarned(attempt.getIsCorrect() ? 10 : 0)
+                .pointsEarned(attempt.getPointsEarned() != null ? attempt.getPointsEarned() : (attempt.getIsCorrect() ? 10 : 0))
+                .starsEarned(attempt.getStarsEarned() != null ? attempt.getStarsEarned() : 0)
                 .attemptedAt(attempt.getAttemptedAt())
                 .build());
+    }
+
+    private boolean canViewCorrectAnswer(User user) {
+        if (user == null || user.getRole() == null || user.getRole().getName() == null) return false;
+        String role = user.getRole().getName();
+        return "INSTRUCTOR".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
     }
     
     private void validateQuizRequest(QuizRequest request) {

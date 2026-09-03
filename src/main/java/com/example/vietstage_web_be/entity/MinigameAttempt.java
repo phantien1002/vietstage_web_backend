@@ -33,6 +33,10 @@ public class MinigameAttempt {
     @Column(name = "stars_earned")
     private Integer starsEarned;
 
+    /** Reward snapshot, retained even when the XP-per-star setting changes later. */
+    @Column(name = "points_earned")
+    private Integer pointsEarned;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 

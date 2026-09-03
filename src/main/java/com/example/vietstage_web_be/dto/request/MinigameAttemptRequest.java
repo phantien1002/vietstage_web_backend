@@ -1,6 +1,7 @@
 package com.example.vietstage_web_be.dto.request;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ public class MinigameAttemptRequest {
     @NotNull(message = "Score is required")
     private Integer score;
 
+    @NotBlank(message = "Client attempt id is required")
     private String clientAttemptId;
 
     @NotNull(message = "Started at is required")

@@ -8,5 +8,6 @@ public class QuizAttemptRequest {
     @NotBlank(message = "Selected answer is required")
     private String selectedAnswer;
     
+    @NotBlank(message = "Client attempt id is required")
     private String clientAttemptId;
 }

@@ -11,4 +11,10 @@ public interface MinigameAttemptRepository extends JpaRepository<MinigameAttempt
     Page<MinigameAttempt> findByChallengeIdAndLearnerIdOrderByCompletedAtDesc(Long challengeId, Long learnerId, Pageable pageable);
     
     java.util.Optional<MinigameAttempt> findByClientAttemptId(String clientAttemptId);
+
+    java.util.Optional<MinigameAttempt> findByClientAttemptIdAndLearnerId(String clientAttemptId, Long learnerId);
+
+    Page<MinigameAttempt> findByLearnerId(Long learnerId, Pageable pageable);
+
+    java.util.Optional<MinigameAttempt> findByIdAndLearnerId(Long id, Long learnerId);
 }

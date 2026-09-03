@@ -14,7 +14,9 @@ import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.entity.MediaAsset;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
+import com.example.vietstage_web_be.repository.AppConfigRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
+import com.example.vietstage_web_be.repository.LearnerProfileRepository;
 import com.example.vietstage_web_be.repository.MinigameAttemptRepository;
 import com.example.vietstage_web_be.repository.MinigameChallengeRepository;
 import com.example.vietstage_web_be.repository.MediaAssetRepository;
@@ -41,10 +43,15 @@ public class MinigameServiceImpl implements IMinigameService {
     private final LessonRepository lessonRepository;
     private final MediaAssetRepository mediaAssetRepository;
     private final ILeaderboardService leaderboardService;
+    private final AppConfigRepository appConfigRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
-    public List<MinigameChallengeResponse> getMinigamesByLesson(Long lessonId) {
+    public List<MinigameChallengeResponse> getMinigamesByLesson(Long lessonId, User requester) {
+        if (isLearner(requester) && !isMinigameEnabled()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Mini Game đang tạm thời bị tắt");
+        }
         List<MinigameChallenge> challenges = challengeRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
         return challenges.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
@@ -103,15 +110,25 @@ public class MinigameServiceImpl implements IMinigameService {
     @Override
     @Transactional
     public MinigameAttemptResponse submitAttempt(Long minigameId, MinigameAttemptRequest request, User learner) {
+        if (!isMinigameEnabled()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Mini Game đang tạm thời bị tắt");
+        }
         MinigameChallenge challenge = challengeRepository.findById(minigameId)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
 
-        com.example.vietstage_web_be.entity.LearnerProfile profile = com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).findByUserId(learner.getId()).orElse(null);
+        validateSubmittedAttempt(challenge, request);
+        com.example.vietstage_web_be.entity.LearnerProfile profile = learnerProfileRepository.findByUserId(learner.getId()).orElse(null);
+
+        int pointsPerStar = configInt("scoring.minigame.points_per_star", legacyPointsPerStar());
 
         if (request.getClientAttemptId() != null) {
-            java.util.Optional<MinigameAttempt> existingAttempt = attemptRepository.findByClientAttemptId(request.getClientAttemptId());
+            java.util.Optional<MinigameAttempt> existingAttempt = attemptRepository
+                    .findByClientAttemptIdAndLearnerId(request.getClientAttemptId(), learner.getId());
             if (existingAttempt.isPresent()) {
                 MinigameAttempt attempt = existingAttempt.get();
+                if (!attempt.getChallenge().getId().equals(challenge.getId())) {
+                    throw new AppException(ErrorCode.BAD_REQUEST, "Mã attempt đã được dùng cho Mini Game khác");
+                }
                 return MinigameAttemptResponse.builder()
                         .id(attempt.getId())
                         .minigameId(challenge.getId())
@@ -123,27 +140,21 @@ public class MinigameServiceImpl implements IMinigameService {
                         .totalPoints(profile != null ? profile.getTotalPoints() : 0)
                         .startedAt(attempt.getStartedAt())
                         .completedAt(attempt.getCompletedAt())
-                        .pointsEarned(attempt.getStarsEarned() * 5)
+                        .pointsEarned(attempt.getPointsEarned() != null ? attempt.getPointsEarned() : attempt.getStarsEarned() * 5)
                         .build();
             }
         }
 
-        // Calculate stars based on score (e.g. maxScore == 3 stars)
-        int starsEarned = 0;
-        if (challenge.getMaxScore() != null && challenge.getMaxScore() > 0 && request.getScore() != null) {
-            double ratio = (double) request.getScore() / challenge.getMaxScore();
-            if (ratio >= 0.9) starsEarned = 3;
-            else if (ratio >= 0.7) starsEarned = 2;
-            else if (ratio >= 0.5) starsEarned = 1;
-        }
+        int starsEarned = calculateStars(request.getScore(), challenge.getMaxScore());
 
-        Integer pointsEarned = starsEarned * 5;
+        Integer pointsEarned = starsEarned * pointsPerStar;
 
         MinigameAttempt attempt = MinigameAttempt.builder()
                 .challenge(challenge)
                 .learner(learner)
                 .score(request.getScore())
                 .starsEarned(starsEarned)
+                .pointsEarned(pointsEarned)
                 .startedAt(request.getStartedAt())
                 .completedAt(request.getCompletedAt())
                 .clientAttemptId(request.getClientAttemptId())
@@ -158,7 +169,7 @@ public class MinigameServiceImpl implements IMinigameService {
         if (profile != null && starsEarned > 0) {
             profile.setTotalStars(profile.getTotalStars() + starsEarned);
             profile.setSpendableStars(profile.getSpendableStars() + starsEarned);
-            com.example.vietstage_web_be.repository.LearnerProfileRepository.class.cast(org.springframework.web.context.support.WebApplicationContextUtils.getRequiredWebApplicationContext(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes() != null ? ((org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()).getRequest().getServletContext() : null).getBean(com.example.vietstage_web_be.repository.LearnerProfileRepository.class)).save(profile);
+            learnerProfileRepository.save(profile);
         }
 
         return MinigameAttemptResponse.builder()
@@ -187,8 +198,62 @@ public class MinigameServiceImpl implements IMinigameService {
                 .starsEarned(attempt.getStarsEarned())
                 .startedAt(attempt.getStartedAt())
                 .completedAt(attempt.getCompletedAt())
-                .pointsEarned(attempt.getStarsEarned() * 5)
+                .pointsEarned(attempt.getPointsEarned() != null ? attempt.getPointsEarned() : attempt.getStarsEarned() * 5)
                 .build());
+    }
+
+    private boolean isMinigameEnabled() {
+        return appConfigRepository.findByConfigKey("feature.minigame.enabled")
+                .map(config -> Boolean.parseBoolean(config.getConfigValue()))
+                .orElse(true);
+    }
+
+    private boolean isLearner(User user) {
+        return user != null && user.getRole() != null && "LEARNER".equalsIgnoreCase(user.getRole().getName());
+    }
+
+    private int configInt(String key, int fallback) {
+        try {
+            return appConfigRepository.findByConfigKey(key)
+                    .map(config -> (int) Math.round(Double.parseDouble(config.getConfigValue())))
+                    .orElse(fallback);
+        } catch (RuntimeException ignored) {
+            return fallback;
+        }
+    }
+
+    private int legacyPointsPerStar() {
+        return configInt("scoring.minigame.multiplier", 5);
+    }
+
+    private int calculateStars(int score, int maxScore) {
+        double percent = maxScore <= 0 ? 0 : score * 100.0 / maxScore;
+        double star1 = configInt("scoring.minigame.star1_threshold", 50);
+        double star2 = configInt("scoring.minigame.star2_threshold", 70);
+        double star3 = configInt("scoring.minigame.star3_threshold", 90);
+        if (percent >= star3) return 3;
+        if (percent >= star2) return 2;
+        return percent >= star1 ? 1 : 0;
+    }
+
+    private void validateSubmittedAttempt(MinigameChallenge challenge, MinigameAttemptRequest request) {
+        if (request.getScore() < 0 || request.getScore() > challenge.getMaxScore()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Điểm Mini Game phải nằm trong khoảng 0 đến điểm tối đa");
+        }
+        if (request.getCompletedAt().isBefore(request.getStartedAt())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Thời điểm hoàn thành không được trước thời điểm bắt đầu");
+        }
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(challenge.getContentJson());
+            int timeLimitSeconds = root.path("time_limit_sec").asInt(0);
+            if (timeLimitSeconds > 0 && java.time.Duration.between(request.getStartedAt(), request.getCompletedAt()).getSeconds() > timeLimitSeconds) {
+                throw new AppException(ErrorCode.BAD_REQUEST, "Thời gian hoàn thành đã vượt giới hạn của Mini Game");
+            }
+        } catch (AppException exception) {
+            throw exception;
+        } catch (Exception ignored) {
+            // Existing rhythm challenges do not require a time limit.
+        }
     }
     
     private MinigameChallengeResponse mapToResponse(MinigameChallenge challenge) {

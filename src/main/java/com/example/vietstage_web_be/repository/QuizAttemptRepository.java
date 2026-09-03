@@ -16,5 +16,11 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     org.springframework.data.domain.Page<QuizAttempt> findByQuizIdAndLearnerIdOrderByAttemptedAtDesc(Long quizId, Long learnerId, org.springframework.data.domain.Pageable pageable);
 
     java.util.Optional<QuizAttempt> findByClientAttemptId(String clientAttemptId);
+
+    java.util.Optional<QuizAttempt> findByClientAttemptIdAndLearnerId(String clientAttemptId, Long learnerId);
+
+    org.springframework.data.domain.Page<QuizAttempt> findByLearnerId(Long learnerId, org.springframework.data.domain.Pageable pageable);
+
+    java.util.Optional<QuizAttempt> findByIdAndLearnerId(Long id, Long learnerId);
 }
 

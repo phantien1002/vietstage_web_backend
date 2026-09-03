@@ -37,6 +37,13 @@ public class QuizAttempt {
     @Column(name = "score")
     private BigDecimal score;
 
+    /** Reward snapshot. Historical attempts must not be recalculated after an admin changes a rule. */
+    @Column(name = "points_earned")
+    private Integer pointsEarned;
+
+    @Column(name = "stars_earned")
+    private Integer starsEarned;
+
     @Column(name = "attempted_at")
     private LocalDateTime attemptedAt;
 

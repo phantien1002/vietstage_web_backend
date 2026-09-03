@@ -32,8 +32,9 @@ public class MinigameController {
     @GetMapping("/lessons/{id}/minigames")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BaseResponse<List<MinigameChallengeResponse>>> getMinigamesByLesson(
-            @PathVariable Long id) {
-        List<MinigameChallengeResponse> response = minigameService.getMinigamesByLesson(id);
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "user") User requester) {
+        List<MinigameChallengeResponse> response = minigameService.getMinigamesByLesson(id, requester);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
