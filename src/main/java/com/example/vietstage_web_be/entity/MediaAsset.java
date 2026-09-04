@@ -44,4 +44,22 @@ public class MediaAsset {
     
     @Column(name = "mime_type")
     private String mimeType;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "checksum")
+    private String checksum;
+
+    @Column(name = "version")
+    private Integer version;
+
+    @Column(name = "processing_status")
+    private String processingStatus;
+
+    @Column(name = "order_index")
+    private Integer orderIndex;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

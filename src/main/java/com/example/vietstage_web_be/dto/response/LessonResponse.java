@@ -18,7 +18,8 @@ public class LessonResponse {
     private String lessonCode;
     private String title;
     private String description;
-    private String status;
+    private String reviewStatus;
+    private String visibilityStatus;
     private Integer orderIndex;
     private SkillLevelInfo skillLevel;
     private InstrumentInfo instrument;
@@ -28,6 +29,7 @@ public class LessonResponse {
     private List<TechniqueInfo> techniques;
     private List<AssetInfo> mediaAssets;
     private List<ExerciseInfo> exercises;
+    private List<ContentInfo> contents;
 
     @Data
     @Builder
@@ -81,6 +83,13 @@ public class LessonResponse {
         private String assetUrl;
         private Integer tempoBpm;
         private BigDecimal durationSec;
+        private Long fileSize;
+        private String mimeType;
+        private String checksum;
+        private Integer version;
+        private String processingStatus;
+        private Integer orderIndex;
+        private LocalDateTime updatedAt;
     }
 
     @Data
@@ -93,6 +102,24 @@ public class LessonResponse {
         private String description;
         private BigDecimal passThreshold;
         private Integer orderIndex;
+        private String exerciseType;
+        private String practiceMode;
+        private String configJson;
+        private String schemaVersion;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ContentInfo {
+        private Long id;
+        private String contentType;
+        private String contentText;
+        private String payloadJson;
+        private Integer orderIndex;
+        private Long assetId;
+        private String schemaVersion;
     }
 }
 

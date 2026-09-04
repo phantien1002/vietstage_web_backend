@@ -37,6 +37,7 @@ public class LessonServiceImpl implements ILessonService {
     private final TechniqueRepository techniqueRepository;
     private final SkillLevelRepository skillLevelRepository;
     private final ContentReviewRepository contentReviewRepository;
+    private final LessonContentRepository lessonContentRepository;
 
     // =========================================================
     // POST /api/Lesson
@@ -83,7 +84,8 @@ public class LessonServiceImpl implements ILessonService {
                 .lessonCode(generatedLessonCode)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .status(initialStatus)
+                .reviewStatus(initialStatus)
+                .visibilityStatus("HIDDEN")
                 .orderIndex(order)
                 .skillLevel(skillLevel)
                 .instrument(instrument)
@@ -255,15 +257,24 @@ public class LessonServiceImpl implements ILessonService {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
         }
 
-        // Cập nhật status bài học
-        lesson.setStatus(newStatus);
+        if ("PENDING".equals(newStatus)) {
+            if (lesson.getExercises() == null || lesson.getExercises().isEmpty()) {
+                throw new AppException(ErrorCode.BAD_REQUEST, "Bài học phải có ít nhất 1 bài tập trước khi nộp duyệt.");
+            }
+            if (lessonContentRepository.findByLessonIdOrderByOrderIndexAsc(lesson.getId()).isEmpty()) {
+                throw new AppException(ErrorCode.BAD_REQUEST, "Bài học phải có nội dung trước khi nộp duyệt.");
+            }
+        }
+
+        // Cập nhật reviewStatus bài học
+        lesson.setReviewStatus(newStatus);
         lesson.setUpdatedAt(LocalDateTime.now());
         lessonRepository.save(lesson);
 
         // TODO: Gửi notification cho Instructor (Nếu cần)
         return LessonStatusResponse.builder()
                 .id(lesson.getId())
-                .status(lesson.getStatus())
+                .status(lesson.getReviewStatus())
                 .build();
     }
 
@@ -289,7 +300,8 @@ public class LessonServiceImpl implements ILessonService {
                 .lessonCode(lesson.getLessonCode())
                 .title(lesson.getTitle())
                 .description(lesson.getDescription())
-                .status(lesson.getStatus())
+                .reviewStatus(lesson.getReviewStatus())
+                .visibilityStatus(lesson.getVisibilityStatus())
                 .orderIndex(lesson.getOrderIndex())
                 .createdAt(lesson.getCreatedAt())
                 .updatedAt(lesson.getUpdatedAt())
@@ -324,6 +336,13 @@ public class LessonServiceImpl implements ILessonService {
                                 .assetUrl(a.getAssetUrl())
                                 .tempoBpm(a.getTempoBpm())
                                 .durationSec(a.getDurationSec())
+                                .fileSize(a.getFileSize())
+                                .mimeType(a.getMimeType())
+                                .checksum(a.getChecksum())
+                                .version(a.getVersion())
+                                .processingStatus(a.getProcessingStatus())
+                                .orderIndex(a.getOrderIndex())
+                                .updatedAt(a.getUpdatedAt())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
                 .exercises(lesson.getExercises() != null ? lesson.getExercises().stream()
@@ -333,8 +352,23 @@ public class LessonServiceImpl implements ILessonService {
                                 .description(e.getDescription())
                                 .passThreshold(e.getPassThreshold())
                                 .orderIndex(e.getOrderIndex())
+                                .exerciseType(e.getExerciseType())
+                                .practiceMode(e.getPracticeMode())
+                                .configJson(e.getConfigJson())
+                                .schemaVersion(e.getSchemaVersion())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
+                .contents(lessonContentRepository.findByLessonIdOrderByOrderIndexAsc(lesson.getId()).stream()
+                        .map(c -> LessonResponse.ContentInfo.builder()
+                                .id(c.getId())
+                                .contentType(c.getContentType())
+                                .contentText(c.getContentText())
+                                .payloadJson(c.getPayloadJson())
+                                .orderIndex(c.getOrderIndex())
+                                .assetId(c.getAsset() != null ? c.getAsset().getId() : null)
+                                .schemaVersion(c.getSchemaVersion())
+                                .build())
+                        .collect(Collectors.toList()))
                 .build();
     }
 }

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class SkillLevelServiceImpl implements ISkillLevelService {
 
     private final SkillLevelRepository skillLevelRepository;
+    private final com.example.vietstage_web_be.repository.LessonRepository lessonRepository;
 
     @Override
     @Transactional
@@ -85,6 +86,11 @@ public class SkillLevelServiceImpl implements ISkillLevelService {
     public void deleteSkillLevel(Long id) {
         SkillLevel skillLevel = skillLevelRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SKILL_LEVEL_NOT_FOUND));
+
+        if (lessonRepository.existsBySkillLevelId(id)) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Không thể xóa trình độ đang được sử dụng trong bài học.");
+        }
+
         skillLevelRepository.delete(skillLevel);
     }
 

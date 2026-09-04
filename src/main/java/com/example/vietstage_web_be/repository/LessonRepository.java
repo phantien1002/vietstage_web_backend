@@ -9,5 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface LessonRepository extends JpaRepository<Lesson, Long>, JpaSpecificationExecutor<Lesson> {
     boolean existsByTitleIgnoreCaseAndInstrumentId(String title, Long instrumentId);
     java.util.Optional<Lesson> findTopByOrderByIdDesc();
-    java.util.List<Lesson> findByStatusIgnoreCase(String status);
+    boolean existsBySkillLevelId(Long skillLevelId);
+    java.util.List<Lesson> findByReviewStatusIgnoreCase(String reviewStatus);
 }

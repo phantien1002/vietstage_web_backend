@@ -109,7 +109,7 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
                     .assets(assets)
                     .technicalNotes(lesson.getTechnicalNotes()) 
                     .description(lesson.getDescription())
-                    .status(lesson.getStatus() != null ? lesson.getStatus().toLowerCase() : "pending")
+                    .status(lesson.getReviewStatus() != null ? lesson.getReviewStatus().toLowerCase() : "pending")
                     .feedback(feedback)
                     .approvedBy(approvedBy)
                     .approvedAt(approvedAt)
@@ -132,11 +132,12 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        if (!"PENDING".equalsIgnoreCase(lesson.getStatus())) {
+        if (!"PENDING".equalsIgnoreCase(lesson.getReviewStatus())) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ có thể xử lý bài học đang ở trạng thái chờ duyệt (PENDING)");
         }
 
-        lesson.setStatus("APPROVED");
+        lesson.setReviewStatus("APPROVED");
+        lesson.setVisibilityStatus("VISIBLE");
         lessonRepository.save(lesson);
 
         User admin = userRepository.findById(adminId)
@@ -158,11 +159,11 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        if (!"PENDING".equalsIgnoreCase(lesson.getStatus())) {
+        if (!"PENDING".equalsIgnoreCase(lesson.getReviewStatus())) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Chỉ có thể xử lý bài học đang ở trạng thái chờ duyệt (PENDING)");
         }
 
-        lesson.setStatus("REJECTED");
+        lesson.setReviewStatus("REJECTED");
         lessonRepository.save(lesson);
         
         User admin = userRepository.findById(adminId)

@@ -31,7 +31,7 @@ public class LessonSpecification {
             // Filter by status: DRAFT | PENDING | APPROVED | REJECTED
             if (status != null && !status.isBlank()) {
                 predicates.add(criteriaBuilder.equal(
-                        criteriaBuilder.upper(root.get("status")), status.toUpperCase()));
+                        criteriaBuilder.upper(root.get("reviewStatus")), status.toUpperCase()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
