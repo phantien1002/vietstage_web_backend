@@ -121,6 +121,8 @@ public class LeaderboardServiceImpl implements ILeaderboardService {
     @Override
     @Transactional
     public void addPoints(User learner, int points, String sourceType) {
+        // XP and stars are separate rewards. Quiz/Mini Game services apply
+        // their configured stars explicitly after this XP transaction.
         if (points == 0) return;
 
         // 1. Create audit log
@@ -141,10 +143,6 @@ public class LeaderboardServiceImpl implements ILeaderboardService {
             return newProfile;
         });
         profile.setTotalPoints(profile.getTotalPoints() + points);
-        
-        // Also increase stars based on points (1 point = 1 star for now)
-        profile.setTotalStars(profile.getTotalStars() + points);
-        profile.setSpendableStars(profile.getSpendableStars() + points);
         
         learnerProfileRepository.save(profile);
 

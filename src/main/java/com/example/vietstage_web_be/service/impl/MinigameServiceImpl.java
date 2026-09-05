@@ -166,6 +166,11 @@ public class MinigameServiceImpl implements IMinigameService {
             leaderboardService.addPoints(learner, pointsEarned, "MINI_GAME");
         }
         
+        // addPoints also provisions the learner profile for older accounts.
+        // Reload it before applying the separately configured game stars.
+        if (profile == null) {
+            profile = learnerProfileRepository.findByUserId(learner.getId()).orElse(null);
+        }
         if (profile != null && starsEarned > 0) {
             profile.setTotalStars(profile.getTotalStars() + starsEarned);
             profile.setSpendableStars(profile.getSpendableStars() + starsEarned);

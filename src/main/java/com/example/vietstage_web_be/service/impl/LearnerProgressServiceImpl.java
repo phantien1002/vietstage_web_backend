@@ -147,17 +147,24 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
 
     @Override
     public LearnerProgressSummaryResponse getLearnerProgressSummary(Long learnerId) {
-        Integer totalStars = lessonCompletionRepository.sumTotalStarsByLearnerId(learnerId);
+        Integer lessonStars = lessonCompletionRepository.sumTotalStarsByLearnerId(learnerId);
         Long completedLessons = lessonCompletionRepository.countCompletedLessonsByLearnerId(learnerId);
 
         LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId).orElse(null);
+        // Quiz/Mini Game rewards live in learner_profiles, while lesson stars
+        // come from learner_lesson_progress. Use the wallet total as the
+        // canonical summary so refreshing after a quiz cannot erase its stars.
+        int profileStars = profile != null && profile.getTotalStars() != null ? profile.getTotalStars() : 0;
+        int totalStars = profile != null
+                ? Math.max(lessonStars != null ? lessonStars : 0, profileStars)
+                : (lessonStars != null ? lessonStars : 0);
         Integer currentStreak = profile != null ? profile.getCurrentStreak() : 0;
         Integer longestStreak = profile != null ? profile.getLongestStreak() : 0;
         Integer totalPoints = profile != null ? profile.getTotalPoints() : 0;
         Integer spendableStars = profile != null ? profile.getSpendableStars() : 0;
 
         return LearnerProgressSummaryResponse.builder()
-                .totalStars(totalStars != null ? totalStars : 0)
+                .totalStars(totalStars)
                 .spendableStars(spendableStars != null ? spendableStars : 0)
                 .completedLessons(completedLessons != null ? completedLessons : 0L)
                 .currentStreak(currentStreak)

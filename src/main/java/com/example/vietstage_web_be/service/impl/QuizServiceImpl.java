@@ -28,8 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -177,8 +179,8 @@ public class QuizServiceImpl implements IQuizService {
 
         String selectedAnswer = request.getSelectedAnswer() != null ? request.getSelectedAnswer().trim() : "";
         String correctAnswer = quiz.getCorrectAnswer() != null ? quiz.getCorrectAnswer().trim() : "";
-        
-        boolean isCorrect = correctAnswer.equals(selectedAnswer);
+
+        boolean isCorrect = answersMatch(quiz, selectedAnswer, correctAnswer);
         BigDecimal score = isCorrect ? BigDecimal.valueOf(100.0) : BigDecimal.ZERO;
         Integer pointsEarned = isCorrect ? configuredPoints : 0;
         Integer starsEarned = isCorrect ? configuredStars : 0;
@@ -186,7 +188,7 @@ public class QuizServiceImpl implements IQuizService {
         QuizAttempt attempt = QuizAttempt.builder()
                 .quiz(quiz)
                 .learner(learner)
-                .selectedAnswer(request.getSelectedAnswer())
+                .selectedAnswer(selectedAnswer)
                 .isCorrect(isCorrect)
                 .score(score)
                 .pointsEarned(pointsEarned)
@@ -201,6 +203,12 @@ public class QuizServiceImpl implements IQuizService {
             leaderboardService.addPoints(learner, pointsEarned, "QUIZ");
         }
         
+        // addPoints creates a profile for legacy users that do not have one
+        // yet. Reload it before applying quiz stars so the reward snapshot and
+        // the totals returned to the client describe the same transaction.
+        if (profile == null) {
+            profile = learnerProfileRepository.findByUserId(learner.getId()).orElse(null);
+        }
         if (profile != null && starsEarned > 0) {
             profile.setTotalStars(profile.getTotalStars() + starsEarned);
             profile.setSpendableStars(profile.getSpendableStars() + starsEarned);
@@ -261,6 +269,39 @@ public class QuizServiceImpl implements IQuizService {
         }
     }
 
+    /**
+     * The learner client submits the visible option text, while older quiz
+     * rows may store either the option text or its letter (A/B/C/...). Keep
+     * grading consistent with the Godot client and tolerate harmless casing,
+     * whitespace, and option-prefix differences.
+     */
+    private boolean answersMatch(Quiz quiz, String selectedAnswer, String correctAnswer) {
+        String selected = normalizeAnswer(selectedAnswer);
+        String expected = normalizeAnswer(correctAnswer);
+        if (selected.isEmpty() || expected.isEmpty()) return false;
+        if (expected.equals(selected)) return true;
+
+        if (expected.length() == 1 && expected.charAt(0) >= 'a' && expected.charAt(0) <= 'z') {
+            try {
+                List<String> options = objectMapper.readValue(quiz.getOptions(), new TypeReference<List<String>>() {});
+                int index = expected.charAt(0) - 'a';
+                return index >= 0 && index < options.size()
+                        && normalizeAnswer(options.get(index)).equals(selected);
+            } catch (JsonProcessingException ignored) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeAnswer(String value) {
+        if (value == null) return "";
+        return Pattern.compile("^[a-z][.)]\\s*", Pattern.CASE_INSENSITIVE)
+                .matcher(value.trim().toLowerCase(Locale.ROOT))
+                .replaceFirst("")
+                .trim();
+    }
+
     private boolean canViewCorrectAnswer(User user) {
         if (user == null || user.getRole() == null || user.getRole().getName() == null) return false;
         String role = user.getRole().getName();
@@ -279,7 +320,15 @@ public class QuizServiceImpl implements IQuizService {
             if (options == null || options.size() < 4) {
                 throw new AppException(ErrorCode.BAD_REQUEST); // Options must have at least 4 items
             }
-            if (!options.contains(request.getCorrectAnswer())) {
+            String expected = normalizeAnswer(request.getCorrectAnswer());
+            boolean correctOption = options.stream()
+                    .anyMatch(option -> normalizeAnswer(option).equals(expected));
+            if (!correctOption && expected.length() == 1
+                    && expected.charAt(0) >= 'a' && expected.charAt(0) <= 'z') {
+                int index = expected.charAt(0) - 'a';
+                correctOption = index >= 0 && index < options.size();
+            }
+            if (!correctOption) {
                 throw new AppException(ErrorCode.BAD_REQUEST); // Correct answer must be exactly one of the options
             }
         } catch (JsonProcessingException e) {
