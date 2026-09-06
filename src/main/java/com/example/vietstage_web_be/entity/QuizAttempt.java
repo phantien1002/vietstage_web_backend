@@ -12,7 +12,13 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "quiz_attempts")
+@Table(
+        name = "quiz_attempts",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_quiz_attempt_learner_client",
+                columnNames = {"learner_id", "client_attempt_id"}
+        )
+)
 public class QuizAttempt {
 
     @Id
@@ -47,6 +53,7 @@ public class QuizAttempt {
     @Column(name = "attempted_at")
     private LocalDateTime attemptedAt;
 
-    @Column(name = "client_attempt_id", unique = true)
+    /** Idempotency key scoped to one learner, so another learner cannot collide. */
+    @Column(name = "client_attempt_id")
     private String clientAttemptId;
 }
