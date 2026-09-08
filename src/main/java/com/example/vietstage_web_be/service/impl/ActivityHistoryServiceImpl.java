@@ -9,6 +9,7 @@ import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.MinigameAttemptRepository;
+import com.example.vietstage_web_be.repository.LessonAssessmentSessionRepository;
 import com.example.vietstage_web_be.repository.PracticeAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
 import com.example.vietstage_web_be.service.IActivityHistoryService;
@@ -34,6 +35,7 @@ import java.util.Locale;
 public class ActivityHistoryServiceImpl implements IActivityHistoryService {
     private static final int MAX_SIZE = 50;
     private final QuizAttemptRepository quizAttemptRepository;
+    private final LessonAssessmentSessionRepository lessonAssessmentSessionRepository;
     private final MinigameAttemptRepository minigameAttemptRepository;
     private final PracticeAttemptRepository practiceAttemptRepository;
 
@@ -48,6 +50,9 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
 
         if (normalizedType.isEmpty() || "QUIZ".equals(normalizedType)) {
             quizAttemptRepository.findByLearnerId(learner.getId(), latest).forEach(attempt -> items.add(mapQuiz(attempt)));
+        }
+        if (normalizedType.isEmpty() || "ASSESSMENT".equals(normalizedType)) {
+            lessonAssessmentSessionRepository.findByLearnerId(learner.getId(), latest).forEach(session -> items.add(mapAssessment(session)));
         }
         if (normalizedType.isEmpty() || "MINIGAME".equals(normalizedType)) {
             Pageable minigames = PageRequest.of(0, fetchSize, Sort.by("completedAt").descending());
@@ -73,6 +78,7 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
         try { id = Long.valueOf(parts[1]); } catch (NumberFormatException ex) { throw new AppException(ErrorCode.RESOURCE_NOT_FOUND); }
         return switch (normalizeType(parts[0])) {
             case "QUIZ" -> detailQuiz(quizAttemptRepository.findByIdAndLearnerId(id, learner.getId()).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND)));
+            case "ASSESSMENT" -> detailAssessment(lessonAssessmentSessionRepository.findByIdAndLearnerId(id, learner.getId()).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND)));
             case "MINIGAME" -> detailMinigame(minigameAttemptRepository.findByIdAndLearnerId(id, learner.getId()).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND)));
             case "PRACTICE" -> detailPractice(practiceAttemptRepository.findByIdAndLearnerId(id, learner.getId()).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND)));
             default -> throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
@@ -81,7 +87,7 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
 
     private String normalizeType(String type) {
         String value = type == null ? "" : type.trim().toUpperCase(Locale.ROOT);
-        return switch (value) { case "", "QUIZ", "MINIGAME", "PRACTICE" -> value; default -> throw new AppException(ErrorCode.RESOURCE_NOT_FOUND); };
+        return switch (value) { case "", "QUIZ", "MINIGAME", "PRACTICE", "ASSESSMENT" -> value; default -> throw new AppException(ErrorCode.RESOURCE_NOT_FOUND); };
     }
 
     private ActivityHistoryItemResponse mapQuiz(QuizAttempt a) {
@@ -107,6 +113,13 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
                 .pointsEarned(a.getPointsEarned() == null ? 0 : a.getPointsEarned()).completedAt(a.getCreatedAt()).status("CONFIRMED").build();
     }
 
+    private ActivityHistoryItemResponse mapAssessment(com.example.vietstage_web_be.entity.LessonAssessmentSession a) {
+        return ActivityHistoryItemResponse.builder().eventId("ASSESSMENT:" + a.getId()).type("ASSESSMENT")
+                .lessonId(a.getLesson().getId()).lessonTitle(a.getLesson().getTitle()).title("Đánh giá bài học")
+                .score(a.getScore()).maxScore(a.getMaxScore()).starsEarned(rewardStars(a.getStarsEarned()))
+                .pointsEarned(a.getPointsEarned()).completedAt(a.getCompletedAt()).status("CONFIRMED").build();
+    }
+
     private ActivityHistoryDetailResponse detailQuiz(QuizAttempt a) {
         return ActivityHistoryDetailResponse.builder().eventId("QUIZ:" + a.getId()).type("QUIZ").lessonTitle(a.getQuiz().getLesson().getTitle()).title(a.getQuiz().getTitle())
                 .question(a.getQuiz().getQuestion()).selectedAnswer(a.getSelectedAnswer()).correctAnswer(a.getQuiz().getCorrectAnswer()).isCorrect(a.getIsCorrect())
@@ -119,6 +132,13 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
                 .challengeType(a.getChallenge().getChallengeType()).score(BigDecimal.valueOf(a.getScore())).maxScore(BigDecimal.valueOf(a.getChallenge().getMaxScore()))
                 .starsEarned(rewardStars(a.getStarsEarned())).pointsEarned(a.getPointsEarned() != null ? a.getPointsEarned() : rewardStars(a.getStarsEarned()) * 5)
                 .startedAt(a.getStartedAt()).completedAt(a.getCompletedAt()).status("CONFIRMED").build();
+    }
+
+    private ActivityHistoryDetailResponse detailAssessment(com.example.vietstage_web_be.entity.LessonAssessmentSession a) {
+        return ActivityHistoryDetailResponse.builder().eventId("ASSESSMENT:" + a.getId()).type("ASSESSMENT")
+                .lessonTitle(a.getLesson().getTitle()).title("Đánh giá bài học")
+                .score(a.getScore()).maxScore(a.getMaxScore()).starsEarned(rewardStars(a.getStarsEarned()))
+                .pointsEarned(a.getPointsEarned()).startedAt(a.getStartedAt()).completedAt(a.getCompletedAt()).status("CONFIRMED").build();
     }
 
     private ActivityHistoryDetailResponse detailPractice(PracticeAttempt a) {
