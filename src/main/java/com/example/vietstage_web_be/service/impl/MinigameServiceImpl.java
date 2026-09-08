@@ -311,6 +311,14 @@ public class MinigameServiceImpl implements IMinigameService {
                             }
                             prevBeat = beat;
                         }
+                        JsonNode roundNotes = roundNode.path("notes");
+                        if (roundNotes.isArray() && roundNotes.size() > 0 && roundNotes.size() != roundBeats.size()) {
+                            throw new AppException(ErrorCode.BAD_REQUEST);
+                        }
+                        JsonNode roundDurations = roundNode.path("durations");
+                        if (roundDurations.isArray() && roundDurations.size() > 0 && roundDurations.size() != roundBeats.size()) {
+                            throw new AppException(ErrorCode.BAD_REQUEST);
+                        }
                     }
                 } else {
                     int tempo = root.path("tempo_bpm").asInt(root.path("tempoBpm").asInt(0));
@@ -331,6 +339,14 @@ public class MinigameServiceImpl implements IMinigameService {
                             throw new AppException(ErrorCode.BAD_REQUEST);
                         }
                         prevBeat = beat;
+                    }
+                    JsonNode notes = root.path("notes");
+                    if (notes.isArray() && notes.size() > 0 && notes.size() != beats.size()) {
+                        throw new AppException(ErrorCode.BAD_REQUEST);
+                    }
+                    JsonNode durations = root.path("durations");
+                    if (durations.isArray() && durations.size() > 0 && durations.size() != beats.size()) {
+                        throw new AppException(ErrorCode.BAD_REQUEST);
                     }
                 }
             } catch (AppException exception) {

@@ -40,7 +40,7 @@ WHERE order_index = 2
 -- RHYTHM MINI GAMES ---------------------------------------------------------
 INSERT INTO minigame_challenges (lesson_id, title, challenge_type, content_json, difficulty, max_score, order_index, created_at)
 SELECT lesson_id, 'Giữ nhịp cơ bản', 'RHYTHM_MATCH',
-       '{"tempoBpm":80,"beats":[0.5,1.0,1.5,2.0]}', 'BEGINNER', 300, 0, NOW()
+       '{"tempoBpm":80,"notes":["Đô","Rê","Mi","Sol"],"beats":[0.5,1.0,1.5,2.0]}', 'BEGINNER', 300, 0, NOW()
 FROM lessons
 WHERE order_index = 1
   AND NOT EXISTS (
@@ -50,7 +50,7 @@ WHERE order_index = 1
 
 INSERT INTO minigame_challenges (lesson_id, title, challenge_type, content_json, difficulty, max_score, order_index, created_at)
 SELECT lesson_id, 'Giữ nhịp nâng cao', 'RHYTHM_MATCH',
-       '{"tempoBpm":96,"beats":[0.5,1.0,1.5,2.0,2.5,3.0]}', 'BEGINNER', 500, 0, NOW()
+       '{"tempoBpm":96,"notes":["Đô","Rê","Mi","Fa","Sol","La"],"beats":[0.5,1.0,1.5,2.0,2.5,3.0]}', 'BEGINNER', 500, 0, NOW()
 FROM lessons
 WHERE order_index = 2
   AND NOT EXISTS (
