@@ -7,6 +7,7 @@ import com.example.vietstage_web_be.dto.request.MinigameAttemptRequest;
 import com.example.vietstage_web_be.dto.request.MinigameChallengeRequest;
 import com.example.vietstage_web_be.dto.response.MinigameAttemptResponse;
 import com.example.vietstage_web_be.dto.response.MinigameChallengeResponse;
+import com.example.vietstage_web_be.entity.Instrument;
 import com.example.vietstage_web_be.entity.Lesson;
 import com.example.vietstage_web_be.entity.MinigameAttempt;
 import com.example.vietstage_web_be.entity.MinigameChallenge;
@@ -59,10 +60,14 @@ public class MinigameServiceImpl implements IMinigameService {
     @Override
     @Transactional
     public MinigameChallengeResponse createMinigame(User actor, Long lessonId, MinigameChallengeRequest request) {
-        validateMinigameRequest(request);
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
         validateLessonOwnership(actor, lesson);
+        validateMinigameRequest(lesson, request);
+
+        if (challengeRepository.existsByLessonIdAndOrderIndex(lessonId, request.getOrderIndex())) {
+            throw new AppException(ErrorCode.CONFLICT, "Thứ tự (order index " + request.getOrderIndex() + ") đã tồn tại trong bài học này");
+        }
 
         MinigameChallenge challenge = MinigameChallenge.builder()
                 .lesson(lesson)
@@ -82,10 +87,15 @@ public class MinigameServiceImpl implements IMinigameService {
     @Override
     @Transactional
     public MinigameChallengeResponse updateMinigame(User actor, Long id, MinigameChallengeRequest request) {
-        validateMinigameRequest(request);
         MinigameChallenge challenge = challengeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
         validateLessonOwnership(actor, challenge.getLesson());
+        validateMinigameRequest(challenge.getLesson(), request);
+
+        if (!challenge.getOrderIndex().equals(request.getOrderIndex())
+                && challengeRepository.existsByLessonIdAndOrderIndex(challenge.getLesson().getId(), request.getOrderIndex())) {
+            throw new AppException(ErrorCode.CONFLICT, "Thứ tự (order index " + request.getOrderIndex() + ") đã tồn tại trong bài học này");
+        }
 
         challenge.setTitle(request.getTitle());
         challenge.setChallengeType(request.getChallengeType());
@@ -214,7 +224,21 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     private boolean isLearner(User user) {
-        return user != null && user.getRole() != null && "LEARNER".equalsIgnoreCase(user.getRole().getName());
+        if (user == null) return false;
+        try {
+            return user.getRole() != null && "LEARNER".equalsIgnoreCase(user.getRole().getName());
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean isUserAdmin(User user) {
+        if (user == null) return false;
+        try {
+            return user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getName());
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private int configInt(String key, int fallback) {
@@ -274,7 +298,7 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     private void validateLessonOwnership(User actor, Lesson lesson) {
-        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getName())) {
+        if (actor != null && isUserAdmin(actor)) {
             return;
         }
         if (actor == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
@@ -282,7 +306,7 @@ public class MinigameServiceImpl implements IMinigameService {
         }
     }
 
-    private void validateMinigameRequest(MinigameChallengeRequest request) {
+    private void validateMinigameRequest(Lesson lesson, MinigameChallengeRequest request) {
         if (request.getOrderIndex() == null || request.getOrderIndex() < 0 || request.getMaxScore() == null || request.getMaxScore() <= 0) {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
@@ -295,6 +319,11 @@ public class MinigameServiceImpl implements IMinigameService {
                         int roundTempo = roundNode.path("tempo_bpm").asInt(roundNode.path("tempoBpm").asInt(root.path("tempo_bpm").asInt(root.path("tempoBpm").asInt(0))));
                         if (roundTempo <= 0) {
                             throw new AppException(ErrorCode.BAD_REQUEST);
+                        }
+                        JsonNode events = roundNode.path("events");
+                        if (events.isArray() && events.size() > 0) {
+                            validateRhythmEvents(lesson, events);
+                            continue;
                         }
                         JsonNode roundBeats = roundNode.path("beats");
                         if (!roundBeats.isArray() || roundBeats.size() == 0) {
@@ -312,8 +341,13 @@ public class MinigameServiceImpl implements IMinigameService {
                             prevBeat = beat;
                         }
                         JsonNode roundNotes = roundNode.path("notes");
-                        if (roundNotes.isArray() && roundNotes.size() > 0 && roundNotes.size() != roundBeats.size()) {
+                        if (!roundNotes.isArray() || roundNotes.size() != roundBeats.size() || roundNotes.size() < 2) {
                             throw new AppException(ErrorCode.BAD_REQUEST);
+                        }
+                        for (JsonNode noteNode : roundNotes) {
+                            if (!isSupportedRhythmNote(lesson, noteNode.asText(""))) {
+                                throw new AppException(ErrorCode.BAD_REQUEST);
+                            }
                         }
                         JsonNode roundDurations = roundNode.path("durations");
                         if (roundDurations.isArray() && roundDurations.size() > 0 && roundDurations.size() != roundBeats.size()) {
@@ -341,8 +375,13 @@ public class MinigameServiceImpl implements IMinigameService {
                         prevBeat = beat;
                     }
                     JsonNode notes = root.path("notes");
-                    if (notes.isArray() && notes.size() > 0 && notes.size() != beats.size()) {
+                    if (!notes.isArray() || notes.size() != beats.size() || notes.size() < 2) {
                         throw new AppException(ErrorCode.BAD_REQUEST);
+                    }
+                    for (JsonNode noteNode : notes) {
+                        if (!isSupportedRhythmNote(lesson, noteNode.asText(""))) {
+                            throw new AppException(ErrorCode.BAD_REQUEST);
+                        }
                     }
                     JsonNode durations = root.path("durations");
                     if (durations.isArray() && durations.size() > 0 && durations.size() != beats.size()) {
@@ -387,6 +426,71 @@ public class MinigameServiceImpl implements IMinigameService {
         } catch (Exception exception) {
             throw new AppException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    /** Validates the authored event timeline used by the redesigned rhythm editor. */
+    private void validateRhythmEvents(Lesson lesson, JsonNode events) {
+        if (events.size() < 2 || events.size() > 16) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+        boolean hasTarget = false;
+        long previousAtMs = -1L;
+        for (JsonNode event : events) {
+            String mode = event.path("mode").asText("");
+            if (!"SAMPLE".equals(mode) && !"TARGET".equals(mode)) {
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+            hasTarget |= "TARGET".equals(mode);
+            if (!isSupportedRhythmNote(lesson, event.path("note").asText(""))) {
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+            double durationBeats = event.path("duration_beats").asDouble(0.0);
+            if (durationBeats != 0.25 && durationBeats != 0.5 && durationBeats != 1.0
+                    && durationBeats != 2.0 && durationBeats != 4.0) {
+                throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+            if (event.has("at_ms")) {
+                long atMs = event.path("at_ms").asLong(-1L);
+                if (atMs < 0 || atMs <= previousAtMs) {
+                    throw new AppException(ErrorCode.BAD_REQUEST);
+                }
+                previousAtMs = atMs;
+            }
+        }
+        if (!hasTarget) {
+            throw new AppException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    private boolean isSupportedRhythmNote(Lesson lesson, String rawNote) {
+        if (lesson == null || rawNote == null || rawNote.trim().isEmpty()) {
+            return false;
+        }
+        String note = rawNote.trim();
+        String instrumentKey = resolveInstrumentKey(lesson.getInstrument());
+        Set<String> supported = switch (instrumentKey) {
+            // Đàn tranh 17 dây, dây Bắc: Sol–La–Đô–Rê–Mi theo thứ tự dây 1 → 17 (và dạng ký hiệu quốc tế tương đương).
+            case "dan_tranh" -> Set.of(
+                    "Sol1", "La1", "Đô2", "Rê2", "Mi2", "Sol2", "La2", "Đô3", "Rê3", "Mi3", "Sol3", "La3", "Đô4", "Rê4", "Mi4", "Sol4", "La4",
+                    "G1", "A1", "C2", "D2", "E2", "G2", "A2", "C3", "D3", "E3", "G3", "A3", "C4", "D4", "E4", "G4", "A4"
+            );
+            case "dan_bau" -> Set.of("C4", "D4", "E4", "G4", "A4", "C5", "E5", "G5", "Đô4", "Rê4", "Mi4", "Sol4", "La4", "Đô5", "Mi5", "Sol5");
+            case "sao_truc" -> Set.of("Đô", "Rê", "Mi", "Fa", "Sol", "La", "Si", "Đố", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5");
+            case "trong_chau" -> Set.of("Tịch", "Cắc", "Tung", "Rong");
+            default -> Set.of();
+        };
+        return supported.isEmpty() || supported.contains(note);
+    }
+
+    private String resolveInstrumentKey(Instrument instrument) {
+        if (instrument == null) return "dan_tranh";
+        String combined = ((instrument.getInstrumentCode() != null ? instrument.getInstrumentCode() : "") + " "
+                + (instrument.getName() != null ? instrument.getName() : "")).toLowerCase();
+        if (combined.contains("tranh") || combined.contains("dan_tranh")) return "dan_tranh";
+        if (combined.contains("bau") || combined.contains("bầu") || combined.contains("dan_bau")) return "dan_bau";
+        if (combined.contains("sao") || combined.contains("sáo") || combined.contains("sao_truc")) return "sao_truc";
+        if (combined.contains("trong") || combined.contains("trống") || combined.contains("trong_chau")) return "trong_chau";
+        return "dan_tranh";
     }
 
     private String prepareContentJson(Lesson lesson, MinigameChallengeRequest request) {
