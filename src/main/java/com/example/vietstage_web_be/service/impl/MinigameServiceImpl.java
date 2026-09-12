@@ -399,12 +399,22 @@ public class MinigameServiceImpl implements IMinigameService {
             JsonNode root = OBJECT_MAPPER.readTree(request.getContentJson());
             JsonNode melody = root.path("melody");
             JsonNode missingPositions = root.path("missing_positions");
-            if (!melody.isArray() || melody.size() < 2 || !missingPositions.isArray() || missingPositions.size() != 1) {
+            boolean hasSimpleMissingIndex = root.has("missing_index");
+            if (!melody.isArray() || melody.size() < 2 || (!hasSimpleMissingIndex && (!missingPositions.isArray() || missingPositions.size() != 1))) {
                 throw new AppException(ErrorCode.BAD_REQUEST);
             }
-            int position = missingPositions.get(0).asInt(-1);
+            int position = hasSimpleMissingIndex ? root.path("missing_index").asInt(-1) : missingPositions.get(0).asInt(-1);
             if (position < 0 || position >= melody.size()) {
                 throw new AppException(ErrorCode.BAD_REQUEST);
+            }
+            for (JsonNode note : melody) {
+                if (!isSupportedRhythmNote(lesson, note.asText(""))) {
+                    throw new AppException(ErrorCode.BAD_REQUEST);
+                }
+            }
+            if (hasSimpleMissingIndex) {
+                if (root.path("bpm").asInt(80) <= 0) throw new AppException(ErrorCode.BAD_REQUEST);
+                return;
             }
             JsonNode options = root.path("note_options").path(String.valueOf(position));
             String correct = root.path("correct_answers").path(String.valueOf(position)).asText("").trim();
@@ -474,7 +484,8 @@ public class MinigameServiceImpl implements IMinigameService {
                     "Sol1", "La1", "Đô2", "Rê2", "Mi2", "Sol2", "La2", "Đô3", "Rê3", "Mi3", "Sol3", "La3", "Đô4", "Rê4", "Mi4", "Sol4", "La4",
                     "G1", "A1", "C2", "D2", "E2", "G2", "A2", "C3", "D3", "E3", "G3", "A3", "C4", "D4", "E4", "G4", "A4"
             );
-            case "dan_bau" -> Set.of("C4", "D4", "E4", "G4", "A4", "C5", "E5", "G5", "Đô4", "Rê4", "Mi4", "Sol4", "La4", "Đô5", "Mi5", "Sol5");
+            // Chỉ chấp nhận cao độ đã có WAV thu thật trong InstrumentSamplePlayer.
+            case "dan_bau" -> Set.of("C4", "G4", "C5", "E5", "G5", "C6", "Đô4", "Sol4", "Đô5", "Mi5", "Sol5", "Đô6");
             case "sao_truc" -> Set.of("Đô", "Rê", "Mi", "Fa", "Sol", "La", "Si", "Đố", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5");
             case "trong_chau" -> Set.of("Tịch", "Cắc", "Tung", "Rong");
             default -> Set.of();

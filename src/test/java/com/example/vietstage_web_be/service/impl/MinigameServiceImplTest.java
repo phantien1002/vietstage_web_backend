@@ -80,6 +80,16 @@ class MinigameServiceImplTest {
                 .isInstanceOf(AppException.class);
     }
 
+    @Test
+    void acceptsSimpleMelodyPayloadAndRejectsAnInvalidInstrumentNote() {
+        when(challengeRepository.save(any(MinigameChallenge.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.createMinigame(instructor, 12L, melodyRequest("{\"melody\":[\"Sol1\",\"La1\",\"Đô2\"],\"missing_index\":1,\"bpm\":80}")))
+                .isNotNull();
+        assertThatThrownBy(() -> service.createMinigame(instructor, 12L, melodyRequest("{\"melody\":[\"Sol1\",\"Fa1\"],\"missing_index\":1,\"bpm\":80}")))
+                .isInstanceOf(AppException.class);
+    }
+
     private MinigameChallengeRequest request(String contentJson) {
         MinigameChallengeRequest request = new MinigameChallengeRequest();
         request.setTitle("Luyện nhịp");
@@ -88,6 +98,12 @@ class MinigameServiceImplTest {
         request.setDifficulty("BEGINNER");
         request.setMaxScore(100);
         request.setOrderIndex(1);
+        return request;
+    }
+
+    private MinigameChallengeRequest melodyRequest(String contentJson) {
+        MinigameChallengeRequest request = request(contentJson);
+        request.setChallengeType("MELODY_COMPLETE");
         return request;
     }
 }

@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface MinigameChallengeRepository extends JpaRepository<MinigameChallenge, Long> {
     List<MinigameChallenge> findByLessonIdOrderByOrderIndexAsc(Long lessonId);
+    boolean existsByLessonIdAndOrderIndex(Long lessonId, Integer orderIndex);
 }
