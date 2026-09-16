@@ -10,5 +10,5 @@ public interface LessonRepository extends JpaRepository<Lesson, Long>, JpaSpecif
     boolean existsByTitleIgnoreCaseAndInstrumentId(String title, Long instrumentId);
     java.util.Optional<Lesson> findTopByOrderByIdDesc();
     boolean existsBySkillLevelId(Long skillLevelId);
-    java.util.List<Lesson> findByReviewStatusIgnoreCase(String reviewStatus);
+    java.util.List<Lesson> findByApprovalStatusIgnoreCase(String approvalStatus);
 }
