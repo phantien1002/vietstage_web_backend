@@ -43,19 +43,19 @@ public class Lesson {
 
     // --- New Fields based on Handoff ---
 
-    @Column(name = "display_number", nullable = false)
+    @Column(name = "display_number", nullable = false, columnDefinition = "varchar(255) default ''")
     private String displayNumber = ""; // Default empty if missing
 
-    @Column(name = "legacy_level", nullable = false)
+    @Column(name = "legacy_level", nullable = false, columnDefinition = "integer default 0")
     private Integer legacyLevel = 0; // Default 0
 
-    @Column(name = "in_current_roadmap", nullable = false)
+    @Column(name = "in_current_roadmap", nullable = false, columnDefinition = "boolean default false")
     private Boolean inCurrentRoadmap = false;
 
-    @Column(name = "approval_status", nullable = false)
+    @Column(name = "approval_status", nullable = false, columnDefinition = "varchar(255) default 'DRAFT'")
     private String approvalStatus = "DRAFT";
 
-    @Column(name = "is_visible", nullable = false)
+    @Column(name = "is_visible", nullable = false, columnDefinition = "boolean default false")
     private Boolean isVisible = false;
 
     @Column(name = "hidden_at")
@@ -64,7 +64,7 @@ public class Lesson {
     @Column(name = "hidden_reason")
     private String hiddenReason;
 
-    @Column(name = "revision", nullable = false)
+    @Column(name = "revision", nullable = false, columnDefinition = "integer default 1")
     private Integer revision = 1;
 
     // Store raw JSON as TEXT or JSONB. Using jsonb for PostgreSQL.
