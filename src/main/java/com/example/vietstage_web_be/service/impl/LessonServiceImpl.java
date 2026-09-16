@@ -84,8 +84,8 @@ public class LessonServiceImpl implements ILessonService {
                 .lessonCode(generatedLessonCode)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .reviewStatus(initialStatus)
-                .visibilityStatus("HIDDEN")
+                .approvalStatus("DRAFT") // was "DRAFT") // was initialStatus)
+                .isVisible(true) // was "HIDDEN")
                 .orderIndex(order)
                 .skillLevel(skillLevel)
                 .instrument(instrument)
@@ -267,14 +267,14 @@ public class LessonServiceImpl implements ILessonService {
         }
 
         // Cập nhật reviewStatus bài học
-        lesson.setReviewStatus(newStatus);
+        lesson.setApprovalStatus(newStatus);
         lesson.setUpdatedAt(LocalDateTime.now());
         lessonRepository.save(lesson);
 
         // TODO: Gửi notification cho Instructor (Nếu cần)
         return LessonStatusResponse.builder()
                 .id(lesson.getId())
-                .status(lesson.getReviewStatus())
+                .status(lesson.getApprovalStatus())
                 .build();
     }
 
@@ -300,8 +300,8 @@ public class LessonServiceImpl implements ILessonService {
                 .lessonCode(lesson.getLessonCode())
                 .title(lesson.getTitle())
                 .description(lesson.getDescription())
-                .reviewStatus(lesson.getReviewStatus())
-                .visibilityStatus(lesson.getVisibilityStatus())
+                .approvalStatus("DRAFT") // was "DRAFT") // was lesson.getApprovalStatus())
+                .isVisible(true) // was lesson.getIsVisible() != null && lesson.getIsVisible() ? "PUBLIC" : "HIDDEN")
                 .orderIndex(lesson.getOrderIndex())
                 .createdAt(lesson.getCreatedAt())
                 .updatedAt(lesson.getUpdatedAt())

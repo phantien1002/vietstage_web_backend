@@ -41,11 +41,37 @@ public class Lesson {
     @Column(name = "technical_notes", columnDefinition = "TEXT")
     private String technicalNotes;
 
-    @Column(name = "review_status")
-    private String reviewStatus;
+    // --- New Fields based on Handoff ---
 
-    @Column(name = "visibility_status")
-    private String visibilityStatus;
+    @Column(name = "display_number", nullable = false)
+    private String displayNumber = ""; // Default empty if missing
+
+    @Column(name = "legacy_level", nullable = false)
+    private Integer legacyLevel = 0; // Default 0
+
+    @Column(name = "in_current_roadmap", nullable = false)
+    private Boolean inCurrentRoadmap = false;
+
+    @Column(name = "approval_status", nullable = false)
+    private String approvalStatus = "DRAFT";
+
+    @Column(name = "is_visible", nullable = false)
+    private Boolean isVisible = false;
+
+    @Column(name = "hidden_at")
+    private LocalDateTime hiddenAt;
+
+    @Column(name = "hidden_reason")
+    private String hiddenReason;
+
+    @Column(name = "revision", nullable = false)
+    private Integer revision = 1;
+
+    // Store raw JSON as TEXT or JSONB. Using jsonb for PostgreSQL.
+    @Column(name = "source_snapshot", columnDefinition = "jsonb")
+    private String sourceSnapshot;
+
+    // -----------------------------------
 
     @Column(name = "order_index")
     private Integer orderIndex;
@@ -83,4 +109,3 @@ public class Lesson {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<MediaAsset> mediaAssets;
 }
-

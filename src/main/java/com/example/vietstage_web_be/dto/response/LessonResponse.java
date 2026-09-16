@@ -18,8 +18,8 @@ public class LessonResponse {
     private String lessonCode;
     private String title;
     private String description;
-    private String reviewStatus;
-    private String visibilityStatus;
+    private String approvalStatus;
+    private Boolean isVisible;
     private Integer orderIndex;
     private SkillLevelInfo skillLevel;
     private InstrumentInfo instrument;
