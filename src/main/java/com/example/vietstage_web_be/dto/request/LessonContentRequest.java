@@ -15,4 +15,13 @@ public class LessonContentRequest {
     @NotNull
     @JsonProperty("order_index")
     private Integer orderIndex;
+
+    @JsonProperty("content_type")
+    private String contentType;
+
+    @JsonProperty("payload_json")
+    private String payloadJson;
+
+    @JsonProperty("asset_id")
+    private Long assetId;
 }

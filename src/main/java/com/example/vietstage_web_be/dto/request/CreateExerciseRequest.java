@@ -27,4 +27,7 @@ public class CreateExerciseRequest {
     @io.swagger.v3.oas.annotations.media.Schema(description = "Thứ tự bài tập", minimum = "1")
     @Min(1)
     private Integer orderIndex;
+
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Cấu hình bài tập json")
+    private String configJson;
 }

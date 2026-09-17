@@ -179,6 +179,7 @@ public class LessonServiceImpl implements ILessonService {
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         checkLessonPermission(lesson, userEmail);
+        checkLessonEditable(lesson);
 
         // Check trùng title trong cùng nhạc cụ (nếu title thay đổi)
         if (!lesson.getTitle().equalsIgnoreCase(request.getTitle())) {
@@ -217,6 +218,7 @@ public class LessonServiceImpl implements ILessonService {
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         checkLessonPermission(lesson, userEmail);
+        checkLessonEditable(lesson);
 
         lessonRepository.delete(lesson);
     }
@@ -258,9 +260,6 @@ public class LessonServiceImpl implements ILessonService {
         }
 
         if ("PENDING".equals(newStatus)) {
-            if (lesson.getExercises() == null || lesson.getExercises().isEmpty()) {
-                throw new AppException(ErrorCode.BAD_REQUEST, "Bài học phải có ít nhất 1 bài tập trước khi nộp duyệt.");
-            }
             if (lessonContentRepository.findByLessonIdOrderByOrderIndexAsc(lesson.getId()).isEmpty()) {
                 throw new AppException(ErrorCode.BAD_REQUEST, "Bài học phải có nội dung trước khi nộp duyệt.");
             }
@@ -282,7 +281,6 @@ public class LessonServiceImpl implements ILessonService {
     // Helpers
     // =========================================================
 
-    /** Kiểm tra quyền: ADMIN toàn quyền, INSTRUCTOR chỉ được sửa bài của mình */
     private void checkLessonPermission(Lesson lesson, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -294,14 +292,20 @@ public class LessonServiceImpl implements ILessonService {
         }
     }
 
+    public void checkLessonEditable(Lesson lesson) {
+        if ("PENDING".equals(lesson.getApprovalStatus()) || "APPROVED".equals(lesson.getApprovalStatus())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Không thể sửa bài học đã gửi duyệt hoặc đã được phê duyệt. Vui lòng rút lại yêu cầu về DRAFT.");
+        }
+    }
+
     private LessonResponse mapToResponse(Lesson lesson) {
         return LessonResponse.builder()
                 .id(lesson.getId())
                 .lessonCode(lesson.getLessonCode())
                 .title(lesson.getTitle())
                 .description(lesson.getDescription())
-                .approvalStatus("DRAFT") // was "DRAFT") // was lesson.getApprovalStatus())
-                .isVisible(true) // was lesson.getIsVisible() != null && lesson.getIsVisible() ? "PUBLIC" : "HIDDEN")
+                .approvalStatus(lesson.getApprovalStatus())
+                .isVisible(lesson.getIsVisible())
                 .orderIndex(lesson.getOrderIndex())
                 .createdAt(lesson.getCreatedAt())
                 .updatedAt(lesson.getUpdatedAt())

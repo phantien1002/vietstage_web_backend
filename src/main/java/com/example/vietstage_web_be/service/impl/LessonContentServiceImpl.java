@@ -14,6 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.vietstage_web_be.repository.MediaAssetRepository;
+import com.example.vietstage_web_be.entity.MediaAsset;
+import com.example.vietstage_web_be.service.impl.LessonServiceImpl;
+
 import java.util.List;
 
 @Service
@@ -22,6 +26,8 @@ public class LessonContentServiceImpl implements ILessonContentService {
 
     private final LessonContentRepository contentRepository;
     private final LessonRepository lessonRepository;
+    private final MediaAssetRepository mediaAssetRepository;
+    private final LessonServiceImpl lessonService;
 
     @Override
     public List<LessonContentResponse> getLessonContents(Long lessonId) {
@@ -39,12 +45,22 @@ public class LessonContentServiceImpl implements ILessonContentService {
         if (!lesson.getCreatedBy().getId().equals(instructor.getId())) {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
+        
+        lessonService.checkLessonEditable(lesson);
 
         LessonContent content = LessonContent.builder()
                 .lesson(lesson)
                 .contentText(request.getContentText())
                 .orderIndex(request.getOrderIndex())
+                .contentType(request.getContentType())
+                .payloadJson(request.getPayloadJson())
                 .build();
+                
+        if (request.getAssetId() != null) {
+            MediaAsset asset = mediaAssetRepository.findById(request.getAssetId())
+                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+            content.setAsset(asset);
+        }
         
         contentRepository.save(content);
         return mapToResponse(content);
@@ -54,9 +70,20 @@ public class LessonContentServiceImpl implements ILessonContentService {
     @Transactional
     public LessonContentResponse updateContent(User instructor, Long lessonId, Long contentId, LessonContentRequest request) {
         LessonContent content = validateOwnership(instructor, lessonId, contentId);
+        lessonService.checkLessonEditable(content.getLesson());
 
         content.setContentText(request.getContentText());
         content.setOrderIndex(request.getOrderIndex());
+        content.setContentType(request.getContentType());
+        content.setPayloadJson(request.getPayloadJson());
+        
+        if (request.getAssetId() != null) {
+            MediaAsset asset = mediaAssetRepository.findById(request.getAssetId())
+                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+            content.setAsset(asset);
+        } else {
+            content.setAsset(null);
+        }
         
         contentRepository.save(content);
         return mapToResponse(content);
@@ -66,6 +93,7 @@ public class LessonContentServiceImpl implements ILessonContentService {
     @Transactional
     public void deleteContent(User instructor, Long lessonId, Long contentId) {
         LessonContent content = validateOwnership(instructor, lessonId, contentId);
+        lessonService.checkLessonEditable(content.getLesson());
         contentRepository.delete(content);
     }
 
@@ -88,6 +116,9 @@ public class LessonContentServiceImpl implements ILessonContentService {
                 .id(content.getId())
                 .contentText(content.getContentText())
                 .orderIndex(content.getOrderIndex())
+                .contentType(content.getContentType())
+                .payloadJson(content.getPayloadJson())
+                .assetId(content.getAsset() != null ? content.getAsset().getId() : null)
                 .build();
     }
 }
