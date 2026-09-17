@@ -16,13 +16,13 @@ public class LessonSpecification {
 
             // Always exclude DRAFT from admin reviews
             predicates.add(criteriaBuilder.notEqual(
-                    criteriaBuilder.upper(root.get("reviewStatus")), 
+                    criteriaBuilder.upper(root.get("approvalStatus")), 
                     "DRAFT"
             ));
 
             if (StringUtils.hasText(status)) {
                 predicates.add(criteriaBuilder.equal(
-                        criteriaBuilder.upper(root.get("reviewStatus")), 
+                        criteriaBuilder.upper(root.get("approvalStatus")), 
                         status.toUpperCase()
                 ));
             }
