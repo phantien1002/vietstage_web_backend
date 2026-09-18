@@ -165,14 +165,16 @@ public class AdminController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long instructorId,
-            @RequestParam(required = false) Long instrumentId) {
+            @RequestParam(required = false) Long instrumentId,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Lọc bài duyệt theo cấp độ")
+            @RequestParam(required = false) Long skillLevelId) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
         
         return ApiResponse.<PageResponse<ReviewItemResponse>>builder()
                 .success(true)
                 .message("Successfully fetched all reviews")
-                .data(adminReviewService.getAllReviews(status, search, instructorId, instrumentId, pageable))
+                .data(adminReviewService.getAllReviews(status, search, instructorId, instrumentId, skillLevelId, pageable))
                 .build();
     }
 

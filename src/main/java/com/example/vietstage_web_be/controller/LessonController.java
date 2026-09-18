@@ -38,11 +38,13 @@ public class LessonController {
             @RequestParam(value = "instrument_id", required = false) Long instrumentId,
             @RequestParam(value = "skill_level_id", required = false) Long skillLevelId,
             @RequestParam(required = false) String status,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Lọc theo trạng thái hiển thị (true/false)")
+            @RequestParam(required = false) Boolean isVisible,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         PageResponse<LessonResponse> data = lessonService.getLessons(
-                search, instrumentId, skillLevelId, status, page, size);
+                search, instrumentId, skillLevelId, status, isVisible, page, size);
 
         return ResponseEntity.ok(ApiResponse.<PageResponse<LessonResponse>>builder()
                 .message("Get Lesson successfully")

@@ -132,13 +132,13 @@ public class LessonServiceImpl implements ILessonService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<LessonResponse> getLessons(String search, Long instrumentId, Long skillLevelId,
-                                                   String status,
+                                                   String status, Boolean isVisible,
                                                    int pageNumber, int pageSize) {
         int zeroBasedPage = Math.max(pageNumber - 1, 0);
-        int size = Math.min(Math.max(pageSize, 1), 100);
+        int size = Math.min(Math.max(pageSize, 1), 1000);
 
         Pageable pageable = PageRequest.of(zeroBasedPage, size, Sort.by("orderIndex").ascending());
-        Specification<Lesson> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status);
+        Specification<Lesson> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status, isVisible);
 
         Page<Lesson> lessonsPage = lessonRepository.findAll(spec, pageable);
 
@@ -295,6 +295,9 @@ public class LessonServiceImpl implements ILessonService {
     public void checkLessonEditable(Lesson lesson) {
         if ("PENDING".equals(lesson.getApprovalStatus()) || "APPROVED".equals(lesson.getApprovalStatus())) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Không thể sửa bài học đã gửi duyệt hoặc đã được phê duyệt. Vui lòng rút lại yêu cầu về DRAFT.");
+        }
+        if ("REJECTED".equals(lesson.getApprovalStatus())) {
+            lesson.setApprovalStatus("DRAFT");
         }
     }
 

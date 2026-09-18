@@ -9,7 +9,7 @@ import java.util.List;
 
 public class LessonSpecification {
 
-    public static Specification<Lesson> filter(String search, Long instrumentId, Long skillLevelId, String status) {
+    public static Specification<Lesson> filter(String search, Long instrumentId, Long skillLevelId, String status, Boolean isVisible) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -31,7 +31,11 @@ public class LessonSpecification {
             // Filter by status: DRAFT | PENDING | APPROVED | REJECTED
             if (status != null && !status.isBlank()) {
                 predicates.add(criteriaBuilder.equal(
-                        criteriaBuilder.upper(root.get("reviewStatus")), status.toUpperCase()));
+                        criteriaBuilder.upper(root.get("approvalStatus")), status.toUpperCase()));
+            }
+
+            if (isVisible != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isVisible"), isVisible));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

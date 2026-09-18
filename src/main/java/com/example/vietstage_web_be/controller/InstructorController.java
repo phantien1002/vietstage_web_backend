@@ -35,7 +35,8 @@ public class InstructorController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search) {
         
-        Pageable pageable = PageRequest.of(page, size);
+        int actualSize = Math.min(Math.max(size, 1), 1000);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), actualSize);
         Page<LearnerForInstructorResponse> result = instructorService.getLearnersForInstructor(userDetails.getUser().getId(), search, pageable);
         
         return ResponseEntity.ok(

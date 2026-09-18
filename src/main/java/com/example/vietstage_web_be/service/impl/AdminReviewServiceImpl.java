@@ -37,9 +37,9 @@ public class AdminReviewServiceImpl implements IAdminReviewService {
     private final UserRepository userRepository;
 
     @Override
-    public PageResponse<ReviewItemResponse> getAllReviews(String status, String search, Long instructorId, Long instrumentId, Pageable pageable) {
+    public PageResponse<ReviewItemResponse> getAllReviews(String status, String search, Long instructorId, Long instrumentId, Long skillLevelId, Pageable pageable) {
         Page<Lesson> lessonPage = lessonRepository.findAll(
-                LessonSpecification.filterBy(status, search, instructorId, instrumentId), 
+                LessonSpecification.filterBy(status, search, instructorId, instrumentId, skillLevelId), 
                 pageable
         );
 

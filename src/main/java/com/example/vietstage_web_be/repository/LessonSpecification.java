@@ -10,7 +10,7 @@ import java.util.List;
 
 public class LessonSpecification {
 
-    public static Specification<Lesson> filterBy(String status, String search, Long instructorId, Long instrumentId) {
+    public static Specification<Lesson> filterBy(String status, String search, Long instructorId, Long instrumentId, Long skillLevelId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -45,6 +45,13 @@ public class LessonSpecification {
                 predicates.add(criteriaBuilder.equal(
                         root.join("instrument").get("id"), 
                         instrumentId
+                ));
+            }
+
+            if (skillLevelId != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.join("skillLevel").get("id"),
+                        skillLevelId
                 ));
             }
 

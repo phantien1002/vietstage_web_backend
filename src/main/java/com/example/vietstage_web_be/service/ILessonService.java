@@ -14,7 +14,7 @@ public interface ILessonService {
 
     /** GET /api/Lesson — PUBLIC. Filter: instrument_id, skill_level_id, status, page, size */
     PageResponse<LessonResponse> getLessons(String search, Long instrumentId, Long skillLevelId,
-                                            String status,
+                                            String status, Boolean isVisible,
                                             int pageNumber, int pageSize);
 
     /** GET /api/Lesson/{id} — PUBLIC. Trả đầy đủ: contents + assets + Exercise + techniques + mini_games */

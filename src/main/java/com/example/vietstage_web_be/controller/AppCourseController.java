@@ -28,7 +28,7 @@ public class AppCourseController {
             @RequestParam(defaultValue = "10") int size) {
         
         PageResponse<LessonResponse> data = lessonService.getLessons(
-                search, instrumentId, skillLevelId, "APPROVED", page, size);
+                search, instrumentId, skillLevelId, "APPROVED", true, page, size);
                 
         return ResponseEntity.ok(ApiResponse.<PageResponse<LessonResponse>>builder()
                 .message("Get approved lessons successfully")
