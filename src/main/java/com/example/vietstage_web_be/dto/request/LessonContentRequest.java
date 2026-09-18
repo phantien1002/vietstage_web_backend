@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 public class LessonContentRequest {
     
-    @NotBlank(message = "Nội dung không được để trống")
     @JsonProperty("content_text")
     private String contentText;
 
