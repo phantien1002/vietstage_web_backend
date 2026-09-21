@@ -53,6 +53,10 @@ public class LearnerProfile {
     @Column(name = "cosmetic_layout", columnDefinition = "TEXT")
     private String cosmeticLayout;
 
+    @Column(name = "has_full_access", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean hasFullAccess = false;
+
     @OneToOne
     @MapsId
     @JoinColumn(name = "user_id")

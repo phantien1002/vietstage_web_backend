@@ -19,6 +19,9 @@ public interface ILearnerProgressService {
     // API 56: /api/Lesson/{id}/learners/{learner_id}/progress
     InstructorLearnerProgressResponse getLearnerProgressByInstructor(Long lessonId, Long learnerId, Long instructorId);
     
+    com.example.vietstage_web_be.dto.response.LessonAccessResponse getLessonAccess(Long learnerId, Long lessonId);
+
+    com.example.vietstage_web_be.dto.response.LessonAccessResponse startLesson(Long learnerId, Long lessonId);
+
     com.example.vietstage_web_be.dto.response.LessonCompletionResponse completeLesson(Long learnerId, Long lessonId, com.example.vietstage_web_be.dto.request.LessonCompletionRequest request);
 }
-

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class AppCourseController {
 
     private final ILessonService lessonService;
+    private final com.example.vietstage_web_be.service.ILearnerProgressService learnerProgressService;
 
     @GetMapping("/lessons")
     @Operation(summary = "Lấy danh sách các bài học đã được duyệt (App)")
@@ -50,6 +51,38 @@ public class AppCourseController {
         
         return ResponseEntity.ok(ApiResponse.<LessonResponse>builder()
                 .message("Get lesson bundle successfully")
+                .data(data)
+                .build());
+    }
+
+    @GetMapping("/lessons/{id}/access")
+    @Operation(summary = "Lấy trạng thái truy cập và tiến độ của bài học cho User hiện tại")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<ApiResponse<com.example.vietstage_web_be.dto.response.LessonAccessResponse>> getLessonAccess(
+            @PathVariable Long id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser) {
+        
+        com.example.vietstage_web_be.dto.response.LessonAccessResponse data = 
+                learnerProgressService.getLessonAccess(currentUser.getId(), id);
+        
+        return ResponseEntity.ok(ApiResponse.<com.example.vietstage_web_be.dto.response.LessonAccessResponse>builder()
+                .message("Lấy trạng thái bài học thành công")
+                .data(data)
+                .build());
+    }
+
+    @PostMapping("/lessons/{id}/start")
+    @Operation(summary = "Ghi nhận bắt đầu bài học (chuyển sang IN_PROGRESS)")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<ApiResponse<com.example.vietstage_web_be.dto.response.LessonAccessResponse>> startLesson(
+            @PathVariable Long id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser) {
+        
+        com.example.vietstage_web_be.dto.response.LessonAccessResponse data = 
+                learnerProgressService.startLesson(currentUser.getId(), id);
+        
+        return ResponseEntity.ok(ApiResponse.<com.example.vietstage_web_be.dto.response.LessonAccessResponse>builder()
+                .message("Bắt đầu bài học thành công")
                 .data(data)
                 .build());
     }
