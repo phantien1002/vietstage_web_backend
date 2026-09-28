@@ -24,4 +24,6 @@ public interface ILearnerProgressService {
     com.example.vietstage_web_be.dto.response.LessonAccessResponse startLesson(Long learnerId, Long lessonId);
 
     com.example.vietstage_web_be.dto.response.LessonCompletionResponse completeLesson(Long learnerId, Long lessonId, com.example.vietstage_web_be.dto.request.LessonCompletionRequest request);
+
+    com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse getCourseProgress(Long learnerId);
 }

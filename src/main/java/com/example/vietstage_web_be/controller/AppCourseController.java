@@ -86,4 +86,19 @@ public class AppCourseController {
                 .data(data)
                 .build());
     }
+
+    @GetMapping("/progress")
+    @Operation(summary = "Lấy toàn bộ tiến độ các bài và level của học viên")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<ApiResponse<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse>> getCourseProgress(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser) {
+        
+        com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse data = 
+                learnerProgressService.getCourseProgress(currentUser.getId());
+        
+        return ResponseEntity.ok(ApiResponse.<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse>builder()
+                .message("Lấy tiến độ học viên thành công")
+                .data(data)
+                .build());
+    }
 }

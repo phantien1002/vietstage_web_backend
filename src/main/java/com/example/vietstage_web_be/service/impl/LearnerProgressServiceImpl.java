@@ -262,4 +262,61 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         // Let's assume there is at least one lesson with orderIndex - 1 that is COMPLETED
         return true; // DRAFT logic, returning true temporarily to avoid blocking. Real logic needs DB support.
     }
+
+    @Override
+    public com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse getCourseProgress(Long learnerId) {
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        
+        boolean hasFullAccess = Boolean.TRUE.equals(profile.getHasFullAccess());
+        
+        List<Lesson> allLessons = lessonRepository.findAll();
+        List<LessonCompletion> completions = lessonCompletionRepository.findByLearnerId(learnerId);
+        
+        java.util.Map<Long, LessonCompletion> completionMap = new java.util.HashMap<>();
+        for (LessonCompletion c : completions) {
+            completionMap.put(c.getLesson().getId(), c);
+        }
+        
+        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO> lessonDtos = new java.util.ArrayList<>();
+        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO> levelDtos = new java.util.ArrayList<>();
+        
+        java.util.Set<Long> levelIds = new java.util.HashSet<>();
+        
+        for (Lesson lesson : allLessons) {
+            LessonCompletion completion = completionMap.get(lesson.getId());
+            String status = completion != null && completion.getStatus() != null ? completion.getStatus() : "NOT_STARTED";
+            
+            if ("LOCKED".equals(status)) {
+                status = "NOT_STARTED";
+            }
+            
+            boolean isUnlocked = hasFullAccess || checkIsUnlocked(lesson, learnerId);
+            
+            lessonDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO.builder()
+                    .lessonId(lesson.getId())
+                    .isUnlocked(isUnlocked)
+                    .learningStatus(isUnlocked ? status : "LOCKED")
+                    .completed(completion != null ? completion.getCompleted() : false)
+                    .completedAt(completion != null ? completion.getCompletedAt() : null)
+                    .lessonStars(completion != null ? completion.getStars() : 0)
+                    .highestScore(completion != null ? completion.getBestScore() : null)
+                    .build());
+                    
+            if (lesson.getSkillLevel() != null && !levelIds.contains(lesson.getSkillLevel().getId())) {
+                levelIds.add(lesson.getSkillLevel().getId());
+                // Level status logic is simplified for now (can be computed by aggregating lesson statuses)
+                levelDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO.builder()
+                        .levelId(lesson.getSkillLevel().getId())
+                        .isUnlocked(hasFullAccess || true) // Simplified
+                        .learningStatus("IN_PROGRESS") // Simplified
+                        .build());
+            }
+        }
+        
+        return com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.builder()
+                .lessons(lessonDtos)
+                .levels(levelDtos)
+                .build();
+    }
 }
