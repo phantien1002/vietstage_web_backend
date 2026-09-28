@@ -207,48 +207,5 @@ public class AdminController {
                 .build();
     }
 
-    @GetMapping("/cosmetics")
-    @Operation(summary = "Lấy danh sách CosmeticItem (Admin)")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<CosmeticItemResponse>>> getCosmetics(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.<List<CosmeticItemResponse>>builder()
-                .message("Thành công")
-                .data(cosmeticsService.getAllCosmeticItemsForAdmin(null, null))
-                .build());
-    }
 
-    @PostMapping("/cosmetics")
-    @Operation(summary = "Tạo mới CosmeticItem (Admin)")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CosmeticItemResponse>> createCosmetic(
-            @Valid @RequestBody CreateCosmeticRequest request) {
-        return ResponseEntity.ok(ApiResponse.<CosmeticItemResponse>builder()
-                .message("Thành công")
-                .data(cosmeticsService.createCosmeticItem(request))
-                .build());
-    }
-
-    @PutMapping("/cosmetics/{id}")
-    @Operation(summary = "Cập nhật CosmeticItem (Admin)")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CosmeticItemResponse>> updateCosmetic(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateCosmeticRequest request) {
-        return ResponseEntity.ok(ApiResponse.<CosmeticItemResponse>builder()
-                .message("Thành công")
-                .data(cosmeticsService.updateCosmeticItem(id, request))
-                .build());
-    }
-
-    @DeleteMapping("/cosmetics/{id}")
-    @Operation(summary = "Xóa CosmeticItem (Admin)")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteCosmetic(@PathVariable Long id) {
-        cosmeticsService.deleteCosmeticItem(id);
-        return ResponseEntity.ok(ApiResponse.<Void>builder()
-                .message("Thành công")
-                .build());
-    }
 }
