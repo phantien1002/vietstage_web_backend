@@ -27,6 +27,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.example.vietstage_web_be.dto.response.*;
+import com.example.vietstage_web_be.dto.request.*;
+import com.example.vietstage_web_be.service.ICosmeticsService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +44,7 @@ public class AdminController {
     private final IUserService userService;
     private final IAdminUserService adminUserService;
     private final IAdminReviewService adminReviewService;
+    private final ICosmeticsService cosmeticsService;
     private final IAdminDashboardService adminDashboardService;
 
     @Operation(summary = "Lấy thống kê Dashboard Admin", description = "Lấy dữ liệu thống kê theo khoảng thời gian. Lưu ý: Khoảng cách giữa fromDate và toDate tối đa là 365 ngày.")
@@ -199,5 +205,50 @@ public class AdminController {
                 .success(true)
                 .message("Successfully rejected review")
                 .build();
+    }
+
+    @GetMapping("/cosmetics")
+    @Operation(summary = "Lấy danh sách CosmeticItem (Admin)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<CosmeticItemResponse>>> getCosmetics(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(ApiResponse.<List<CosmeticItemResponse>>builder()
+                .message("Thành công")
+                .data(cosmeticsService.getAllCosmeticItemsForAdmin(null, null))
+                .build());
+    }
+
+    @PostMapping("/cosmetics")
+    @Operation(summary = "Tạo mới CosmeticItem (Admin)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CosmeticItemResponse>> createCosmetic(
+            @Valid @RequestBody CreateCosmeticRequest request) {
+        return ResponseEntity.ok(ApiResponse.<CosmeticItemResponse>builder()
+                .message("Thành công")
+                .data(cosmeticsService.createCosmeticItem(request))
+                .build());
+    }
+
+    @PutMapping("/cosmetics/{id}")
+    @Operation(summary = "Cập nhật CosmeticItem (Admin)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CosmeticItemResponse>> updateCosmetic(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCosmeticRequest request) {
+        return ResponseEntity.ok(ApiResponse.<CosmeticItemResponse>builder()
+                .message("Thành công")
+                .data(cosmeticsService.updateCosmeticItem(id, request))
+                .build());
+    }
+
+    @DeleteMapping("/cosmetics/{id}")
+    @Operation(summary = "Xóa CosmeticItem (Admin)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteCosmetic(@PathVariable Long id) {
+        cosmeticsService.deleteCosmeticItem(id);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Thành công")
+                .build());
     }
 }

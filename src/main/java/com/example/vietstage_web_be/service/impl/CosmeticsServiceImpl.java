@@ -80,8 +80,8 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                         .id(lc.getCosmeticItem().getId())
                         .name(lc.getCosmeticItem().getName())
                         .itemType(lc.getCosmeticItem().getItemType())
-                        .unlockType(lc.getCosmeticItem().getUnlockType())
-                        .unlockValue(lc.getCosmeticItem().getUnlockValue())
+                        
+                        .starPrice(lc.getCosmeticItem().getStarPrice())
                         .assetUrl(lc.getCosmeticItem().getAssetUrl())
                         .isEquipped(lc.getIsEquipped())
                         .build())
@@ -108,10 +108,6 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .filter(lc -> lc.getCosmeticItem().getId().equals(cosmeticId))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.COSMETIC_NOT_OWNED));
-
-        if (!"ACTIVE".equals(targetCosmetic.getCosmeticItem().getStatus())) {
-            throw new AppException(ErrorCode.BAD_REQUEST); // Should not equip inactive items
-        }
 
         if (isEquipped) {
             // Auto unequip other items of the same type
@@ -163,12 +159,12 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
             }
         }
 
-        if (item.getUnlockValue() > 0) {
-            if (profile.getSpendableStars() < item.getUnlockValue()) {
+        if (item.getStarPrice() > 0) {
+            if (profile.getSpendableStars() < item.getStarPrice()) {
                 throw new AppException(ErrorCode.BAD_REQUEST); // Not enough stars
             }
             // Deduct stars
-            profile.setSpendableStars(profile.getSpendableStars() - item.getUnlockValue());
+            profile.setSpendableStars(profile.getSpendableStars() - item.getStarPrice());
             learnerProfileRepository.save(profile);
             
             // Log transaction
@@ -177,7 +173,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                     .actionType("COSMETIC_PURCHASE")
                     .entityType("COSMETIC_ITEM")
                     .entityId(String.valueOf(item.getId()))
-                    .description("Purchased cosmetic item: " + item.getName() + " for " + item.getUnlockValue() + " stars")
+                    .description("Purchased cosmetic item: " + item.getName() + " for " + item.getStarPrice() + " stars")
                     .createdAt(LocalDateTime.now())
                     .build();
             auditLogRepository.save(auditLog);
@@ -222,7 +218,6 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
         if (layout.getItems() != null) {
             List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
             Set<Long> ownedIds = ownedCosmetics.stream()
-                    .filter(lc -> "ACTIVE".equals(lc.getCosmeticItem().getStatus()))
                     .map(lc -> lc.getCosmeticItem().getId())
                     .collect(Collectors.toSet());
             
@@ -232,7 +227,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                     throw new AppException(ErrorCode.BAD_REQUEST); // Duplicate cosmeticId in layout
                 }
                 if (!ownedIds.contains(item.getCosmeticId())) {
-                    throw new AppException(ErrorCode.COSMETIC_NOT_OWNED); // Item not owned or inactive
+                    throw new AppException(ErrorCode.COSMETIC_NOT_OWNED); // Item not owned
                 }
             }
         }
@@ -253,8 +248,8 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .name(request.getName())
                 .itemType(request.getItemType() != null ? request.getItemType() : "ROOM_DECOR")
                 .assetUrl(request.getAssetUrl())
-                .unlockType(request.getUnlockType() != null ? request.getUnlockType() : "STARS")
-                .unlockValue(request.getUnlockValue() != null ? request.getUnlockValue() : 0)
+                
+                .starPrice(request.getStarPrice() != null ? request.getStarPrice() : 0)
                 .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .build();
         cosmeticItemRepository.save(item);
@@ -269,8 +264,8 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
         if (request.getName() != null) item.setName(request.getName());
         if (request.getItemType() != null) item.setItemType(request.getItemType());
         if (request.getAssetUrl() != null) item.setAssetUrl(request.getAssetUrl());
-        if (request.getUnlockType() != null) item.setUnlockType(request.getUnlockType());
-        if (request.getUnlockValue() != null) item.setUnlockValue(request.getUnlockValue());
+        
+        if (request.getStarPrice() != null) item.setStarPrice(request.getStarPrice());
         if (request.getStatus() != null) item.setStatus(request.getStatus());
         
         cosmeticItemRepository.save(item);
@@ -297,8 +292,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .id(item.getId())
                 .name(item.getName())
                 .itemType(item.getItemType())
-                .unlockType(item.getUnlockType())
-                .unlockValue(item.getUnlockValue())
+                .starPrice(item.getStarPrice())
                 .assetUrl(item.getAssetUrl())
                 .status(item.getStatus())
                 .build();

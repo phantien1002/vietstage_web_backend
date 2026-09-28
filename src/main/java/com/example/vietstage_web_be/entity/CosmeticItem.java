@@ -27,13 +27,9 @@ public class CosmeticItem {
     @Column(name = "asset_url")
     private String assetUrl;
 
-    @Column(name = "unlock_type")
+    @Column(name = "star_price")
     @Builder.Default
-    private String unlockType = "STARS"; // ACHIEVEMENT | STARS | POINTS | DEFAULT
-
-    @Column(name = "unlock_value")
-    @Builder.Default
-    private Integer unlockValue = 0;
+    private Integer starPrice = 0;
 
     @Column(name = "status")
     @Builder.Default
