@@ -101,7 +101,7 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
     }
 
     private ActivityHistoryItemResponse mapPractice(PracticeAttempt a) {
-        return ActivityHistoryItemResponse.builder().eventId("PRACTICE:" + a.getId()).type("PRACTICE")
+        return ActivityHistoryItemResponse.builder().eventId("PRACTICE:" + a.getId()).attemptId(a.getId()).type("PRACTICE")
                 .lessonId(a.getExercise().getLesson().getId()).lessonTitle(a.getExercise().getLesson().getTitle()).title(a.getExercise().getTitle())
                 .score(a.getTotalScore()).maxScore(BigDecimal.valueOf(100)).starsEarned(rewardStars(a.getStars()))
                 .pointsEarned(a.getPointsEarned() == null ? 0 : a.getPointsEarned()).completedAt(a.getCreatedAt()).status("CONFIRMED").build();
@@ -122,7 +122,7 @@ public class ActivityHistoryServiceImpl implements IActivityHistoryService {
     }
 
     private ActivityHistoryDetailResponse detailPractice(PracticeAttempt a) {
-        return ActivityHistoryDetailResponse.builder().eventId("PRACTICE:" + a.getId()).type("PRACTICE").lessonTitle(a.getExercise().getLesson().getTitle()).title(a.getExercise().getTitle())
+        return ActivityHistoryDetailResponse.builder().eventId("PRACTICE:" + a.getId()).attemptId(a.getId()).type("PRACTICE").lessonTitle(a.getExercise().getLesson().getTitle()).title(a.getExercise().getTitle())
                 .score(a.getTotalScore()).maxScore(BigDecimal.valueOf(100)).pitchScore(a.getPitchScore()).rhythmScore(a.getRhythmScore()).dynamicsScore(a.getDynamicsScore())
                 .tonalQualityScore(a.getTonalQualityScore()).breathScore(a.getBreathScore()).starsEarned(rewardStars(a.getStars())).pointsEarned(a.getPointsEarned() == null ? 0 : a.getPointsEarned())
                 .completedAt(a.getCreatedAt()).status("CONFIRMED").build();

@@ -182,9 +182,27 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Double bestScore = practiceAttemptRepository.findBestScoreByLessonAndLearner(lessonId, learnerId);
         Integer quizAttempt = quizAttemptRepository.countQuizAttemptsByLessonAndLearner(lessonId, learnerId);
 
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId).orElse(null);
+        boolean isUnlocked = false;
+        if (profile != null && Boolean.TRUE.equals(profile.getHasFullAccess())) {
+            isUnlocked = true;
+        } else {
+            isUnlocked = checkIsUnlocked(lesson, learnerId);
+        }
+
+        String learningStatus = completionsOptional.map(LessonCompletion::getStatus).orElse("NOT_STARTED");
+        if ("LOCKED".equals(learningStatus)) {
+            learningStatus = "NOT_STARTED";
+        }
+        if (!isUnlocked) {
+            learningStatus = "LOCKED";
+        }
+
         return InstructorLearnerProgressResponse.builder()
                 .lessonId(lessonId)
                 .learnerId(learnerId)
+                .isUnlocked(isUnlocked)
+                .learningStatus(learningStatus)
                 .stars(completionsOptional.map(LessonCompletion::getStars).orElse(0))
                 .completed(completionsOptional.map(LessonCompletion::getCompleted).orElse(false))
                 .totalPracticeAttempts(PracticeAttempt != null ? PracticeAttempt : 0)

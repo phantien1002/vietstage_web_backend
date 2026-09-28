@@ -10,4 +10,5 @@ public class PurchaseCosmeticResponse {
     private Integer totalStars;
     private Integer spendableStars;
     private Boolean isEquipped;
+    private LearnerCosmeticResponse ownedItem;
 }

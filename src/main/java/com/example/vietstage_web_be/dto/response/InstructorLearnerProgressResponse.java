@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @Builder
@@ -12,6 +13,9 @@ import lombok.NoArgsConstructor;
 public class InstructorLearnerProgressResponse {
     private Long lessonId;
     private Long learnerId;
+    private Boolean isUnlocked;
+    @Schema(allowableValues = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED"})
+    private String learningStatus;
     private Integer stars;
     private Boolean completed;
     private Integer totalPracticeAttempts;

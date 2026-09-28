@@ -84,6 +84,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                         .starPrice(lc.getCosmeticItem().getStarPrice())
                         .assetUrl(lc.getCosmeticItem().getAssetUrl())
                         .isEquipped(lc.getIsEquipped())
+                        .status(lc.getCosmeticItem().getStatus())
                         .build())
                 .collect(Collectors.toList());
 
@@ -153,6 +154,15 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                         .totalStars(profile.getTotalStars())
                         .spendableStars(profile.getSpendableStars())
                         .isEquipped(ownership.getIsEquipped())
+                        .ownedItem(LearnerCosmeticResponse.builder()
+                                .id(item.getId())
+                                .name(item.getName())
+                                .itemType(item.getItemType())
+                                .starPrice(item.getStarPrice())
+                                .assetUrl(item.getAssetUrl())
+                                .isEquipped(ownership.getIsEquipped())
+                                .status(item.getStatus())
+                                .build())
                         .build();
             } else {
                 throw new AppException(ErrorCode.BAD_REQUEST); // Already owned
@@ -193,6 +203,15 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .totalStars(profile.getTotalStars())
                 .spendableStars(profile.getSpendableStars())
                 .isEquipped(false)
+                .ownedItem(LearnerCosmeticResponse.builder()
+                        .id(item.getId())
+                        .name(item.getName())
+                        .itemType(item.getItemType())
+                        .starPrice(item.getStarPrice())
+                        .assetUrl(item.getAssetUrl())
+                        .isEquipped(false)
+                        .status(item.getStatus())
+                        .build())
                 .build();
     }
 

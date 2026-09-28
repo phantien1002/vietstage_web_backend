@@ -13,4 +13,5 @@ public class LearnerCosmeticResponse {
     private String assetUrl;
     @com.fasterxml.jackson.annotation.JsonProperty("isEquipped")
     private Boolean isEquipped;
+    private String status;
 }
