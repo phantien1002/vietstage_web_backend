@@ -22,5 +22,17 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     org.springframework.data.domain.Page<QuizAttempt> findByLearnerId(Long learnerId, org.springframework.data.domain.Pageable pageable);
 
     java.util.Optional<QuizAttempt> findByIdAndLearnerId(Long id, Long learnerId);
+
+    @Query("SELECT COUNT(DISTINCT qa.learner.id) as learnersCount, COUNT(qa) as totalAttempts, " +
+           "AVG(qa.score) as averageScore, " +
+           "SUM(CASE WHEN qa.isCorrect = true THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(qa), 0) as passRate " +
+           "FROM QuizAttempt qa WHERE qa.quiz.id = :quizId")
+    java.util.Map<String, Object> getQuizStatistics(@Param("quizId") Long quizId);
+    
+    @Query("SELECT COUNT(DISTINCT qa.learner.id) as learnersCount, COUNT(qa) as totalAttempts, " +
+           "AVG(qa.score) as averageScore, " +
+           "SUM(CASE WHEN qa.isCorrect = true THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(qa), 0) as passRate " +
+           "FROM QuizAttempt qa WHERE qa.quiz.lesson.id = :lessonId")
+    java.util.Map<String, Object> getQuizStatisticsByLesson(@Param("lessonId") Long lessonId);
 }
 

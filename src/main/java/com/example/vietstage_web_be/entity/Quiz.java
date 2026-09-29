@@ -51,6 +51,10 @@ public class Quiz {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @Column(name = "status")
+    @Builder.Default
+    private String status = "ACTIVE"; // ACTIVE, INACTIVE, ARCHIVED
+
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL)
     private List<QuizAttempt> attempts;
 }

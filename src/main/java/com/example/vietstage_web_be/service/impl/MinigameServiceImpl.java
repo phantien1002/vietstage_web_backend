@@ -104,7 +104,13 @@ public class MinigameServiceImpl implements IMinigameService {
         MinigameChallenge challenge = challengeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
         validateLessonOwnership(actor, challenge.getLesson());
-        challengeRepository.delete(challenge);
+        
+        if (challenge.getAttempts() != null && !challenge.getAttempts().isEmpty()) {
+            challenge.setStatus("INACTIVE");
+            challengeRepository.save(challenge);
+        } else {
+            challengeRepository.delete(challenge);
+        }
     }
 
     @Override
@@ -246,8 +252,27 @@ public class MinigameServiceImpl implements IMinigameService {
         try {
             JsonNode root = OBJECT_MAPPER.readTree(challenge.getContentJson());
             int timeLimitSeconds = root.path("time_limit_sec").asInt(0);
-            if (timeLimitSeconds > 0 && java.time.Duration.between(request.getStartedAt(), request.getCompletedAt()).getSeconds() > timeLimitSeconds) {
+            if (timeLimitSeconds > 0 && java.time.Duration.between(request.getStartedAt(), request.getCompletedAt()).getSeconds() > timeLimitSeconds + 5) { // 5s buffer
                 throw new AppException(ErrorCode.BAD_REQUEST, "Thời gian hoàn thành đã vượt giới hạn của Mini Game");
+            }
+            
+            // XÁC MINH ĐIỂM SƠ BỘ TỪ DỮ LIỆU
+            if (request.getPlayData() != null && !request.getPlayData().trim().isEmpty()) {
+                if ("MELODY_COMPLETE".equals(challenge.getChallengeType())) {
+                    JsonNode playNode = OBJECT_MAPPER.readTree(request.getPlayData());
+                    String userChoice = playNode.path("selected_note").asText("");
+                    JsonNode missingPositions = root.path("missing_positions");
+                    if (missingPositions.isArray() && missingPositions.size() > 0) {
+                        int pos = missingPositions.get(0).asInt(-1);
+                        String correctNote = root.path("correct_answers").path(String.valueOf(pos)).asText("");
+                        
+                        // Nếu user chọn đúng thì score phải = maxScore, ngược lại = 0
+                        int expectedScore = correctNote.equals(userChoice) ? challenge.getMaxScore() : 0;
+                        if (request.getScore() != expectedScore) {
+                            throw new AppException(ErrorCode.BAD_REQUEST, "Điểm không khớp với dữ liệu chơi gửi lên");
+                        }
+                    }
+                }
             }
         } catch (AppException exception) {
             throw exception;
@@ -265,6 +290,7 @@ public class MinigameServiceImpl implements IMinigameService {
                 .maxScore(challenge.getMaxScore())
                 .orderIndex(challenge.getOrderIndex())
                 .contentJson(challenge.getContentJson())
+                .status(challenge.getStatus())
                 .build();
     }
 

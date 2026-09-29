@@ -12,9 +12,9 @@ import java.util.List;
 
 public interface IQuizService {
     List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser);
-    QuizResponse createQuiz(Long lessonId, QuizRequest request);
-    QuizResponse updateQuiz(Long id, QuizRequest request);
-    void deleteQuiz(Long id);
+    QuizResponse createQuiz(User actor, Long lessonId, QuizRequest request);
+    QuizResponse updateQuiz(User actor, Long id, QuizRequest request);
+    void deleteQuiz(User actor, Long id);
     
     QuizAttemptResponse submitAttempt(Long quizId, QuizAttemptRequest request, User learner);
     Page<QuizAttemptResponse> getAttempts(Long quizId, Pageable pageable, User learner);

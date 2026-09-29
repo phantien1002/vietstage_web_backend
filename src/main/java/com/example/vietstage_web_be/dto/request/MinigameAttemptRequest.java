@@ -19,4 +19,7 @@ public class MinigameAttemptRequest {
 
     @NotNull(message = "Completed at is required")
     private LocalDateTime completedAt;
+    
+    // Dữ liệu chơi của user để server xác minh thay vì chỉ tin vào score (ví dụ: các nốt đã chọn, timing tap...)
+    private String playData;
 }

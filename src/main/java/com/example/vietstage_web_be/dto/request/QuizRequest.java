@@ -11,6 +11,7 @@ public class QuizRequest {
 
     @NotBlank(message = "Question type is required")
     @jakarta.validation.constraints.Pattern(regexp = "^(NOTE_IDENTIFICATION|GENERAL)$", message = "Question type must be NOTE_IDENTIFICATION or GENERAL")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"NOTE_IDENTIFICATION", "GENERAL"})
     private String questionType;
 
     private String note;

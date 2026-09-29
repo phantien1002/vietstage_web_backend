@@ -43,9 +43,10 @@ public class QuizController {
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<BaseResponse<QuizResponse>> createQuiz(
             @PathVariable Long id,
-            @Valid @RequestBody QuizRequest request) {
+            @Valid @RequestBody QuizRequest request,
+            @AuthenticationPrincipal(expression = "user") User actor) {
             
-        QuizResponse response = quizService.createQuiz(id, request);
+        QuizResponse response = quizService.createQuiz(actor, id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
     }
 
@@ -53,16 +54,19 @@ public class QuizController {
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<BaseResponse<QuizResponse>> updateQuiz(
             @PathVariable Long id,
-            @Valid @RequestBody QuizRequest request) {
+            @Valid @RequestBody QuizRequest request,
+            @AuthenticationPrincipal(expression = "user") User actor) {
             
-        QuizResponse response = quizService.updateQuiz(id, request);
+        QuizResponse response = quizService.updateQuiz(actor, id, request);
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
     @DeleteMapping("/quizzes/{id}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteQuiz(@PathVariable Long id) {
-        quizService.deleteQuiz(id);
+    public ResponseEntity<Void> deleteQuiz(
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "user") User actor) {
+        quizService.deleteQuiz(actor, id);
         return ResponseEntity.noContent().build();
     }
 

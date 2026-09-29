@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "minigame_attempts")
+@Table(name = "minigame_attempts", uniqueConstraints = {@UniqueConstraint(columnNames = {"learner_id", "client_attempt_id"})})
 public class MinigameAttempt {
 
     @Id
@@ -46,6 +46,6 @@ public class MinigameAttempt {
     @Column(name = "sync_status")
     private String syncStatus;
 
-    @Column(name = "client_attempt_id", unique = true)
+    @Column(name = "client_attempt_id")
     private String clientAttemptId;
 }

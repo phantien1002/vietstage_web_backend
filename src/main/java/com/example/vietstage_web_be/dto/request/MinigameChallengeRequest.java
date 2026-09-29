@@ -10,6 +10,8 @@ public class MinigameChallengeRequest {
     private String title;
 
     @NotBlank(message = "Challenge type is required")
+    @jakarta.validation.constraints.Pattern(regexp = "^(RHYTHM_MATCH|MELODY_COMPLETE)$", message = "Challenge type must be RHYTHM_MATCH or MELODY_COMPLETE")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"RHYTHM_MATCH", "MELODY_COMPLETE"})
     private String challengeType;
 
     // Optional depending on type
