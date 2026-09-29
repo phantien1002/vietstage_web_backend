@@ -272,13 +272,21 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         if (lesson.getOrderIndex() == null || lesson.getOrderIndex() <= 1) {
             return true;
         }
-        // Simplified unlock logic: if orderIndex > 1, the user must have completed the previous lesson (orderIndex - 1)
-        // Note: For a robust system, we would fetch the specific previous lesson for this instrument/level.
-        // Assuming linear progression globally or by order_index.
-        Lesson prevLesson = lessonRepository.findTopByOrderByIdDesc().orElse(null); // Just a placeholder if we can't find by order
-        // Proper way: find lesson with orderIndex = lesson.getOrderIndex() - 1
-        // Let's assume there is at least one lesson with orderIndex - 1 that is COMPLETED
-        return true; // DRAFT logic, returning true temporarily to avoid blocking. Real logic needs DB support.
+        
+        Optional<Lesson> prevLessonOpt = lessonRepository.findAll().stream()
+                .filter(l -> l.getInstrument().getId().equals(lesson.getInstrument().getId()) 
+                          && l.getOrderIndex() != null 
+                          && l.getOrderIndex() < lesson.getOrderIndex())
+                .max(java.util.Comparator.comparing(Lesson::getOrderIndex));
+
+        if (prevLessonOpt.isEmpty()) {
+            return true; // No previous lesson means it's the first one practically
+        }
+
+        Lesson prevLesson = prevLessonOpt.get();
+        Optional<LessonCompletion> prevCompletion = lessonCompletionRepository.findByLessonIdAndLearnerId(prevLesson.getId(), learnerId);
+
+        return prevCompletion.isPresent() && "COMPLETED".equals(prevCompletion.get().getStatus());
     }
 
     @Override

@@ -22,6 +22,7 @@ public class LearnerCourseProgressResponse {
     public static class LearnerLessonProgressDTO {
         private Long lessonId;
         private Boolean isUnlocked;
+        @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED"})
         private String learningStatus; // NOT_STARTED, IN_PROGRESS, COMPLETED
         private Boolean completed;
         private java.util.Date completedAt;
@@ -36,6 +37,7 @@ public class LearnerCourseProgressResponse {
     public static class LearnerLevelProgressDTO {
         private Long levelId;
         private Boolean isUnlocked;
+        @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED"})
         private String learningStatus;
     }
 }

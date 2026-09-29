@@ -44,6 +44,24 @@ public class CleanupMigrator implements CommandLineRunner {
                 System.err.println("Notice: Could not add status columns: " + ex.getMessage());
             }
 
+            try {
+                jdbcTemplate.execute("INSERT INTO users (email, username, password_hash, role_id, created_at, status) " +
+                    "SELECT 'phuclong2710@gmail.com', 'Phuc Long', 'hashed_pass', r.id, CURRENT_TIMESTAMP, 'ACTIVE' " +
+                    "FROM roles r WHERE r.name = 'LEARNER' " +
+                    "AND NOT EXISTS (SELECT 1 FROM users WHERE email = 'phuclong2710@gmail.com')");
+                
+                jdbcTemplate.execute("INSERT INTO learner_profiles (user_id, has_full_access, created_at, streak_days, current_streak, longest_streak, total_points, total_stars, spendable_stars) " +
+                    "SELECT id, TRUE, CURRENT_TIMESTAMP, 0, 0, 0, 0, 0, 0 FROM users WHERE email IN ('phuclong2710@gmail.com', 'thanhdattb19@gmail.com') " +
+                    "AND NOT EXISTS (SELECT 1 FROM learner_profiles lp WHERE lp.user_id = users.id)");
+
+                jdbcTemplate.execute("UPDATE learner_profiles SET has_full_access = TRUE " +
+                    "WHERE user_id IN (SELECT id FROM users WHERE email IN ('phuclong2710@gmail.com', 'thanhdattb19@gmail.com'))");
+                    
+                System.out.println("Granted full access to test accounts.");
+            } catch (Exception ex) {
+                System.err.println("Notice: Could not update full access: " + ex.getMessage());
+            }
+
             System.out.println("Successfully ran DB cleanups.");
         } catch (Exception e) {
             System.err.println("Error dropping 'id' column: " + e.getMessage());
