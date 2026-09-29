@@ -7,6 +7,7 @@ import com.example.vietstage_web_be.dto.response.QuizAttemptResponse;
 import com.example.vietstage_web_be.dto.response.QuizResponse;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.IQuizService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,7 @@ public class QuizController {
 
     @DeleteMapping("/quizzes/{id}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
+    @Operation(summary = "Xóa Quiz", description = "Xóa quiz. Nếu quiz đã có lịch sử làm bài, thay vì xóa thật, quiz sẽ được chuyển sang trạng thái ARCHIVED để giữ lịch sử.")
     public ResponseEntity<Void> deleteQuiz(
             @PathVariable Long id,
             @AuthenticationPrincipal(expression = "user") User actor) {

@@ -7,6 +7,7 @@ import com.example.vietstage_web_be.dto.response.MinigameAttemptResponse;
 import com.example.vietstage_web_be.dto.response.MinigameChallengeResponse;
 import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.IMinigameService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,7 @@ public class MinigameController {
 
     @DeleteMapping("/minigames/{id}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
+    @Operation(summary = "Xóa Minigame", description = "Xóa minigame. Nếu minigame đã có lịch sử làm bài, thay vì xóa thật, minigame sẽ được chuyển sang trạng thái ARCHIVED để giữ lịch sử.")
     public ResponseEntity<Void> deleteMinigame(
             @PathVariable Long id,
             @AuthenticationPrincipal(expression = "user") User actor) {

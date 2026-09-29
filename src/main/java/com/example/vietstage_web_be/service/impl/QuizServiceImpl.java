@@ -47,6 +47,10 @@ public class QuizServiceImpl implements IQuizService {
     public List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser) {
         List<Quiz> quizzes = quizRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
         
+        if (currentUser != null && currentUser.getRole() != null && "LEARNER".equalsIgnoreCase(currentUser.getRole().getName())) {
+            quizzes = quizzes.stream().filter(q -> "ACTIVE".equals(q.getStatus())).collect(Collectors.toList());
+        }
+
         return quizzes.stream().map(quiz -> {
             QuizResponse.QuizResponseBuilder builder = QuizResponse.builder()
                     .id(quiz.getId())
@@ -84,6 +88,7 @@ public class QuizServiceImpl implements IQuizService {
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
                 .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -120,6 +125,9 @@ public class QuizServiceImpl implements IQuizService {
         quiz.setOptions(request.getOptions());
         quiz.setCorrectAnswer(request.getCorrectAnswer());
         quiz.setOrderIndex(request.getOrderIndex());
+        if (request.getStatus() != null) {
+            quiz.setStatus(request.getStatus());
+        }
 
         quiz = quizRepository.save(quiz);
 
@@ -145,7 +153,7 @@ public class QuizServiceImpl implements IQuizService {
         validateOwnership(actor, quiz.getLesson());
 
         if (quiz.getAttempts() != null && !quiz.getAttempts().isEmpty()) {
-            quiz.setStatus("INACTIVE");
+            quiz.setStatus("ARCHIVED");
             quizRepository.save(quiz);
         } else {
             quizRepository.delete(quiz);

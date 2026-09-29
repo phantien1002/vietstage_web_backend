@@ -29,4 +29,6 @@ public class QuizRequest {
 
     @NotNull(message = "Order index is required")
     private Integer orderIndex;
+
+    private String status;
 }

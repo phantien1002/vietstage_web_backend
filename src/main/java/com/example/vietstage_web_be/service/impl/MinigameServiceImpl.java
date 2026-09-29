@@ -53,6 +53,9 @@ public class MinigameServiceImpl implements IMinigameService {
             throw new AppException(ErrorCode.BAD_REQUEST, "Mini Game đang tạm thời bị tắt");
         }
         List<MinigameChallenge> challenges = challengeRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+        if (isLearner(requester)) {
+            challenges = challenges.stream().filter(m -> "ACTIVE".equals(m.getStatus())).collect(Collectors.toList());
+        }
         return challenges.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -72,6 +75,7 @@ public class MinigameServiceImpl implements IMinigameService {
                 .difficulty(request.getDifficulty())
                 .maxScore(request.getMaxScore())
                 .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -93,6 +97,9 @@ public class MinigameServiceImpl implements IMinigameService {
         challenge.setDifficulty(request.getDifficulty());
         challenge.setMaxScore(request.getMaxScore());
         challenge.setOrderIndex(request.getOrderIndex());
+        if (request.getStatus() != null) {
+            challenge.setStatus(request.getStatus());
+        }
 
         challenge = challengeRepository.save(challenge);
         return mapToResponse(challenge);
@@ -106,7 +113,7 @@ public class MinigameServiceImpl implements IMinigameService {
         validateLessonOwnership(actor, challenge.getLesson());
         
         if (challenge.getAttempts() != null && !challenge.getAttempts().isEmpty()) {
-            challenge.setStatus("INACTIVE");
+            challenge.setStatus("ARCHIVED");
             challengeRepository.save(challenge);
         } else {
             challengeRepository.delete(challenge);

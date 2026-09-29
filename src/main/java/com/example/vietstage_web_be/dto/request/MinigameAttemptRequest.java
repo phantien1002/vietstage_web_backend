@@ -20,6 +20,11 @@ public class MinigameAttemptRequest {
     @NotNull(message = "Completed at is required")
     private LocalDateTime completedAt;
     
-    // Dữ liệu chơi của user để server xác minh thay vì chỉ tin vào score (ví dụ: các nốt đã chọn, timing tap...)
+    @io.swagger.v3.oas.annotations.media.Schema(
+        description = "Dữ liệu JSON chi tiết của lượt chơi để server xác minh. " +
+        "Với RHYTHM_MATCH: { \"totalTargets\": 10, \"hits\": 8, \"accuracy\": 80.0 }. " +
+        "Với MELODY_COMPLETE: { \"selectedNotes\": [\"C\", \"D\"], \"correctNotes\": [\"C\", \"D\"], \"isCorrect\": true, \"correctRounds\": 1 }",
+        example = "{\"totalTargets\": 10, \"hits\": 8, \"accuracy\": 80.0}"
+    )
     private String playData;
 }
