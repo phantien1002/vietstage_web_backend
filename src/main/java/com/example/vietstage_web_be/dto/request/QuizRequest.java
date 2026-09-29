@@ -30,5 +30,7 @@ public class QuizRequest {
     @NotNull(message = "Order index is required")
     private Integer orderIndex;
 
+    @jakarta.validation.constraints.Pattern(regexp = "^(ACTIVE|INACTIVE|ARCHIVED)$", message = "Status must be ACTIVE, INACTIVE, or ARCHIVED")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ACTIVE", "INACTIVE", "ARCHIVED"})
     private String status;
 }

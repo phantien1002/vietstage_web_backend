@@ -264,20 +264,47 @@ public class MinigameServiceImpl implements IMinigameService {
             }
             
             // XÁC MINH ĐIỂM SƠ BỘ TỪ DỮ LIỆU
-            if (request.getPlayData() != null && !request.getPlayData().trim().isEmpty()) {
-                if ("MELODY_COMPLETE".equals(challenge.getChallengeType())) {
-                    JsonNode playNode = OBJECT_MAPPER.readTree(request.getPlayData());
-                    String userChoice = playNode.path("selected_note").asText("");
-                    JsonNode missingPositions = root.path("missing_positions");
-                    if (missingPositions.isArray() && missingPositions.size() > 0) {
-                        int pos = missingPositions.get(0).asInt(-1);
-                        String correctNote = root.path("correct_answers").path(String.valueOf(pos)).asText("");
-                        
-                        // Nếu user chọn đúng thì score phải = maxScore, ngược lại = 0
-                        int expectedScore = correctNote.equals(userChoice) ? challenge.getMaxScore() : 0;
-                        if (request.getScore() != expectedScore) {
-                            throw new AppException(ErrorCode.BAD_REQUEST, "Điểm không khớp với dữ liệu chơi gửi lên");
+            if (request.getPlayData() == null || request.getPlayData().trim().isEmpty()) {
+                request.setScore(0); // Bắt buộc có playData mới được điểm
+            } else {
+                JsonNode playNode = OBJECT_MAPPER.readTree(request.getPlayData());
+                if ("RHYTHM_MATCH".equals(challenge.getChallengeType())) {
+                    int totalTargets = playNode.path("totalTargets").asInt(0);
+                    int hits = playNode.path("hits").asInt(0);
+                    double accuracy = playNode.path("accuracy").asDouble(0.0);
+                    
+                    int actualBeats = 0;
+                    JsonNode rounds = root.path("rounds");
+                    if (rounds.isArray() && rounds.size() > 0) {
+                        for (JsonNode roundNode : rounds) {
+                            actualBeats += roundNode.path("beats").size();
                         }
+                    } else {
+                        actualBeats = root.path("beats").size();
+                    }
+                    
+                    if (totalTargets > 0 && totalTargets != actualBeats) {
+                        // Cấu hình app có thể đếm khác, tạm cho phép +- 10% nếu app có logic khác
+                        if (Math.abs(totalTargets - actualBeats) > (actualBeats * 0.1) + 2) {
+                            throw new AppException(ErrorCode.BAD_REQUEST, "Số mục tiêu (totalTargets) không khớp cấu hình");
+                        }
+                    }
+                    if (hits > totalTargets && totalTargets > 0) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Số hits không được lớn hơn totalTargets");
+                    }
+                    
+                    // Điểm không được cao hơn tỷ lệ hits/totalTargets
+                    if (totalTargets > 0) {
+                        int expectedMaxScore = (int) Math.round((double) challenge.getMaxScore() * hits / totalTargets);
+                        if (request.getScore() > expectedMaxScore + 5) {
+                            throw new AppException(ErrorCode.BAD_REQUEST, "Điểm số không hợp lệ với kết quả chơi (vượt quá mức cho phép)");
+                        }
+                    }
+                } else if ("MELODY_COMPLETE".equals(challenge.getChallengeType())) {
+                    boolean isCorrect = playNode.path("isCorrect").asBoolean(false);
+                    int expectedScore = isCorrect ? challenge.getMaxScore() : 0;
+                    if (request.getScore() != expectedScore) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Điểm không khớp với kết quả chơi");
                     }
                 }
             }
