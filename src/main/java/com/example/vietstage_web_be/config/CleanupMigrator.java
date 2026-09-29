@@ -45,6 +45,15 @@ public class CleanupMigrator implements CommandLineRunner {
             }
 
             try {
+                jdbcTemplate.execute("ALTER TABLE learner_cosmetics DROP CONSTRAINT IF EXISTS uk_learner_cosmetic_client_request");
+                jdbcTemplate.execute("ALTER TABLE learner_cosmetics DROP CONSTRAINT IF EXISTS learner_cosmetics_client_request_id_key");
+                jdbcTemplate.execute("ALTER TABLE learner_cosmetics ADD CONSTRAINT uk_learner_cosmetic_client_request UNIQUE (learner_id, client_request_id)");
+                System.out.println("Updated unique constraints for learner_cosmetics.");
+            } catch (Exception ex) {
+                System.err.println("Notice: Could not update learner_cosmetics constraint: " + ex.getMessage());
+            }
+
+            try {
                 jdbcTemplate.execute("INSERT INTO users (email, username, password_hash, role_id, created_at, status) " +
                     "SELECT 'phuclong2710@gmail.com', 'Phuc Long', 'hashed_pass', r.id, CURRENT_TIMESTAMP, 'ACTIVE' " +
                     "FROM roles r WHERE r.name = 'LEARNER' " +
