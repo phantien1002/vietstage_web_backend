@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardStatsResponse {
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Số learner khác nhau có hoạt động học (từ practice_attempts hoặc practice_sessions) trong khoảng thời gian; không tính admin/instructor")
     private long activeUsers; 
     
     private List<PopularInstrument> popularInstruments; // new
@@ -25,6 +26,7 @@ public class DashboardStatsResponse {
     public static class PopularInstrument {
         private Long instrumentId;
         private String instrumentName;
+        @io.swagger.v3.oas.annotations.media.Schema(description = "Số lượt luyện tập hợp lệ theo chuỗi attempt -> exercise -> lesson -> instrument")
         private Long practiceCount;
     }
 
@@ -34,7 +36,9 @@ public class DashboardStatsResponse {
     @AllArgsConstructor
     public static class SessionDurationData {
         private String period;
+        @io.swagger.v3.oas.annotations.media.Schema(description = "Thời lượng trung bình mỗi phiên (phút). Tính từ (endedAt - startedAt) của các phiên đã đóng.")
         private Double averageDurationMinutes;
+        @io.swagger.v3.oas.annotations.media.Schema(description = "Tổng thời lượng các phiên (phút). Tính từ (endedAt - startedAt) của các phiên đã đóng.")
         private Double totalDurationMinutes;
     }
 
@@ -44,7 +48,7 @@ public class DashboardStatsResponse {
     @AllArgsConstructor
     public static class RetentionData {
         private String period;
-        @io.swagger.v3.oas.annotations.media.Schema(description = "Tỷ lệ giữ chân người dùng (%) (Thang 0-100)")
+        @io.swagger.v3.oas.annotations.media.Schema(description = "Tỷ lệ giữ chân người dùng (%). Tính bằng: (Learner hoạt động ở kỳ N-1 và quay lại ở kỳ N) / (Learner hoạt động ở kỳ N-1) * 100")
         private Double retentionRate;
     }
 }

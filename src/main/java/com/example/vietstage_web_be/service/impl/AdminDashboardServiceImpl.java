@@ -24,8 +24,9 @@ public class AdminDashboardServiceImpl implements IAdminDashboardService {
 
     @Override
     public DashboardStatsResponse getDashboardStats(LocalDateTime fromDate, LocalDateTime toDate, String granularity) {
-        if (fromDate == null) fromDate = LocalDateTime.now().minusDays(30);
-        if (toDate == null) toDate = LocalDateTime.now();
+        java.time.ZoneId vnZone = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+        if (fromDate == null) fromDate = LocalDateTime.now(vnZone).minusDays(30);
+        if (toDate == null) toDate = LocalDateTime.now(vnZone);
         if (granularity == null || granularity.isEmpty()) granularity = "MONTH";
 
         // 1. Active Users (using aggregate query)
