@@ -96,20 +96,6 @@ public class LessonController {
     }
 
     /**
-     * GET /api/lessons/{id}/exercises
-     * PUBLIC — trả danh sách exercises của bài học
-     */
-    @GetMapping("/{id}/exercises")
-    @Operation(summary = "Lấy danh sách bài tập của bài học (PUBLIC)")
-    public ResponseEntity<ApiResponse<java.util.List<LessonResponse.ExerciseInfo>>> getLessonExercises(@PathVariable Long id) {
-        LessonResponse data = lessonService.getLessonById(id);
-        return ResponseEntity.ok(ApiResponse.<java.util.List<LessonResponse.ExerciseInfo>>builder()
-                .message("Get lesson exercises successfully")
-                .data(data.getExercises())
-                .build());
-    }
-
-    /**
      * POST /api/Lesson
      * INSTRUCTOR only — tạo bài học mới. Status mặc định = DRAFT. Trả 201 Created.
      */
