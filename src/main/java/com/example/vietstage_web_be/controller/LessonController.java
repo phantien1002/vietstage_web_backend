@@ -68,6 +68,48 @@ public class LessonController {
     }
 
     /**
+     * GET /api/lessons/{id}/contents
+     * PUBLIC — trả danh sách contents của bài học
+     */
+    @GetMapping("/{id}/contents")
+    @Operation(summary = "Lấy nội dung bài học theo thứ tự (PUBLIC)")
+    public ResponseEntity<ApiResponse<java.util.List<LessonResponse.ContentInfo>>> getLessonContents(@PathVariable Long id) {
+        LessonResponse data = lessonService.getLessonById(id);
+        return ResponseEntity.ok(ApiResponse.<java.util.List<LessonResponse.ContentInfo>>builder()
+                .message("Get lesson contents successfully")
+                .data(data.getContents())
+                .build());
+    }
+
+    /**
+     * GET /api/lessons/{id}/assets
+     * PUBLIC — trả danh sách assets của bài học
+     */
+    @GetMapping("/{id}/assets")
+    @Operation(summary = "Lấy danh sách media assets của bài học (PUBLIC)")
+    public ResponseEntity<ApiResponse<java.util.List<LessonResponse.AssetInfo>>> getLessonAssets(@PathVariable Long id) {
+        LessonResponse data = lessonService.getLessonById(id);
+        return ResponseEntity.ok(ApiResponse.<java.util.List<LessonResponse.AssetInfo>>builder()
+                .message("Get lesson assets successfully")
+                .data(data.getMediaAssets())
+                .build());
+    }
+
+    /**
+     * GET /api/lessons/{id}/exercises
+     * PUBLIC — trả danh sách exercises của bài học
+     */
+    @GetMapping("/{id}/exercises")
+    @Operation(summary = "Lấy danh sách bài tập của bài học (PUBLIC)")
+    public ResponseEntity<ApiResponse<java.util.List<LessonResponse.ExerciseInfo>>> getLessonExercises(@PathVariable Long id) {
+        LessonResponse data = lessonService.getLessonById(id);
+        return ResponseEntity.ok(ApiResponse.<java.util.List<LessonResponse.ExerciseInfo>>builder()
+                .message("Get lesson exercises successfully")
+                .data(data.getExercises())
+                .build());
+    }
+
+    /**
      * POST /api/Lesson
      * INSTRUCTOR only — tạo bài học mới. Status mặc định = DRAFT. Trả 201 Created.
      */
