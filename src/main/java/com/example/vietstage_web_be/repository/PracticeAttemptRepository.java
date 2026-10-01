@@ -37,7 +37,7 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
             "JOIN FETCH pa.exercise e " +
             "LEFT JOIN FETCH e.lesson l " +
             "JOIN FETCH pa.learner u " +
-            "WHERE l.createdBy.id = :instructorId " +
+            "WHERE 1=1 " +
             "AND (:learnerId IS NULL OR u.id = :learnerId) " +
             "AND (:lessonId IS NULL OR l.id = :lessonId) " +
             "AND (pa.createdAt >= :fromDateTime) " +
@@ -65,7 +65,7 @@ public interface PracticeAttemptRepository extends JpaRepository<PracticeAttempt
             "FROM practice_attempts pa " +
             "JOIN exercises e ON pa.exercise_id = e.id " +
             "JOIN lessons l ON e.lesson_id = l.id " +
-            "WHERE l.created_by = :instructorId " +
+            "WHERE 1=1 " +
             "AND (:learnerId IS NULL OR pa.learner_id = :learnerId) " +
             "AND (:lessonId IS NULL OR e.lesson_id = :lessonId) " +
             "AND (pa.created_at >= :fromDateTime) " +

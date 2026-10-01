@@ -172,10 +172,6 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "lesson not found with id: " + lessonId));
 
-        if (lesson.getCreatedBy() != null && !lesson.getCreatedBy().equals(instructorId)) {
-            throw new AppException(ErrorCode.INSTRUCTOR_FORBIDDEN);
-        }
-
         Optional<LessonCompletion> completionsOptional = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId);
 
         Integer PracticeAttempt = practiceAttemptRepository.countAttemptsByLessonAndLearner(lessonId, learnerId);
