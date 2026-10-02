@@ -6,4 +6,5 @@ import java.util.UUID;
 public interface IUsageSessionService {
     UUID startSession(User user, String platform);
     void endSession(User user, UUID sessionId);
+    void recordActivity(User user);
 }

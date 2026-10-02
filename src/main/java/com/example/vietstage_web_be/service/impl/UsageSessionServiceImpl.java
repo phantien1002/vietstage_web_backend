@@ -40,4 +40,20 @@ public class UsageSessionServiceImpl implements IUsageSessionService {
         session.setEndedAt(LocalDateTime.now());
         usageSessionRepository.save(session);
     }
+
+    @Override
+    public void recordActivity(User user) {
+        usageSessionRepository.findFirstByUser_IdOrderByStartedAtDesc(user.getId())
+            .ifPresentOrElse(session -> {
+                // If last activity was more than 30 minutes ago, create a new session
+                if (session.getEndedAt() != null && session.getEndedAt().plusMinutes(30).isBefore(LocalDateTime.now())) {
+                    startSession(user, "WEB");
+                } else {
+                    session.setEndedAt(LocalDateTime.now());
+                    usageSessionRepository.save(session);
+                }
+            }, () -> {
+                startSession(user, "WEB");
+            });
+    }
 }
