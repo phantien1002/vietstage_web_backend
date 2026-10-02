@@ -39,5 +39,7 @@ public class LearnerCourseProgressResponse {
         private Boolean isUnlocked;
         @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"NOT_STARTED", "IN_PROGRESS", "COMPLETED"})
         private String learningStatus;
+        private Integer earnedStars;
+        private Integer totalStars;
     }
 }

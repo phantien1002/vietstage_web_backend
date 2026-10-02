@@ -301,9 +301,23 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         }
         
         List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO> lessonDtos = new java.util.ArrayList<>();
-        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO> levelDtos = new java.util.ArrayList<>();
         
-        java.util.Set<Long> levelIds = new java.util.HashSet<>();
+        java.util.Map<Long, Integer> levelEarnedStars = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> levelTotalStars = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> levelUnlocked = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> levelAnyStarted = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> levelAllCompleted = new java.util.HashMap<>();
+        
+        for (Lesson lesson : allLessons) {
+            if (lesson.getSkillLevel() != null) {
+                Long lvlId = lesson.getSkillLevel().getId();
+                levelEarnedStars.putIfAbsent(lvlId, 0);
+                levelTotalStars.putIfAbsent(lvlId, 0);
+                levelUnlocked.putIfAbsent(lvlId, false);
+                levelAnyStarted.putIfAbsent(lvlId, false);
+                levelAllCompleted.putIfAbsent(lvlId, true);
+            }
+        }
         
         for (Lesson lesson : allLessons) {
             LessonCompletion completion = completionMap.get(lesson.getId());
@@ -314,26 +328,56 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
             }
             
             boolean isUnlocked = hasFullAccess || checkIsUnlocked(lesson, learnerId);
+            String finalStatus = isUnlocked ? status : "LOCKED";
+            int stars = completion != null && completion.getStars() != null ? completion.getStars() : 0;
             
             lessonDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO.builder()
                     .lessonId(lesson.getId())
                     .isUnlocked(isUnlocked)
-                    .learningStatus(isUnlocked ? status : "LOCKED")
-                    .completed(completion != null ? completion.getCompleted() : false)
+                    .learningStatus(finalStatus)
+                    .completed(completion != null ? Boolean.TRUE.equals(completion.getCompleted()) : false)
                     .completedAt(completion != null ? completion.getCompletedAt() : null)
-                    .lessonStars(completion != null ? completion.getStars() : 0)
+                    .lessonStars(stars)
                     .highestScore(completion != null ? completion.getBestScore() : null)
                     .build());
                     
-            if (lesson.getSkillLevel() != null && !levelIds.contains(lesson.getSkillLevel().getId())) {
-                levelIds.add(lesson.getSkillLevel().getId());
-                // Level status logic is simplified for now (can be computed by aggregating lesson statuses)
-                levelDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO.builder()
-                        .levelId(lesson.getSkillLevel().getId())
-                        .isUnlocked(hasFullAccess || true) // Simplified
-                        .learningStatus("IN_PROGRESS") // Simplified
-                        .build());
+            if (lesson.getSkillLevel() != null) {
+                Long lvlId = lesson.getSkillLevel().getId();
+                levelTotalStars.put(lvlId, levelTotalStars.get(lvlId) + 3); // Max 3 stars per lesson
+                levelEarnedStars.put(lvlId, levelEarnedStars.get(lvlId) + stars);
+                
+                if (isUnlocked) {
+                    levelUnlocked.put(lvlId, true);
+                }
+                if ("IN_PROGRESS".equals(finalStatus) || "COMPLETED".equals(finalStatus)) {
+                    levelAnyStarted.put(lvlId, true);
+                }
+                if (!"COMPLETED".equals(finalStatus)) {
+                    levelAllCompleted.put(lvlId, false);
+                }
             }
+        }
+        
+        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO> levelDtos = new java.util.ArrayList<>();
+        for (Long lvlId : levelTotalStars.keySet()) {
+            String lvlStatus = "LOCKED";
+            if (levelUnlocked.get(lvlId)) {
+                if (levelAllCompleted.get(lvlId)) {
+                    lvlStatus = "COMPLETED";
+                } else if (levelAnyStarted.get(lvlId)) {
+                    lvlStatus = "IN_PROGRESS";
+                } else {
+                    lvlStatus = "NOT_STARTED";
+                }
+            }
+            
+            levelDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO.builder()
+                    .levelId(lvlId)
+                    .isUnlocked(levelUnlocked.get(lvlId))
+                    .learningStatus(lvlStatus)
+                    .earnedStars(levelEarnedStars.get(lvlId))
+                    .totalStars(levelTotalStars.get(lvlId))
+                    .build());
         }
         
         return com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.builder()
