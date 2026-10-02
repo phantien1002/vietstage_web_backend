@@ -37,5 +37,8 @@ public interface LessonCompletionRepository extends JpaRepository<LessonCompleti
     @Query("SELECT lc FROM LessonCompletion lc WHERE lc.lesson.id = :lessonId AND lc.learner.id = :learnerId")
     Optional<LessonCompletion> findByLessonIdAndLearnerId(@Param("lessonId") Long lessonId, @Param("learnerId") Long learnerId);
 
+    @Query("SELECT lc FROM LessonCompletion lc WHERE lc.learner.id = :learnerId")
+    List<LessonCompletion> findByLearnerId(@Param("learnerId") Long learnerId);
+
 }
 

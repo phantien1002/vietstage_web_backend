@@ -68,6 +68,9 @@ public class EmailServiceImpl implements IEmailService {
                 log.error("SendGrid returned status code: {}", response.getStatusCode());
                 throw new Exception("SendGrid API error");
             }
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            log.error("Failed to send OTP email via SendGrid: Status {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new Exception("Cannot send OTP email via SendGrid", e);
         } catch (Exception e) {
             log.error("Failed to send OTP email via SendGrid: {}", e.getMessage());
             throw new Exception("Cannot send OTP email via SendGrid", e);

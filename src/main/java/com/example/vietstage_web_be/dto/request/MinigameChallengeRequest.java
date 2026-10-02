@@ -10,6 +10,8 @@ public class MinigameChallengeRequest {
     private String title;
 
     @NotBlank(message = "Challenge type is required")
+    @jakarta.validation.constraints.Pattern(regexp = "^(RHYTHM_MATCH|MELODY_COMPLETE)$", message = "Challenge type must be RHYTHM_MATCH or MELODY_COMPLETE")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"RHYTHM_MATCH", "MELODY_COMPLETE"})
     private String challengeType;
 
     // Optional depending on type
@@ -25,4 +27,8 @@ public class MinigameChallengeRequest {
 
     @NotNull(message = "Order index is required")
     private Integer orderIndex;
+
+    @jakarta.validation.constraints.Pattern(regexp = "^(ACTIVE|INACTIVE|ARCHIVED)$", message = "Status must be ACTIVE, INACTIVE, or ARCHIVED")
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ACTIVE", "INACTIVE", "ARCHIVED"})
+    private String status;
 }

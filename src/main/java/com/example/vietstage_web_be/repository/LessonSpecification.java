@@ -10,19 +10,19 @@ import java.util.List;
 
 public class LessonSpecification {
 
-    public static Specification<Lesson> filterBy(String status, String search, Long instructorId, Long instrumentId) {
+    public static Specification<Lesson> filterBy(String status, String search, Long instructorId, Long instrumentId, Long skillLevelId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // Always exclude DRAFT from admin reviews
             predicates.add(criteriaBuilder.notEqual(
-                    criteriaBuilder.upper(root.get("status")), 
+                    criteriaBuilder.upper(root.get("approvalStatus")), 
                     "DRAFT"
             ));
 
             if (StringUtils.hasText(status)) {
                 predicates.add(criteriaBuilder.equal(
-                        criteriaBuilder.upper(root.get("status")), 
+                        criteriaBuilder.upper(root.get("approvalStatus")), 
                         status.toUpperCase()
                 ));
             }
@@ -45,6 +45,13 @@ public class LessonSpecification {
                 predicates.add(criteriaBuilder.equal(
                         root.join("instrument").get("id"), 
                         instrumentId
+                ));
+            }
+
+            if (skillLevelId != null) {
+                predicates.add(criteriaBuilder.equal(
+                        root.join("skillLevel").get("id"),
+                        skillLevelId
                 ));
             }
 

@@ -10,7 +10,10 @@ import lombok.Data;
 public class QuizResponse {
     private Long id;
     private String title;
+    
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"GENERAL", "NOTE_IDENTIFICATION"})
     private String questionType;
+    
     private String note;
     private String audioUrl;
     private String question;
@@ -20,4 +23,7 @@ public class QuizResponse {
     private String correctAnswer;
     
     private Integer orderIndex;
+    
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ACTIVE", "INACTIVE", "ARCHIVED"})
+    private String status;
 }

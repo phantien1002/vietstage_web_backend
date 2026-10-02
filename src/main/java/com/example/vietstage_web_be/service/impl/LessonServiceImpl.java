@@ -37,6 +37,7 @@ public class LessonServiceImpl implements ILessonService {
     private final TechniqueRepository techniqueRepository;
     private final SkillLevelRepository skillLevelRepository;
     private final ContentReviewRepository contentReviewRepository;
+    private final LessonContentRepository lessonContentRepository;
 
     // =========================================================
     // POST /api/Lesson
@@ -83,7 +84,8 @@ public class LessonServiceImpl implements ILessonService {
                 .lessonCode(generatedLessonCode)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .status(initialStatus)
+                .approvalStatus("DRAFT") // was "DRAFT") // was initialStatus)
+                .isVisible(true) // was "HIDDEN")
                 .orderIndex(order)
                 .skillLevel(skillLevel)
                 .instrument(instrument)
@@ -130,13 +132,13 @@ public class LessonServiceImpl implements ILessonService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<LessonResponse> getLessons(String search, Long instrumentId, Long skillLevelId,
-                                                   String status,
+                                                   String status, Boolean isVisible,
                                                    int pageNumber, int pageSize) {
         int zeroBasedPage = Math.max(pageNumber - 1, 0);
-        int size = Math.min(Math.max(pageSize, 1), 100);
+        int size = Math.min(Math.max(pageSize, 1), 1000);
 
         Pageable pageable = PageRequest.of(zeroBasedPage, size, Sort.by("orderIndex").ascending());
-        Specification<Lesson> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status);
+        Specification<Lesson> spec = LessonSpecification.filter(search, instrumentId, skillLevelId, status, isVisible);
 
         Page<Lesson> lessonsPage = lessonRepository.findAll(spec, pageable);
 
@@ -177,6 +179,7 @@ public class LessonServiceImpl implements ILessonService {
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         checkLessonPermission(lesson, userEmail);
+        checkLessonEditable(lesson);
 
         // Check trùng title trong cùng nhạc cụ (nếu title thay đổi)
         if (!lesson.getTitle().equalsIgnoreCase(request.getTitle())) {
@@ -215,6 +218,7 @@ public class LessonServiceImpl implements ILessonService {
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         checkLessonPermission(lesson, userEmail);
+        checkLessonEditable(lesson);
 
         lessonRepository.delete(lesson);
     }
@@ -255,15 +259,21 @@ public class LessonServiceImpl implements ILessonService {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
         }
 
-        // Cập nhật status bài học
-        lesson.setStatus(newStatus);
+        if ("PENDING".equals(newStatus)) {
+            if (lessonContentRepository.findByLessonIdOrderByOrderIndexAsc(lesson.getId()).isEmpty()) {
+                throw new AppException(ErrorCode.BAD_REQUEST, "Bài học phải có nội dung trước khi nộp duyệt.");
+            }
+        }
+
+        // Cập nhật reviewStatus bài học
+        lesson.setApprovalStatus(newStatus);
         lesson.setUpdatedAt(LocalDateTime.now());
         lessonRepository.save(lesson);
 
         // TODO: Gửi notification cho Instructor (Nếu cần)
         return LessonStatusResponse.builder()
                 .id(lesson.getId())
-                .status(lesson.getStatus())
+                .status(lesson.getApprovalStatus())
                 .build();
     }
 
@@ -271,7 +281,6 @@ public class LessonServiceImpl implements ILessonService {
     // Helpers
     // =========================================================
 
-    /** Kiểm tra quyền: ADMIN toàn quyền, INSTRUCTOR chỉ được sửa bài của mình */
     private void checkLessonPermission(Lesson lesson, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -283,13 +292,23 @@ public class LessonServiceImpl implements ILessonService {
         }
     }
 
+    public void checkLessonEditable(Lesson lesson) {
+        if ("PENDING".equals(lesson.getApprovalStatus()) || "APPROVED".equals(lesson.getApprovalStatus())) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Không thể sửa bài học đã gửi duyệt hoặc đã được phê duyệt. Vui lòng rút lại yêu cầu về DRAFT.");
+        }
+        if ("REJECTED".equals(lesson.getApprovalStatus())) {
+            lesson.setApprovalStatus("DRAFT");
+        }
+    }
+
     private LessonResponse mapToResponse(Lesson lesson) {
         return LessonResponse.builder()
                 .id(lesson.getId())
                 .lessonCode(lesson.getLessonCode())
                 .title(lesson.getTitle())
                 .description(lesson.getDescription())
-                .status(lesson.getStatus())
+                .approvalStatus(lesson.getApprovalStatus())
+                .isVisible(lesson.getIsVisible())
                 .orderIndex(lesson.getOrderIndex())
                 .createdAt(lesson.getCreatedAt())
                 .updatedAt(lesson.getUpdatedAt())
@@ -324,6 +343,13 @@ public class LessonServiceImpl implements ILessonService {
                                 .assetUrl(a.getAssetUrl())
                                 .tempoBpm(a.getTempoBpm())
                                 .durationSec(a.getDurationSec())
+                                .fileSize(a.getFileSize())
+                                .mimeType(a.getMimeType())
+                                .checksum(a.getChecksum())
+                                .version(a.getVersion())
+                                .processingStatus(a.getProcessingStatus())
+                                .orderIndex(a.getOrderIndex())
+                                .updatedAt(a.getUpdatedAt())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
                 .exercises(lesson.getExercises() != null ? lesson.getExercises().stream()
@@ -333,8 +359,23 @@ public class LessonServiceImpl implements ILessonService {
                                 .description(e.getDescription())
                                 .passThreshold(e.getPassThreshold())
                                 .orderIndex(e.getOrderIndex())
+                                .exerciseType(e.getExerciseType())
+                                .practiceMode(e.getPracticeMode())
+                                .configJson(e.getConfigJson())
+                                .schemaVersion(e.getSchemaVersion())
                                 .build())
                         .collect(Collectors.toList()) : List.of())
+                .contents(lessonContentRepository.findByLessonIdOrderByOrderIndexAsc(lesson.getId()).stream()
+                        .map(c -> LessonResponse.ContentInfo.builder()
+                                .id(c.getId())
+                                .contentType(c.getContentType())
+                                .contentText(c.getContentText())
+                                .payloadJson(c.getPayloadJson())
+                                .orderIndex(c.getOrderIndex())
+                                .assetId(c.getAsset() != null ? c.getAsset().getId() : null)
+                                .schemaVersion(c.getSchemaVersion())
+                                .build())
+                        .collect(Collectors.toList()))
                 .build();
     }
 }

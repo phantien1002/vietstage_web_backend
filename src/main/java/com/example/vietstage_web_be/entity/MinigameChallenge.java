@@ -45,6 +45,10 @@ public class MinigameChallenge {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @Column(name = "status")
+    @Builder.Default
+    private String status = "ACTIVE"; // ACTIVE, INACTIVE, ARCHIVED
+
     @OneToMany(mappedBy = "challenge", cascade = CascadeType.ALL)
     private List<MinigameAttempt> attempts;
 }

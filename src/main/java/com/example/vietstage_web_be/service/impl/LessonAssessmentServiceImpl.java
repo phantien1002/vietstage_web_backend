@@ -36,7 +36,8 @@ public class LessonAssessmentServiceImpl implements ILessonAssessmentService {
     public LessonAssessmentResponse submit(Long lessonId, LessonAssessmentRequest request, User learner) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
-        if (!"PUBLISHED".equalsIgnoreCase(lesson.getStatus())) {
+        if (!"APPROVED".equalsIgnoreCase(lesson.getApprovalStatus())
+                || !Boolean.TRUE.equals(lesson.getIsVisible())) {
             throw new AppException(ErrorCode.BAD_REQUEST, "Bài học chưa được xuất bản");
         }
         Optional<LessonAssessmentSession> existing = sessionRepository

@@ -8,11 +8,19 @@ import lombok.Data;
 @Data
 public class LessonContentRequest {
     
-    @NotBlank(message = "Nội dung không được để trống")
     @JsonProperty("content_text")
     private String contentText;
 
     @NotNull
     @JsonProperty("order_index")
     private Integer orderIndex;
+
+    @JsonProperty("content_type")
+    private String contentType;
+
+    @JsonProperty("payload_json")
+    private String payloadJson;
+
+    @JsonProperty("asset_id")
+    private Long assetId;
 }

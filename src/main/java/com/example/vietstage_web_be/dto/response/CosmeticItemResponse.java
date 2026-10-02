@@ -9,8 +9,7 @@ public class CosmeticItemResponse {
     private Long id;
     private String name;
     private String itemType;
-    private String unlockType;
-    private Integer unlockValue;
+    private Integer starPrice;
     private String assetUrl;
     private String status;
 }

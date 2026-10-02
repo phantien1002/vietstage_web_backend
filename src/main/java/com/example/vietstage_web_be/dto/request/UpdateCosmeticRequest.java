@@ -22,11 +22,10 @@ public class UpdateCosmeticRequest {
     @Pattern(regexp = "^(http|https)://.*$", message = "URL hình ảnh phải là một link hợp lệ")
     private String assetUrl;
 
-    @Pattern(regexp = "^(STARS|ACHIEVEMENT|DEFAULT)$", message = "Loại mở khóa không hợp lệ")
-    private String unlockType;
-
+    @jakarta.validation.constraints.NotNull(message = "Giá sao không được để trống")
     @jakarta.validation.constraints.Min(value = 0, message = "Giá trị mở khóa phải lớn hơn hoặc bằng 0")
-    private Integer unlockValue;
+    @io.swagger.v3.oas.annotations.media.Schema(requiredMode = io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED)
+    private Integer starPrice;
 
     @Pattern(regexp = "^(ACTIVE|INACTIVE)$", message = "Trạng thái phải là ACTIVE hoặc INACTIVE")
     private String status;

@@ -25,14 +25,11 @@ public class CreateCosmeticRequest {
     @Pattern(regexp = "^(http|https)://.*$", message = "URL hình ảnh phải là một link hợp lệ")
     private String assetUrl;
 
-    @NotBlank(message = "Loại mở khóa không được để trống")
-    @Pattern(regexp = "^(STARS|ACHIEVEMENT|DEFAULT)$", message = "Loại mở khóa không hợp lệ")
-    @Builder.Default
-    private String unlockType = "STARS";
-
+    @jakarta.validation.constraints.NotNull(message = "Giá sao không được để trống")
     @jakarta.validation.constraints.Min(value = 0, message = "Giá trị mở khóa phải lớn hơn hoặc bằng 0")
+    @io.swagger.v3.oas.annotations.media.Schema(requiredMode = io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED)
     @Builder.Default
-    private Integer unlockValue = 0;
+    private Integer starPrice = 0;
 
     @NotBlank(message = "Trạng thái không được để trống")
     @Pattern(regexp = "^(ACTIVE|INACTIVE)$", message = "Trạng thái phải là ACTIVE hoặc INACTIVE")

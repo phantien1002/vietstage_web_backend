@@ -84,7 +84,12 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 // Đặt JWT filter trước UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                
+                // Đặt UsageSessionFilter sau JwtAuthenticationFilter để lấy được SecurityContext
+                .addFilterAfter(new com.example.vietstage_web_be.security.UsageSessionFilter(
+                        http.getSharedObject(org.springframework.context.ApplicationContext.class).getBean(com.example.vietstage_web_be.service.IUsageSessionService.class)
+                ), JwtAuthenticationFilter.class);
 
         return http.build();
     }

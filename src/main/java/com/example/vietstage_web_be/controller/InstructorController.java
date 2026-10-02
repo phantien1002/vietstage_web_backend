@@ -31,12 +31,14 @@ public class InstructorController {
     @Operation(summary = "Lấy danh sách Học viên", description = "API lấy danh sách các học viên mà Giảng viên hiện tại được phép theo dõi.")
     public ResponseEntity<ApiResponse<Page<LearnerForInstructorResponse>>> getLearnersForInstructor(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) Long instrumentId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search) {
         
-        Pageable pageable = PageRequest.of(page, size);
-        Page<LearnerForInstructorResponse> result = instructorService.getLearnersForInstructor(userDetails.getUser().getId(), search, pageable);
+        int actualSize = Math.min(Math.max(size, 1), 1000);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), actualSize);
+        Page<LearnerForInstructorResponse> result = instructorService.getLearnersForInstructor(instrumentId, search, pageable);
         
         return ResponseEntity.ok(
             ApiResponse.<Page<LearnerForInstructorResponse>>builder()

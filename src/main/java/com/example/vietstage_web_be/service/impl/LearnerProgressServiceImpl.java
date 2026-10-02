@@ -179,24 +179,217 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "lesson not found with id: " + lessonId));
 
-        if (lesson.getCreatedBy() != null && !lesson.getCreatedBy().equals(instructorId)) {
-            throw new AppException(ErrorCode.INSTRUCTOR_FORBIDDEN);
-        }
-
         Optional<LessonCompletion> completionsOptional = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId);
 
         Integer PracticeAttempt = practiceAttemptRepository.countAttemptsByLessonAndLearner(lessonId, learnerId);
         Double bestScore = practiceAttemptRepository.findBestScoreByLessonAndLearner(lessonId, learnerId);
         Integer quizAttempt = quizAttemptRepository.countQuizAttemptsByLessonAndLearner(lessonId, learnerId);
 
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId).orElse(null);
+        boolean isUnlocked = false;
+        if (profile != null && Boolean.TRUE.equals(profile.getHasFullAccess())) {
+            isUnlocked = true;
+        } else {
+            isUnlocked = checkIsUnlocked(lesson, learnerId);
+        }
+
+        String learningStatus = completionsOptional.map(LessonCompletion::getStatus).orElse("NOT_STARTED");
+        if ("LOCKED".equals(learningStatus)) {
+            learningStatus = "NOT_STARTED";
+        }
+        if (!isUnlocked) {
+            learningStatus = "LOCKED";
+        }
+
         return InstructorLearnerProgressResponse.builder()
                 .lessonId(lessonId)
                 .learnerId(learnerId)
+                .isUnlocked(isUnlocked)
+                .learningStatus(learningStatus)
                 .stars(completionsOptional.map(LessonCompletion::getStars).orElse(0))
                 .completed(completionsOptional.map(LessonCompletion::getCompleted).orElse(false))
                 .totalPracticeAttempts(PracticeAttempt != null ? PracticeAttempt : 0)
                 .bestPracticeScore(bestScore !=  null ? bestScore : 0.0)
                 .totalQuizAttempts(quizAttempt != null ? quizAttempt : 0)
+                .build();
+    }
+
+    @Override
+    public com.example.vietstage_web_be.dto.response.LessonAccessResponse getLessonAccess(Long learnerId, Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found: " + lessonId));
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        
+        Optional<LessonCompletion> completionOpt = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId);
+        String learningStatus = completionOpt.map(LessonCompletion::getStatus).orElse("NOT_STARTED");
+        
+        if ("LOCKED".equals(learningStatus)) {
+            learningStatus = "NOT_STARTED"; // Re-evaluate logic below
+        }
+
+        boolean isUnlocked = Boolean.TRUE.equals(profile.getHasFullAccess());
+        if (!isUnlocked) {
+            isUnlocked = checkIsUnlocked(lesson, learnerId);
+        }
+
+        return com.example.vietstage_web_be.dto.response.LessonAccessResponse.builder()
+                .isUnlocked(isUnlocked)
+                .learningStatus(isUnlocked ? learningStatus : "LOCKED")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public com.example.vietstage_web_be.dto.response.LessonAccessResponse startLesson(Long learnerId, Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found: " + lessonId));
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        
+        boolean isUnlocked = Boolean.TRUE.equals(profile.getHasFullAccess()) || checkIsUnlocked(lesson, learnerId);
+        if (!isUnlocked) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Lesson is locked");
+        }
+
+        LessonCompletion completion = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId)
+                .orElse(LessonCompletion.builder()
+                        .lesson(lesson)
+                        .learner(profile.getUser())
+                        .stars(0)
+                        .build());
+
+        if (completion.getStatus() == null || "LOCKED".equals(completion.getStatus()) || "NOT_STARTED".equals(completion.getStatus())) {
+            completion.setStatus("IN_PROGRESS");
+            completion.setStartedAt(new java.util.Date());
+            lessonCompletionRepository.save(completion);
+        }
+
+        return com.example.vietstage_web_be.dto.response.LessonAccessResponse.builder()
+                .isUnlocked(true)
+                .learningStatus(completion.getStatus())
+                .build();
+    }
+
+    private boolean checkIsUnlocked(Lesson lesson, Long learnerId) {
+        if (lesson.getOrderIndex() == null || lesson.getOrderIndex() <= 1) {
+            return true;
+        }
+        
+        Optional<Lesson> prevLessonOpt = lessonRepository.findAll().stream()
+                .filter(l -> l.getInstrument().getId().equals(lesson.getInstrument().getId()) 
+                          && l.getOrderIndex() != null 
+                          && l.getOrderIndex() < lesson.getOrderIndex())
+                .max(java.util.Comparator.comparing(Lesson::getOrderIndex));
+
+        if (prevLessonOpt.isEmpty()) {
+            return true; // No previous lesson means it's the first one practically
+        }
+
+        Lesson prevLesson = prevLessonOpt.get();
+        Optional<LessonCompletion> prevCompletion = lessonCompletionRepository.findByLessonIdAndLearnerId(prevLesson.getId(), learnerId);
+
+        return prevCompletion.isPresent() && "COMPLETED".equals(prevCompletion.get().getStatus());
+    }
+
+    @Override
+    public com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse getCourseProgress(Long learnerId) {
+        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        
+        boolean hasFullAccess = Boolean.TRUE.equals(profile.getHasFullAccess());
+        
+        List<Lesson> allLessons = lessonRepository.findAll();
+        List<LessonCompletion> completions = lessonCompletionRepository.findByLearnerId(learnerId);
+        
+        java.util.Map<Long, LessonCompletion> completionMap = new java.util.HashMap<>();
+        for (LessonCompletion c : completions) {
+            completionMap.put(c.getLesson().getId(), c);
+        }
+        
+        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO> lessonDtos = new java.util.ArrayList<>();
+        
+        java.util.Map<Long, Integer> levelEarnedStars = new java.util.HashMap<>();
+        java.util.Map<Long, Integer> levelTotalStars = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> levelUnlocked = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> levelAnyStarted = new java.util.HashMap<>();
+        java.util.Map<Long, Boolean> levelAllCompleted = new java.util.HashMap<>();
+        
+        for (Lesson lesson : allLessons) {
+            if (lesson.getSkillLevel() != null) {
+                Long lvlId = lesson.getSkillLevel().getId();
+                levelEarnedStars.putIfAbsent(lvlId, 0);
+                levelTotalStars.putIfAbsent(lvlId, 0);
+                levelUnlocked.putIfAbsent(lvlId, false);
+                levelAnyStarted.putIfAbsent(lvlId, false);
+                levelAllCompleted.putIfAbsent(lvlId, true);
+            }
+        }
+        
+        for (Lesson lesson : allLessons) {
+            LessonCompletion completion = completionMap.get(lesson.getId());
+            String status = completion != null && completion.getStatus() != null ? completion.getStatus() : "NOT_STARTED";
+            
+            if ("LOCKED".equals(status)) {
+                status = "NOT_STARTED";
+            }
+            
+            boolean isUnlocked = hasFullAccess || checkIsUnlocked(lesson, learnerId);
+            String finalStatus = isUnlocked ? status : "LOCKED";
+            int stars = completion != null && completion.getStars() != null ? completion.getStars() : 0;
+            
+            lessonDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO.builder()
+                    .lessonId(lesson.getId())
+                    .isUnlocked(isUnlocked)
+                    .learningStatus(finalStatus)
+                    .completed(completion != null ? Boolean.TRUE.equals(completion.getCompleted()) : false)
+                    .completedAt(completion != null ? completion.getCompletedAt() : null)
+                    .lessonStars(stars)
+                    .highestScore(completion != null ? completion.getBestScore() : null)
+                    .build());
+                    
+            if (lesson.getSkillLevel() != null) {
+                Long lvlId = lesson.getSkillLevel().getId();
+                levelTotalStars.put(lvlId, levelTotalStars.get(lvlId) + 3); // Max 3 stars per lesson
+                levelEarnedStars.put(lvlId, levelEarnedStars.get(lvlId) + stars);
+                
+                if (isUnlocked) {
+                    levelUnlocked.put(lvlId, true);
+                }
+                if ("IN_PROGRESS".equals(finalStatus) || "COMPLETED".equals(finalStatus)) {
+                    levelAnyStarted.put(lvlId, true);
+                }
+                if (!"COMPLETED".equals(finalStatus)) {
+                    levelAllCompleted.put(lvlId, false);
+                }
+            }
+        }
+        
+        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO> levelDtos = new java.util.ArrayList<>();
+        for (Long lvlId : levelTotalStars.keySet()) {
+            String lvlStatus = "LOCKED";
+            if (levelUnlocked.get(lvlId)) {
+                if (levelAllCompleted.get(lvlId)) {
+                    lvlStatus = "COMPLETED";
+                } else if (levelAnyStarted.get(lvlId)) {
+                    lvlStatus = "IN_PROGRESS";
+                } else {
+                    lvlStatus = "NOT_STARTED";
+                }
+            }
+            
+            levelDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO.builder()
+                    .levelId(lvlId)
+                    .isUnlocked(levelUnlocked.get(lvlId))
+                    .learningStatus(lvlStatus)
+                    .earnedStars(levelEarnedStars.get(lvlId))
+                    .totalStars(levelTotalStars.get(lvlId))
+                    .build());
+        }
+        
+        return com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.builder()
+                .lessons(lessonDtos)
+                .levels(levelDtos)
                 .build();
     }
 }

@@ -54,6 +54,9 @@ public class MinigameServiceImpl implements IMinigameService {
             throw new AppException(ErrorCode.BAD_REQUEST, "Mini Game đang tạm thời bị tắt");
         }
         List<MinigameChallenge> challenges = challengeRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+        if (isLearner(requester)) {
+            challenges = challenges.stream().filter(m -> "ACTIVE".equals(m.getStatus())).collect(Collectors.toList());
+        }
         return challenges.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -77,6 +80,7 @@ public class MinigameServiceImpl implements IMinigameService {
                 .difficulty(request.getDifficulty())
                 .maxScore(request.getMaxScore())
                 .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -103,6 +107,9 @@ public class MinigameServiceImpl implements IMinigameService {
         challenge.setDifficulty(request.getDifficulty());
         challenge.setMaxScore(request.getMaxScore());
         challenge.setOrderIndex(request.getOrderIndex());
+        if (request.getStatus() != null) {
+            challenge.setStatus(request.getStatus());
+        }
 
         challenge = challengeRepository.save(challenge);
         return mapToResponse(challenge);
@@ -114,7 +121,13 @@ public class MinigameServiceImpl implements IMinigameService {
         MinigameChallenge challenge = challengeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
         validateLessonOwnership(actor, challenge.getLesson());
-        challengeRepository.delete(challenge);
+        
+        if (challenge.getAttempts() != null && !challenge.getAttempts().isEmpty()) {
+            challenge.setStatus("ARCHIVED");
+            challengeRepository.save(challenge);
+        } else {
+            challengeRepository.delete(challenge);
+        }
     }
 
     @Override
@@ -275,8 +288,54 @@ public class MinigameServiceImpl implements IMinigameService {
         try {
             JsonNode root = OBJECT_MAPPER.readTree(challenge.getContentJson());
             int timeLimitSeconds = root.path("time_limit_sec").asInt(0);
-            if (timeLimitSeconds > 0 && java.time.Duration.between(request.getStartedAt(), request.getCompletedAt()).getSeconds() > timeLimitSeconds) {
+            if (timeLimitSeconds > 0 && java.time.Duration.between(request.getStartedAt(), request.getCompletedAt()).getSeconds() > timeLimitSeconds + 5) { // 5s buffer
                 throw new AppException(ErrorCode.BAD_REQUEST, "Thời gian hoàn thành đã vượt giới hạn của Mini Game");
+            }
+            
+            // XÁC MINH ĐIỂM SƠ BỘ TỪ DỮ LIỆU
+            if (request.getPlayData() == null || request.getPlayData().trim().isEmpty()) {
+                request.setScore(0); // Bắt buộc có playData mới được điểm
+            } else {
+                JsonNode playNode = OBJECT_MAPPER.readTree(request.getPlayData());
+                if ("RHYTHM_MATCH".equals(challenge.getChallengeType())) {
+                    int totalTargets = playNode.path("totalTargets").asInt(0);
+                    int hits = playNode.path("hits").asInt(0);
+                    double accuracy = playNode.path("accuracy").asDouble(0.0);
+                    
+                    int actualBeats = 0;
+                    JsonNode rounds = root.path("rounds");
+                    if (rounds.isArray() && rounds.size() > 0) {
+                        for (JsonNode roundNode : rounds) {
+                            actualBeats += roundNode.path("beats").size();
+                        }
+                    } else {
+                        actualBeats = root.path("beats").size();
+                    }
+                    
+                    if (totalTargets > 0 && totalTargets != actualBeats) {
+                        // Cấu hình app có thể đếm khác, tạm cho phép +- 10% nếu app có logic khác
+                        if (Math.abs(totalTargets - actualBeats) > (actualBeats * 0.1) + 2) {
+                            throw new AppException(ErrorCode.BAD_REQUEST, "Số mục tiêu (totalTargets) không khớp cấu hình");
+                        }
+                    }
+                    if (hits > totalTargets && totalTargets > 0) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Số hits không được lớn hơn totalTargets");
+                    }
+                    
+                    // Điểm không được cao hơn tỷ lệ hits/totalTargets
+                    if (totalTargets > 0) {
+                        int expectedMaxScore = (int) Math.round((double) challenge.getMaxScore() * hits / totalTargets);
+                        if (request.getScore() > expectedMaxScore + 5) {
+                            throw new AppException(ErrorCode.BAD_REQUEST, "Điểm số không hợp lệ với kết quả chơi (vượt quá mức cho phép)");
+                        }
+                    }
+                } else if ("MELODY_COMPLETE".equals(challenge.getChallengeType())) {
+                    boolean isCorrect = playNode.path("isCorrect").asBoolean(false);
+                    int expectedScore = isCorrect ? challenge.getMaxScore() : 0;
+                    if (request.getScore() != expectedScore) {
+                        throw new AppException(ErrorCode.BAD_REQUEST, "Điểm không khớp với kết quả chơi");
+                    }
+                }
             }
         } catch (AppException exception) {
             throw exception;
@@ -294,6 +353,7 @@ public class MinigameServiceImpl implements IMinigameService {
                 .maxScore(challenge.getMaxScore())
                 .orderIndex(challenge.getOrderIndex())
                 .contentJson(challenge.getContentJson())
+                .status(challenge.getStatus())
                 .build();
     }
 

@@ -44,6 +44,18 @@ public class Exercise {
     @JoinColumn(name = "reference_asset_id")
     private MediaAsset referenceAsset;
 
+    @Column(name = "exercise_type")
+    private String exerciseType;
+
+    @Column(name = "practice_mode")
+    private String practiceMode;
+
+    @Column(name = "config_json", columnDefinition = "TEXT")
+    private String configJson;
+
+    @Column(name = "schema_version")
+    private String schemaVersion;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL)
     private List<PracticeAttempt> practiceAttempts;
 }

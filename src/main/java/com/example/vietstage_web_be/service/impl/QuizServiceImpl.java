@@ -49,6 +49,10 @@ public class QuizServiceImpl implements IQuizService {
     public List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser) {
         List<Quiz> quizzes = quizRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
         
+        if (currentUser != null && currentUser.getRole() != null && "LEARNER".equalsIgnoreCase(currentUser.getRole().getName())) {
+            quizzes = quizzes.stream().filter(q -> "ACTIVE".equals(q.getStatus())).collect(Collectors.toList());
+        }
+
         return quizzes.stream().map(quiz -> {
             QuizResponse.QuizResponseBuilder builder = QuizResponse.builder()
                     .id(quiz.getId())
@@ -59,6 +63,7 @@ public class QuizServiceImpl implements IQuizService {
                     .question(quiz.getQuestion())
                     .options(quiz.getOptions())
                     .orderIndex(quiz.getOrderIndex())
+                    .status(quiz.getStatus())
                     // Answers are authoring data. A learner receives it only after submitting.
                     .correctAnswer(canViewCorrectAnswer(currentUser) ? quiz.getCorrectAnswer() : null);
             
@@ -67,11 +72,13 @@ public class QuizServiceImpl implements IQuizService {
     }
 
     @Override
-    public QuizResponse createQuiz(Long lessonId, QuizRequest request) {
+    public QuizResponse createQuiz(User actor, Long lessonId, QuizRequest request) {
         validateQuizRequest(request);
         
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        validateOwnership(actor, lesson);
 
         Quiz quiz = Quiz.builder()
                 .lesson(lesson)
@@ -83,6 +90,7 @@ public class QuizServiceImpl implements IQuizService {
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
                 .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -98,15 +106,18 @@ public class QuizServiceImpl implements IQuizService {
                 .options(quiz.getOptions())
                 .correctAnswer(quiz.getCorrectAnswer())
                 .orderIndex(quiz.getOrderIndex())
+                .status(quiz.getStatus())
                 .build();
     }
 
     @Override
-    public QuizResponse updateQuiz(Long id, QuizRequest request) {
+    public QuizResponse updateQuiz(User actor, Long id, QuizRequest request) {
         validateQuizRequest(request);
         
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND)); 
+
+        validateOwnership(actor, quiz.getLesson());
 
         quiz.setTitle(request.getTitle());
         quiz.setQuestionType(request.getQuestionType());
@@ -116,6 +127,9 @@ public class QuizServiceImpl implements IQuizService {
         quiz.setOptions(request.getOptions());
         quiz.setCorrectAnswer(request.getCorrectAnswer());
         quiz.setOrderIndex(request.getOrderIndex());
+        if (request.getStatus() != null) {
+            quiz.setStatus(request.getStatus());
+        }
 
         quiz = quizRepository.save(quiz);
 
@@ -129,15 +143,23 @@ public class QuizServiceImpl implements IQuizService {
                 .options(quiz.getOptions())
                 .correctAnswer(quiz.getCorrectAnswer())
                 .orderIndex(quiz.getOrderIndex())
+                .status(quiz.getStatus())
                 .build();
     }
 
     @Override
-    public void deleteQuiz(Long id) {
-        if (!quizRepository.existsById(id)) {
-            throw new AppException(ErrorCode.QUIZ_NOT_FOUND);
+    public void deleteQuiz(User actor, Long id) {
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
+
+        validateOwnership(actor, quiz.getLesson());
+
+        if (quiz.getAttempts() != null && !quiz.getAttempts().isEmpty()) {
+            quiz.setStatus("ARCHIVED");
+            quizRepository.save(quiz);
+        } else {
+            quizRepository.delete(quiz);
         }
-        quizRepository.deleteById(id);
     }
 
     @Override
@@ -306,6 +328,15 @@ public class QuizServiceImpl implements IQuizService {
         if (user == null || user.getRole() == null || user.getRole().getName() == null) return false;
         String role = user.getRole().getName();
         return "INSTRUCTOR".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role);
+    }
+
+    private void validateOwnership(User actor, Lesson lesson) {
+        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getName())) {
+            return;
+        }
+        if (actor == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
+        }
     }
     
     private void validateQuizRequest(QuizRequest request) {

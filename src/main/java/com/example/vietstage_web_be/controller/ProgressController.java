@@ -101,7 +101,7 @@ public class ProgressController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
     })
-    public ResponseEntity<ApiResponse<PageResponse<PracticeAttemptDetailResponse>>> getPracticeAttempts(
+    public ResponseEntity<ApiResponse<?>> getPracticeAttempts(
             @AuthenticationPrincipal(expression = "user") User currentUser,
             @RequestParam(required = false) Long learnerId,
             @RequestParam(required = false) Long lessonId,
@@ -124,7 +124,7 @@ public class ProgressController {
 
         if (groupBy != null && !groupBy.isBlank()) {
             List<PracticeAttemptGroupedResponse> groupedResponses = instructorService.getGroupedPracticeAttemptDetail(currentUser.getId(), filterRequest);
-            return (ResponseEntity) ResponseEntity.ok(ApiResponse.<List<PracticeAttemptGroupedResponse>>builder()
+            return ResponseEntity.ok(ApiResponse.<List<PracticeAttemptGroupedResponse>>builder()
                     .message("Get grouped attempts successfully")
                     .data(groupedResponses)
                     .build());

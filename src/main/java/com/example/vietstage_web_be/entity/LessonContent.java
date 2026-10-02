@@ -26,4 +26,17 @@ public class LessonContent {
 
     @Column(name = "order_index")
     private Integer orderIndex;
+
+    @Column(name = "content_type")
+    private String contentType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "asset_id")
+    private MediaAsset asset;
+
+    @Column(name = "payload_json", columnDefinition = "TEXT")
+    private String payloadJson;
+
+    @Column(name = "schema_version")
+    private String schemaVersion;
 }

@@ -9,9 +9,9 @@ public class LearnerCosmeticResponse {
     private Long id;
     private String name;
     private String itemType;
-    private String unlockType;
-    private Integer unlockValue;
+    private Integer starPrice;
     private String assetUrl;
     @com.fasterxml.jackson.annotation.JsonProperty("isEquipped")
     private Boolean isEquipped;
+    private String status;
 }

@@ -130,10 +130,10 @@ public class InstructorServiceImpl implements IInstructorService {
     }
 
     @Override
-    public Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instructorId, String search, Pageable pageable) {
-        Page<User> learners = userRepository.findLearnersForInstructor(instructorId, search, pageable);
+    public Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instrumentId, String search, Pageable pageable) {
+        Page<User> learners = userRepository.findActiveLearnersByInstrument(instrumentId, search, pageable);
         return learners.map(user -> {
-            String instrumentName = "N/A"; // favoriteInstrument is not mapped
+            String instrumentName = instrumentId != null ? "Selected Instrument" : "All";
             return com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse.builder()
                     .id(user.getId())
                     .fullName(user.getFullName())

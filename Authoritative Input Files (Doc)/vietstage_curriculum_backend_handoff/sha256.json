@@ -1,0 +1,42 @@
+﻿[
+    {
+        "Path":  "README.md",
+        "Hash":  "304CD27506D59D8F987A6E42A445F8C524F906E4BFAD9632567F5C6D5DF7B61C"
+    },
+    {
+        "Path":  "media\\DanBauDoan12Bai1.ogv",
+        "Hash":  "73665884FC2AB771392CE041993B3521B31993D501196A623E4E23D5DDCFA323"
+    },
+    {
+        "Path":  "media\\DT_LV1_B1.ogv",
+        "Hash":  "766BDAB4A9414322D1404B8742F3553D26E08D8929741F296824463BC2EA2704"
+    },
+    {
+        "Path":  "media\\intro1.ogv",
+        "Hash":  "40249AA50CFB70D148EC1D465EADE3E83BC0EEB5BF9EFF44BDBBA811B2021359"
+    },
+    {
+        "Path":  "media\\intro2.ogv",
+        "Hash":  "021ADD0EC9B80AF659110B3D819E2D4794A7DE2DDB933F84443E0E7961BE7EF1"
+    },
+    {
+        "Path":  "media\\intro3.ogv",
+        "Hash":  "D047C9A164A76086320A618E7BD5BFD6B6054AB783AAE328FCFE6B4A6AFE50C8"
+    },
+    {
+        "Path":  "scripts\\DanTranhBundledLessonData.gd",
+        "Hash":  "ED74B1EBA7B685CAC7B67D5CC6FF697755B2AF91AA154788296B610BD84BB3EA"
+    },
+    {
+        "Path":  "scripts\\DanTranhCourseData.gd",
+        "Hash":  "45A7CE3D768FDADB6B3AF9AD7AE994AC0FFE71F8ABEC3A2697D0BE1172A7F8B7"
+    },
+    {
+        "Path":  "scripts\\SaoTrucBundledLessonData.gd",
+        "Hash":  "6AA34794F57429CE5083F86FC61878E6D2A1AE7192F19130391A6E81BC67AD26"
+    },
+    {
+        "Path":  "scripts\\SaoTrucCourseData.gd",
+        "Hash":  "FAC1770EF5BE05C7320E8674BE8981D2BA52D40A54186A5A128C5345A308EE04"
+    }
+]

@@ -8,6 +8,7 @@ import lombok.Data;
 public class MinigameChallengeResponse {
     private Long id;
     private String title;
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"RHYTHM_MATCH", "MELODY_COMPLETE"})
     private String challengeType;
     private String difficulty;
     private Integer maxScore;
@@ -15,4 +16,7 @@ public class MinigameChallengeResponse {
     
     // We omit referenceAssetId and just return contentJson as specified in my plan
     private String contentJson;
+    
+    @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ACTIVE", "INACTIVE", "ARCHIVED"})
+    private String status;
 }

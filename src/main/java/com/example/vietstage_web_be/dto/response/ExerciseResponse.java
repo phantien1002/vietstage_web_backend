@@ -23,4 +23,6 @@ public class ExerciseResponse {
     private Double passThreshold;
 
     private Integer orderIndex;
+
+    private String configJson;
 }

@@ -21,7 +21,7 @@ public class Lesson {
     @Column(name = "lesson_id", nullable = false)
     private Long id;
 
-    @Column(name = "lesson_code", unique = true)
+    @Column(name = "lesson_code", unique = true, nullable = false)
     private String lessonCode;
 
     @ManyToOne
@@ -41,8 +41,37 @@ public class Lesson {
     @Column(name = "technical_notes", columnDefinition = "TEXT")
     private String technicalNotes;
 
-    @Column(name = "status")
-    private String status;
+    // --- New Fields based on Handoff ---
+
+    @Column(name = "display_number", nullable = false, columnDefinition = "varchar(255) default ''")
+    private String displayNumber = ""; // Default empty if missing
+
+    @Column(name = "legacy_level", nullable = false, columnDefinition = "integer default 0")
+    private Integer legacyLevel = 0; // Default 0
+
+    @Column(name = "in_current_roadmap", nullable = false, columnDefinition = "boolean default false")
+    private Boolean inCurrentRoadmap = false;
+
+    @Column(name = "approval_status", nullable = false, columnDefinition = "varchar(255) default 'DRAFT'")
+    private String approvalStatus = "DRAFT";
+
+    @Column(name = "is_visible", nullable = false, columnDefinition = "boolean default false")
+    private Boolean isVisible = false;
+
+    @Column(name = "hidden_at")
+    private LocalDateTime hiddenAt;
+
+    @Column(name = "hidden_reason")
+    private String hiddenReason;
+
+    @Column(name = "revision", nullable = false, columnDefinition = "integer default 1")
+    private Integer revision = 1;
+
+    // Store raw JSON as TEXT or JSONB. Using jsonb for PostgreSQL.
+    @Column(name = "source_snapshot", columnDefinition = "jsonb")
+    private String sourceSnapshot;
+
+    // -----------------------------------
 
     @Column(name = "order_index")
     private Integer orderIndex;
@@ -65,19 +94,18 @@ public class Lesson {
     )
     private Set<Technique> techniques;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<LessonContent> lessonContents;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<Exercise> exercises;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<Quiz> quizzes;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<MinigameChallenge> minigameChallenges;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL)
     private List<MediaAsset> mediaAssets;
 }
-

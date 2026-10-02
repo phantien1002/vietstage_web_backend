@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ActivityHistoryItemResponse {
     private String eventId;
+    private Long attemptId;
     private String type;
     private Long lessonId;
     private String lessonTitle;

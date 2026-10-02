@@ -31,10 +31,23 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT lc.learner FROM LessonCompletion lc WHERE " +
            "lc.lesson.createdBy.id = :instructorId AND lc.learner.role.name = 'LEARNER' AND " +
+           "(lc.learner.userCode IS NULL OR lc.learner.userCode NOT LIKE 'LNR_MOCK_%') AND " +
            "(:search IS NULL OR :search = '' OR LOWER(lc.learner.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(lc.learner.email) LIKE LOWER(CONCAT('%', :search, '%')))")
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"role", "learnerProfile"})
     org.springframework.data.domain.Page<User> findLearnersForInstructor(
         @org.springframework.data.repository.query.Param("instructorId") Long instructorId, 
+        @org.springframework.data.repository.query.Param("search") String search, 
+        org.springframework.data.domain.Pageable pageable
+    );
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u " +
+           "WHERE u.role.name = 'LEARNER' AND u.active = true AND " +
+           "(u.userCode IS NULL OR u.userCode NOT LIKE 'LNR_MOCK_%') AND " +
+           "(:instrumentId IS NULL OR EXISTS (SELECT 1 FROM LessonCompletion lc WHERE lc.learner = u AND lc.lesson.instrument.id = :instrumentId) OR EXISTS (SELECT 1 FROM PracticeAttempt pa WHERE pa.learner = u AND pa.exercise.lesson.instrument.id = :instrumentId)) AND " +
+           "(:search IS NULL OR :search = '' OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"role", "learnerProfile"})
+    org.springframework.data.domain.Page<User> findActiveLearnersByInstrument(
+        @org.springframework.data.repository.query.Param("instrumentId") Long instrumentId, 
         @org.springframework.data.repository.query.Param("search") String search, 
         org.springframework.data.domain.Pageable pageable
     );

@@ -40,7 +40,12 @@ class LessonAssessmentServiceImplTest {
 
     @BeforeEach void setUp() {
         learner = User.builder().id(7L).build();
-        lesson = Lesson.builder().id(11L).status("PUBLISHED").title("Lesson").build();
+        lesson = Lesson.builder()
+                .id(11L)
+                .approvalStatus("APPROVED")
+                .isVisible(true)
+                .title("Lesson")
+                .build();
         LearnerProfile profile = LearnerProfile.builder().userId(7L).totalPoints(0).totalStars(0).spendableStars(0).build();
         when(lessonRepository.findById(11L)).thenReturn(Optional.of(lesson));
         when(learnerProfileRepository.findByUserId(7L)).thenReturn(Optional.of(profile));

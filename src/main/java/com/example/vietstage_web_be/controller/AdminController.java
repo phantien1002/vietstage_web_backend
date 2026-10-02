@@ -27,6 +27,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.example.vietstage_web_be.dto.response.*;
+import com.example.vietstage_web_be.dto.request.*;
+import com.example.vietstage_web_be.service.ICosmeticsService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,10 +44,12 @@ public class AdminController {
     private final IUserService userService;
     private final IAdminUserService adminUserService;
     private final IAdminReviewService adminReviewService;
+    private final ICosmeticsService cosmeticsService;
     private final IAdminDashboardService adminDashboardService;
 
     @Operation(summary = "Lấy thống kê Dashboard Admin", description = "Lấy dữ liệu thống kê theo khoảng thời gian. Lưu ý: Khoảng cách giữa fromDate và toDate tối đa là 365 ngày.")
     @GetMapping("/dashboard")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<DashboardStatsResponse> getDashboard(
             @io.swagger.v3.oas.annotations.Parameter(description = "Ngày bắt đầu (ISO-8601 Date-Time)")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.OffsetDateTime fromDate,
@@ -165,14 +172,16 @@ public class AdminController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long instructorId,
-            @RequestParam(required = false) Long instrumentId) {
+            @RequestParam(required = false) Long instrumentId,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Lọc bài duyệt theo cấp độ")
+            @RequestParam(required = false) Long skillLevelId) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
         
         return ApiResponse.<PageResponse<ReviewItemResponse>>builder()
                 .success(true)
                 .message("Successfully fetched all reviews")
-                .data(adminReviewService.getAllReviews(status, search, instructorId, instrumentId, pageable))
+                .data(adminReviewService.getAllReviews(status, search, instructorId, instrumentId, skillLevelId, pageable))
                 .build();
     }
 
@@ -198,4 +207,6 @@ public class AdminController {
                 .message("Successfully rejected review")
                 .build();
     }
+
+
 }

@@ -11,6 +11,7 @@ import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.ExerciseRepository;
 import com.example.vietstage_web_be.repository.MediaAssetRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
+import com.example.vietstage_web_be.service.impl.LessonServiceImpl;
 import com.example.vietstage_web_be.service.IExerciseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class ExerciseServiceImpl implements IExerciseService {
     private final ExerciseRepository exerciseRepository;
     private final LessonRepository LessonRepository;
     private final MediaAssetRepository  MediaAssetRepository;
+    private final LessonServiceImpl lessonService;
 
     @Override
     public List<ExerciseResponse> getExercisesByLesson(Long lessonId) {
@@ -72,6 +74,7 @@ public class ExerciseServiceImpl implements IExerciseService {
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         checkPermission(lesson, instructor);
+        lessonService.checkLessonEditable(lesson);
         shiftOrderIndexes(lessonId, request.getOrderIndex());
 
         Exercise exercise = new Exercise();
@@ -83,6 +86,9 @@ public class ExerciseServiceImpl implements IExerciseService {
             exercise.setPassThreshold(BigDecimal.valueOf(request.getPassThreshold()));
         }
         exercise.setOrderIndex(request.getOrderIndex());
+        if (request.getConfigJson() != null) {
+            exercise.setConfigJson(request.getConfigJson());
+        }
 
         if (request.getBeatMapAssetId() != null) {
             MediaAsset asset =  MediaAssetRepository.findById(request.getBeatMapAssetId())
@@ -102,6 +108,7 @@ public class ExerciseServiceImpl implements IExerciseService {
                 .orElseThrow(() -> new AppException(ErrorCode.EXERCISE_NOT_FOUND));
 
         checkPermission(exercise.getLesson(), instructor);
+        lessonService.checkLessonEditable(exercise.getLesson());
 
         if (exercise.getOrderIndex() != request.getOrderIndex()) {
              shiftOrderIndexes(exercise.getLesson().getId(), request.getOrderIndex());
@@ -113,6 +120,9 @@ public class ExerciseServiceImpl implements IExerciseService {
             exercise.setPassThreshold(BigDecimal.valueOf(request.getPassThreshold()));
         }
         exercise.setOrderIndex(request.getOrderIndex());
+        if (request.getConfigJson() != null) {
+            exercise.setConfigJson(request.getConfigJson());
+        }
 
         if (request.getBeatMapAssetId() != null) {
             MediaAsset asset =  MediaAssetRepository.findById(request.getBeatMapAssetId())
@@ -134,6 +144,7 @@ public class ExerciseServiceImpl implements IExerciseService {
                 .orElseThrow(() -> new AppException(ErrorCode.EXERCISE_NOT_FOUND));
 
         checkPermission(exercise.getLesson(), instructor);
+        lessonService.checkLessonEditable(exercise.getLesson());
 
         exerciseRepository.delete(exercise);
     }
@@ -159,6 +170,8 @@ public class ExerciseServiceImpl implements IExerciseService {
                 )
                 .orderIndex(
                         exercise.getOrderIndex())
+                .configJson(
+                        exercise.getConfigJson())
                 .build();
 
     }

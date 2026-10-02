@@ -38,11 +38,13 @@ public class LessonController {
             @RequestParam(value = "instrument_id", required = false) Long instrumentId,
             @RequestParam(value = "skill_level_id", required = false) Long skillLevelId,
             @RequestParam(required = false) String status,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Lọc theo trạng thái hiển thị (true/false)")
+            @RequestParam(required = false) Boolean isVisible,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         PageResponse<LessonResponse> data = lessonService.getLessons(
-                search, instrumentId, skillLevelId, status, page, size);
+                search, instrumentId, skillLevelId, status, isVisible, page, size);
 
         return ResponseEntity.ok(ApiResponse.<PageResponse<LessonResponse>>builder()
                 .message("Get Lesson successfully")
@@ -62,6 +64,34 @@ public class LessonController {
         return ResponseEntity.ok(ApiResponse.<LessonResponse>builder()
                 .message("Get lesson detail successfully")
                 .data(data)
+                .build());
+    }
+
+    /**
+     * GET /api/lessons/{id}/contents
+     * PUBLIC — trả danh sách contents của bài học
+     */
+    @GetMapping("/{id}/contents")
+    @Operation(summary = "Lấy nội dung bài học theo thứ tự (PUBLIC)")
+    public ResponseEntity<ApiResponse<java.util.List<LessonResponse.ContentInfo>>> getLessonContents(@PathVariable Long id) {
+        LessonResponse data = lessonService.getLessonById(id);
+        return ResponseEntity.ok(ApiResponse.<java.util.List<LessonResponse.ContentInfo>>builder()
+                .message("Get lesson contents successfully")
+                .data(data.getContents())
+                .build());
+    }
+
+    /**
+     * GET /api/lessons/{id}/assets
+     * PUBLIC — trả danh sách assets của bài học
+     */
+    @GetMapping("/{id}/assets")
+    @Operation(summary = "Lấy danh sách media assets của bài học (PUBLIC)")
+    public ResponseEntity<ApiResponse<java.util.List<LessonResponse.AssetInfo>>> getLessonAssets(@PathVariable Long id) {
+        LessonResponse data = lessonService.getLessonById(id);
+        return ResponseEntity.ok(ApiResponse.<java.util.List<LessonResponse.AssetInfo>>builder()
+                .message("Get lesson assets successfully")
+                .data(data.getMediaAssets())
                 .build());
     }
 

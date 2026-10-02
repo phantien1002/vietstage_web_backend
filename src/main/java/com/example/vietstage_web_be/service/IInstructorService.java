@@ -15,5 +15,5 @@ public interface IInstructorService {
 
     List<PracticeAttemptGroupedResponse> getGroupedPracticeAttemptDetail(Long instructorId, InstructorPracticeAttemptRequest request);
 
-    Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instructorId, String search, org.springframework.data.domain.Pageable pageable);
+    Page<com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse> getLearnersForInstructor(Long instrumentId, String search, org.springframework.data.domain.Pageable pageable);
 }
