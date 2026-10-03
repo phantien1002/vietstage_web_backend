@@ -30,26 +30,7 @@ public class QuizController {
 
     private final IQuizService quizService;
 
-    @GetMapping("/lessons/{id}/quizzes")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<BaseResponse<List<QuizResponse>>> getQuizzesByLesson(
-            @PathVariable Long id,
-            @AuthenticationPrincipal(expression = "user") User currentUser) {
-        
-        List<QuizResponse> response = quizService.getQuizzesByLesson(id, currentUser);
-        return ResponseEntity.ok(BaseResponse.success(response));
-    }
 
-    @PostMapping("/lessons/{id}/quizzes")
-    @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<BaseResponse<QuizResponse>> createQuiz(
-            @PathVariable Long id,
-            @Valid @RequestBody QuizRequest request,
-            @AuthenticationPrincipal(expression = "user") User actor) {
-            
-        QuizResponse response = quizService.createQuiz(actor, id, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
-    }
 
     @PutMapping("/quizzes/{id}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")

@@ -84,6 +84,38 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     @Override
+    public List<MinigameChallengeResponse> getMinigamesByInstrument(Long instrumentId, User requester) {
+        if (isLearner(requester) && !isMinigameEnabled()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "Mini Game đang tạm thời bị tắt");
+        }
+        List<MinigameChallenge> challenges = challengeRepository.findByInstrumentIdOrderByOrderIndexAsc(instrumentId);
+        if (isLearner(requester)) {
+            challenges = challenges.stream().filter(m -> "ACTIVE".equals(m.getStatus())).collect(Collectors.toList());
+        }
+        return challenges.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public MinigameChallengeResponse createMinigameByInstrument(User actor, Long instrumentId, MinigameChallengeRequest request) {
+        validateMinigameRequest(request);
+
+        MinigameChallenge challenge = MinigameChallenge.builder()
+                .title(request.getTitle())
+                .challengeType(request.getChallengeType())
+                .contentJson(prepareContentJson(null, request))
+                .difficulty(request.getDifficulty())
+                .maxScore(request.getMaxScore())
+                .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        challenge = challengeRepository.save(challenge);
+        return mapToResponse(challenge);
+    }
+
+    @Override
     @Transactional
     public MinigameChallengeResponse updateMinigame(User actor, Long id, MinigameChallengeRequest request) {
         validateMinigameRequest(request);

@@ -30,24 +30,7 @@ public class MinigameController {
 
     private final IMinigameService minigameService;
 
-    @GetMapping("/lessons/{id}/minigames")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<BaseResponse<List<MinigameChallengeResponse>>> getMinigamesByLesson(
-            @PathVariable Long id,
-            @AuthenticationPrincipal(expression = "user") User requester) {
-        List<MinigameChallengeResponse> response = minigameService.getMinigamesByLesson(id, requester);
-        return ResponseEntity.ok(BaseResponse.success(response));
-    }
 
-    @PostMapping("/lessons/{id}/minigames")
-    @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<BaseResponse<MinigameChallengeResponse>> createMinigame(
-            @PathVariable Long id,
-            @Valid @RequestBody MinigameChallengeRequest request,
-            @AuthenticationPrincipal(expression = "user") User actor) {
-        MinigameChallengeResponse response = minigameService.createMinigame(actor, id, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(response));
-    }
 
     @PutMapping("/minigames/{id}")
     @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")

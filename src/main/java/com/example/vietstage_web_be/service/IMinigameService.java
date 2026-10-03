@@ -12,7 +12,9 @@ import java.util.List;
 
 public interface IMinigameService {
     List<MinigameChallengeResponse> getMinigamesByLesson(Long lessonId, User requester);
+    List<MinigameChallengeResponse> getMinigamesByInstrument(Long instrumentId, User requester);
     MinigameChallengeResponse createMinigame(User actor, Long lessonId, MinigameChallengeRequest request);
+    MinigameChallengeResponse createMinigameByInstrument(User actor, Long instrumentId, MinigameChallengeRequest request);
     MinigameChallengeResponse updateMinigame(User actor, Long id, MinigameChallengeRequest request);
     void deleteMinigame(User actor, Long id);
     
