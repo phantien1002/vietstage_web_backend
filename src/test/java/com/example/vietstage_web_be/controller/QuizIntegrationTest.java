@@ -11,6 +11,7 @@ import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.QuizRepository;
 import com.example.vietstage_web_be.repository.RoleRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
+import com.example.vietstage_web_be.repository.AuditLogRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ public class QuizIntegrationTest {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
     private User instructor;
     private Lesson lesson;
     private Quiz quiz;
@@ -53,6 +57,7 @@ public class QuizIntegrationTest {
     void setUp() {
         quizRepository.deleteAll();
         lessonRepository.deleteAll();
+        auditLogRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
 
@@ -96,6 +101,7 @@ public class QuizIntegrationTest {
     void tearDown() {
         quizRepository.deleteAll();
         lessonRepository.deleteAll();
+        auditLogRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         SecurityContextHolder.clearContext();
