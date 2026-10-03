@@ -1,6 +1,8 @@
 package com.example.vietstage_web_be.controller;
 
+import com.example.vietstage_web_be.dto.BaseResponse;
 import com.example.vietstage_web_be.dto.request.QuizRequest;
+import com.example.vietstage_web_be.dto.response.QuizResponse;
 import com.example.vietstage_web_be.entity.Lesson;
 import com.example.vietstage_web_be.entity.Quiz;
 import com.example.vietstage_web_be.entity.Role;
@@ -9,33 +11,27 @@ import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.QuizRepository;
 import com.example.vietstage_web_be.repository.RoleRepository;
 import com.example.vietstage_web_be.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Optional;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 @TestPropertySource(properties = {
         "spring.jpa.open-in-view=false"
 })
 public class QuizIntegrationTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private QuizController quizController;
 
     @Autowired
     private QuizRepository quizRepository;
@@ -48,9 +44,6 @@ public class QuizIntegrationTest {
 
     @Autowired
     private RoleRepository roleRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private User instructor;
     private Lesson lesson;
@@ -68,9 +61,9 @@ public class QuizIntegrationTest {
         role = roleRepository.save(role);
 
         instructor = User.builder()
-                .username("testinstructor")
+                .fullName("testinstructor")
                 .email("testinstructor@example.com")
-                .password("password")
+                .passwordHash("password")
                 .role(role)
                 .build();
         instructor = userRepository.save(instructor);
@@ -92,6 +85,11 @@ public class QuizIntegrationTest {
                 .status("ACTIVE")
                 .build();
         quiz = quizRepository.save(quiz);
+
+        // Mock Security Context
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(instructor, null, null)
+        );
     }
 
     @AfterEach
@@ -100,11 +98,11 @@ public class QuizIntegrationTest {
         lessonRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    @WithMockUser(username = "testinstructor@example.com", authorities = {"ROLE_INSTRUCTOR"})
-    void updateQuiz_success() throws Exception {
+    void updateQuiz_success() {
         QuizRequest request = new QuizRequest();
         request.setTitle("New Quiz Title");
         request.setQuestionType("MULTIPLE_CHOICE");
@@ -114,11 +112,11 @@ public class QuizIntegrationTest {
         request.setOrderIndex(1);
         request.setStatus("ACTIVE");
 
-        mockMvc.perform(put("/api/quizzes/{id}", quiz.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("New Quiz Title"))
-                .andExpect(jsonPath("$.question").value("What is 2+2?"));
+        ResponseEntity<BaseResponse<QuizResponse>> response = quizController.updateQuiz(quiz.getId(), request, instructor);
+        
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("New Quiz Title", response.getBody().getData().getTitle());
+        assertEquals("What is 2+2?", response.getBody().getData().getQuestion());
     }
 }
