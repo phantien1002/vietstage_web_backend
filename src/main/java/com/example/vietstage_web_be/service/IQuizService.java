@@ -12,7 +12,9 @@ import java.util.List;
 
 public interface IQuizService {
     List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser);
+    List<QuizResponse> getQuizzesByInstrument(Long instrumentId, User currentUser);
     QuizResponse createQuiz(User actor, Long lessonId, QuizRequest request);
+    QuizResponse createQuizByInstrument(User actor, Long instrumentId, QuizRequest request);
     QuizResponse updateQuiz(User actor, Long id, QuizRequest request);
     void deleteQuiz(User actor, Long id);
     

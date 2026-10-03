@@ -74,8 +74,98 @@ public class QuizServiceImpl implements IQuizService {
     }
 
     @Override
+    public List<QuizResponse> getQuizzesByInstrument(Long instrumentId, User currentUser) {
+        List<Quiz> quizzes = quizRepository.findByInstrumentIdOrderByOrderIndexAsc(instrumentId);
+        
+        if (currentUser != null && currentUser.getRole() != null && "LEARNER".equalsIgnoreCase(currentUser.getRole().getName())) {
+            quizzes = quizzes.stream().filter(q -> "ACTIVE".equals(q.getStatus())).collect(Collectors.toList());
+        }
+
+        return quizzes.stream().map(quiz -> QuizResponse.builder()
+                .id(quiz.getId())
+                .title(quiz.getTitle())
+                .questionType(quiz.getQuestionType())
+                .note(quiz.getNote())
+                .audioUrl(quiz.getAudioUrl())
+                .question(quiz.getQuestion())
+                .options(quiz.getOptions())
+                .orderIndex(quiz.getOrderIndex())
+                .status(quiz.getStatus())
+                .correctAnswer(canViewCorrectAnswer(currentUser) ? quiz.getCorrectAnswer() : null)
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public QuizResponse createQuiz(User actor, Long lessonId, QuizRequest request) {
+        validateQuizRequest(request);
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        validateOwnership(actor, lesson);
+
+        Quiz quiz = Quiz.builder()
+                .lesson(lesson)
+                .title(request.getTitle())
+                .questionType(request.getQuestionType())
+                .note(request.getNote())
+                .audioUrl(request.getAudioUrl())
+                .question(request.getQuestion())
+                .options(request.getOptions())
+                .correctAnswer(request.getCorrectAnswer())
+                .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
+                .build();
+
+        quiz = quizRepository.save(quiz);
+
+        return QuizResponse.builder()
+                .id(quiz.getId())
+                .title(quiz.getTitle())
+                .questionType(quiz.getQuestionType())
+                .note(quiz.getNote())
+                .audioUrl(quiz.getAudioUrl())
+                .question(quiz.getQuestion())
+                .options(quiz.getOptions())
+                .correctAnswer(quiz.getCorrectAnswer())
+                .orderIndex(quiz.getOrderIndex())
+                .status(quiz.getStatus())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public QuizResponse createQuizByInstrument(User actor, Long instrumentId, QuizRequest request) {
+        validateQuizRequest(request);
+
+        Quiz quiz = Quiz.builder()
+                .title(request.getTitle())
+                .questionType(request.getQuestionType())
+                .note(request.getNote())
+                .audioUrl(request.getAudioUrl())
+                .question(request.getQuestion())
+                .options(request.getOptions())
+                .correctAnswer(request.getCorrectAnswer())
+                .orderIndex(request.getOrderIndex())
+                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
+                .build();
+
+        quiz = quizRepository.save(quiz);
+
+        return QuizResponse.builder()
+                .id(quiz.getId())
+                .title(quiz.getTitle())
+                .questionType(quiz.getQuestionType())
+                .note(request.getNote())
+                .audioUrl(request.getAudioUrl())
+                .question(quiz.getQuestion())
+                .options(quiz.getOptions())
+                .correctAnswer(quiz.getCorrectAnswer())
+                .orderIndex(quiz.getOrderIndex())
+                .status(quiz.getStatus())
+                .build();
+    }
         validateQuizRequest(request);
         
         Lesson lesson = lessonRepository.findById(lessonId)

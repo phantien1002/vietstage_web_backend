@@ -21,8 +21,12 @@ public class Quiz {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lesson_id", nullable = false)
+    @JoinColumn(name = "lesson_id", nullable = true)
     private Lesson lesson;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instrument_id", nullable = true)
+    private Instrument instrument;
 
     @Column(name = "title", nullable = false)
     private String title;
