@@ -18,7 +18,7 @@ public class CurriculumSeeder {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @EventListener(ApplicationReadyEvent.class)
+    // DISABLED: @EventListener(ApplicationReadyEvent.class)
     public void seedCurriculum() {
         try {
             log.info("Starting Curriculum Seed (Đàn Tranh & Sáo Trúc)...");

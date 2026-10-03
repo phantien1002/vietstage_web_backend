@@ -45,6 +45,10 @@ public class QuizServiceImpl implements IQuizService {
 
     @Override
     public List<QuizResponse> getQuizzesByLesson(Long lessonId, User currentUser) {
+        if (!lessonRepository.existsById(lessonId)) {
+            throw new AppException(ErrorCode.LESSON_NOT_FOUND);
+        }
+        
         List<Quiz> quizzes = quizRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
         
         if (currentUser != null && currentUser.getRole() != null && "LEARNER".equalsIgnoreCase(currentUser.getRole().getName())) {
