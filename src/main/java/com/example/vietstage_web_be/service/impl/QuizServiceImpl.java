@@ -166,42 +166,7 @@ public class QuizServiceImpl implements IQuizService {
                 .status(quiz.getStatus())
                 .build();
     }
-        validateQuizRequest(request);
-        
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        validateOwnership(actor, lesson);
-
-        Quiz quiz = Quiz.builder()
-                .lesson(lesson)
-                .title(request.getTitle())
-                .questionType(request.getQuestionType())
-                .note(request.getNote())
-                .audioUrl(request.getAudioUrl())
-                .question(request.getQuestion())
-                .options(request.getOptions())
-                .correctAnswer(request.getCorrectAnswer())
-                .orderIndex(request.getOrderIndex())
-                .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        quiz = quizRepository.save(quiz);
-
-        return QuizResponse.builder()
-                .id(quiz.getId())
-                .title(quiz.getTitle())
-                .questionType(quiz.getQuestionType())
-                .note(quiz.getNote())
-                .audioUrl(quiz.getAudioUrl())
-                .question(quiz.getQuestion())
-                .options(quiz.getOptions())
-                .correctAnswer(quiz.getCorrectAnswer())
-                .orderIndex(quiz.getOrderIndex())
-                .status(quiz.getStatus())
-                .build();
-    }
 
     @Override
     @Transactional
