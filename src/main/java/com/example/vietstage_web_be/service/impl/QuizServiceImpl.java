@@ -70,6 +70,7 @@ public class QuizServiceImpl implements IQuizService {
     }
 
     @Override
+    @Transactional
     public QuizResponse createQuiz(User actor, Long lessonId, QuizRequest request) {
         validateQuizRequest(request);
         
@@ -109,6 +110,7 @@ public class QuizServiceImpl implements IQuizService {
     }
 
     @Override
+    @Transactional
     public QuizResponse updateQuiz(User actor, Long id, QuizRequest request) {
         validateQuizRequest(request);
         
@@ -146,6 +148,7 @@ public class QuizServiceImpl implements IQuizService {
     }
 
     @Override
+    @Transactional
     public void deleteQuiz(User actor, Long id) {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
