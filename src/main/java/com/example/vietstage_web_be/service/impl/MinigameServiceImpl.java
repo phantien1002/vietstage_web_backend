@@ -366,7 +366,7 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     private void validateLessonOwnership(User actor, Lesson lesson) {
-        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getRoleName())) {
+        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getName())) {
             return;
         }
         if (actor == null || lesson == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
@@ -375,10 +375,10 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     private void validateChallengeOwnership(User actor, MinigameChallenge challenge) {
-        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getRoleName())) {
+        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getName())) {
             return;
         }
-        if (actor != null && actor.getRole() != null && "LEARNER".equalsIgnoreCase(actor.getRole().getRoleName())) {
+        if (actor != null && actor.getRole() != null && "LEARNER".equalsIgnoreCase(actor.getRole().getName())) {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
         if (challenge.getLesson() != null) {
@@ -386,7 +386,7 @@ public class MinigameServiceImpl implements IMinigameService {
         } else if (challenge.getInstrument() != null) {
             // Instructor managing instrument-level minigames.
             // Currently allowed for all INSTRUCTORs.
-            if (actor == null || !"INSTRUCTOR".equalsIgnoreCase(actor.getRole().getRoleName())) {
+            if (actor == null || !"INSTRUCTOR".equalsIgnoreCase(actor.getRole().getName())) {
                 throw new AppException(ErrorCode.FORBIDDEN);
             }
         } else {
