@@ -24,7 +24,7 @@ public class DashboardRepository {
                 JOIN roles r ON u.role_id = r.role_id
                 WHERE r.role_name = 'LEARNER' 
                 AND u.user_id IN (
-                    SELECT learner_user_id FROM practice_attempts WHERE completed_at >= ? AND completed_at <= ?
+                    SELECT learner_id FROM practice_attempts WHERE completed_at >= ? AND completed_at <= ?
                     UNION
                     SELECT user_id FROM usage_sessions WHERE started_at >= ? AND started_at <= ?
                 )

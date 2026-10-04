@@ -78,6 +78,8 @@ public class DemoDataSeeder implements CommandLineRunner {
             // Seed practice sessions and attempts for instrument 2 (Sao Truc)
             seedAttemptForInstrument(uid, 2L);
             
+            seedUsageSessions(uid, email);
+            
             log.info("DemoDataSeeder completed for {}", email);
         }
         
@@ -119,27 +121,50 @@ public class DemoDataSeeder implements CommandLineRunner {
                 Integer.class, uid, exId);
             
             if (count != null && count == 0) {
-                // Insert session
-                jdbcTemplate.update(
-                    "INSERT INTO practice_sessions (learner_id, started_at, ended_at, duration_minutes) VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 30)",
-                    uid
-                );
-                
-                Long sessionId = jdbcTemplate.queryForObject(
-                    "SELECT id FROM practice_sessions WHERE learner_id = ? ORDER BY id DESC LIMIT 1",
-                    Long.class, uid
-                );
-                
-                if (sessionId != null) {
+                int[] daysAgo = {0, 2, 5, 10, 15, 20}; // multiple days in past
+                for (int days : daysAgo) {
+                    // Insert session
                     jdbcTemplate.update(
-                        "INSERT INTO practice_attempts (" +
-                        "client_uuid, learner_id, exercise_id, session_id, started_at, completed_at, created_at, " +
-                        "pitch_score, rhythm_score, total_score, stars, points_earned, sync_status" +
-                        ") VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 100, 100, 100, 3, 50, 'SYNCED')",
-                        UUID.randomUUID().toString(), uid, exId, sessionId
+                        "INSERT INTO practice_sessions (learner_id, started_at, ended_at, duration_minutes) " +
+                        "VALUES (?, CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?), CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?) + INTERVAL '30 minutes', 30)",
+                        uid, days, days
                     );
+                    
+                    Long sessionId = jdbcTemplate.queryForObject(
+                        "SELECT id FROM practice_sessions WHERE learner_id = ? ORDER BY id DESC LIMIT 1",
+                        Long.class, uid
+                    );
+                    
+                    if (sessionId != null) {
+                        jdbcTemplate.update(
+                            "INSERT INTO practice_attempts (" +
+                            "client_uuid, learner_id, exercise_id, session_id, started_at, completed_at, created_at, " +
+                            "pitch_score, rhythm_score, total_score, stars, points_earned, sync_status" +
+                            ") VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?), CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?), CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?), 100, 100, 100, 3, 50, 'SYNCED')",
+                            UUID.randomUUID().toString(), uid, exId, sessionId, days, days, days
+                        );
+                    }
                 }
             }
+        }
+    }
+    
+    private void seedUsageSessions(Long uid, String email) {
+        Integer sessionCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM usage_sessions WHERE user_id = ?", Integer.class, uid
+        );
+        
+        if (sessionCount != null && sessionCount == 0) {
+            // Seed a few past usage sessions for retention and dashboard graphs
+            int[] daysAgo = {0, 1, 2, 5, 7, 10, 15, 20, 30};
+            for (int days : daysAgo) {
+                jdbcTemplate.update(
+                    "INSERT INTO usage_sessions (usage_session_id, user_id, platform, started_at, ended_at) " +
+                    "VALUES (?, ?, 'WEB', CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?), CURRENT_TIMESTAMP - (INTERVAL '1 day' * ?) + INTERVAL '30 minutes')",
+                    UUID.randomUUID(), uid, days, days
+                );
+            }
+            log.info("Seeded usage_sessions for {}", email);
         }
     }
 }
