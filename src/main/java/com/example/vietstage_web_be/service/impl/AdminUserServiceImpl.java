@@ -38,6 +38,7 @@ public class AdminUserServiceImpl implements IAdminUserService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, List<String> roles, String status, String sortBy, String sortDir) {
         if (page < 0) page = 0;
         if (size <= 0) size = 10;
