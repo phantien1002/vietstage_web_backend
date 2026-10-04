@@ -36,8 +36,8 @@ public class DemoDataSeeder implements CommandLineRunner {
             
             // Upsert learner_profile if missing
             jdbcTemplate.execute(
-                "INSERT INTO learner_profiles (user_id, has_full_access, created_at, updated_at, total_stars, spendable_stars) " +
-                "VALUES (" + uid + ", true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0) " +
+                "INSERT INTO learner_profiles (user_id, has_full_access, total_stars, spendable_stars) " +
+                "VALUES (" + uid + ", true, 0, 0) " +
                 "ON CONFLICT (user_id) DO UPDATE SET has_full_access = true"
             );
 
