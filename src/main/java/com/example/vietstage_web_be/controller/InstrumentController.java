@@ -35,27 +35,29 @@ public class InstrumentController {
     private final IMinigameService minigameService;
 
     @PostMapping("/{instrumentId}/quizzes")
+    @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ApiResponse<QuizResponse>> createQuizByInstrument(
-            @AuthenticationPrincipal User actor,
+            @AuthenticationPrincipal(expression = "user") User actor,
             @PathVariable Long instrumentId,
-            @RequestBody QuizRequest request) {
+            @Valid @RequestBody QuizRequest request) {
         QuizResponse response = quizService.createQuizByInstrument(actor, instrumentId, request);
         return ResponseEntity.ok(ApiResponse.<QuizResponse>builder().data(response).build());
     }
 
     @GetMapping("/{instrumentId}/quizzes")
     public ResponseEntity<ApiResponse<List<QuizResponse>>> getQuizzesByInstrument(
-            @AuthenticationPrincipal User currentUser,
+            @AuthenticationPrincipal(expression = "user") User currentUser,
             @PathVariable Long instrumentId) {
         List<QuizResponse> responses = quizService.getQuizzesByInstrument(instrumentId, currentUser);
         return ResponseEntity.ok(ApiResponse.<List<QuizResponse>>builder().data(responses).build());
     }
 
     @PostMapping("/{instrumentId}/minigames")
+    @PreAuthorize("hasAnyAuthority('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ApiResponse<MinigameChallengeResponse>> createMinigameByInstrument(
-            @AuthenticationPrincipal User actor,
+            @AuthenticationPrincipal(expression = "user") User actor,
             @PathVariable Long instrumentId,
-            @RequestBody MinigameChallengeRequest request) {
+            @Valid @RequestBody MinigameChallengeRequest request) {
         MinigameChallengeResponse response = minigameService.createMinigameByInstrument(actor, instrumentId, request);
         return ResponseEntity.ok(ApiResponse.<MinigameChallengeResponse>builder().data(response).build());
     }

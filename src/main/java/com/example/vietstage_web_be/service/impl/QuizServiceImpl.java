@@ -41,6 +41,7 @@ public class QuizServiceImpl implements IQuizService {
     private final ILeaderboardService leaderboardService;
     private final AppConfigRepository appConfigRepository;
     private final LearnerProfileRepository learnerProfileRepository;
+    private final com.example.vietstage_web_be.repository.InstrumentRepository instrumentRepository;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -139,7 +140,11 @@ public class QuizServiceImpl implements IQuizService {
     public QuizResponse createQuizByInstrument(User actor, Long instrumentId, QuizRequest request) {
         validateQuizRequest(request);
 
+        com.example.vietstage_web_be.entity.Instrument instrument = instrumentRepository.findById(instrumentId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND)); // Or a more specific NOT_FOUND error
+
         Quiz quiz = Quiz.builder()
+                .instrument(instrument)
                 .title(request.getTitle())
                 .questionType(request.getQuestionType())
                 .note(request.getNote())
@@ -176,7 +181,7 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND)); 
 
-        validateOwnership(actor, quiz.getLesson());
+        validateOwnership(actor, quiz);
 
         quiz.setTitle(request.getTitle());
         quiz.setQuestionType(request.getQuestionType());
@@ -212,7 +217,7 @@ public class QuizServiceImpl implements IQuizService {
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
 
-        validateOwnership(actor, quiz.getLesson());
+        validateOwnership(actor, quiz);
 
         if (quiz.getAttempts() != null && !quiz.getAttempts().isEmpty()) {
             quiz.setStatus("ARCHIVED");
@@ -357,6 +362,23 @@ public class QuizServiceImpl implements IQuizService {
         }
         if (actor == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
+        }
+    }
+
+    private void validateOwnership(User actor, Quiz quiz) {
+        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getName())) {
+            return;
+        }
+        Lesson lesson = quiz.getLesson();
+        if (lesson != null) {
+            if (actor == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
+                throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
+            }
+        } else {
+            // Independent quiz by instrument
+            if (actor == null || actor.getRole() == null || !"INSTRUCTOR".equalsIgnoreCase(actor.getRole().getName())) {
+                throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS); // Or a specific error
+            }
         }
     }
     
