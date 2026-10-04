@@ -52,7 +52,8 @@ public class Quiz {
     @Column(name = "order_index")
     private Integer orderIndex;
 
-    @Column(name = "created_at")
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
     @Column(name = "status")

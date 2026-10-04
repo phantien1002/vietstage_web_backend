@@ -116,6 +116,7 @@ public class QuizServiceImpl implements IQuizService {
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
                 .orderIndex(request.getOrderIndex())
+                .createdAt(LocalDateTime.now())
                 .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .build();
 
@@ -153,6 +154,7 @@ public class QuizServiceImpl implements IQuizService {
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
                 .orderIndex(request.getOrderIndex())
+                .createdAt(LocalDateTime.now())
                 .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
                 .build();
 
