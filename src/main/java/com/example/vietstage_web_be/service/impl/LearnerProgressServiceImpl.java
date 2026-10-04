@@ -13,6 +13,8 @@ import com.example.vietstage_web_be.repository.LearnerProfileRepository;
 import com.example.vietstage_web_be.repository.LessonRepository;
 import com.example.vietstage_web_be.repository.PracticeAttemptRepository;
 import com.example.vietstage_web_be.repository.QuizAttemptRepository;
+import com.example.vietstage_web_be.repository.UserRepository;
+import com.example.vietstage_web_be.entity.User;
 import com.example.vietstage_web_be.service.ILearnerProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,26 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
     private final PracticeAttemptRepository practiceAttemptRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
+
+    private LearnerProfile getOrCreateProfile(Long learnerId) {
+        return learnerProfileRepository.findByUserId(learnerId)
+                .orElseGet(() -> {
+                    User user = userRepository.findById(learnerId)
+                            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "User not found: " + learnerId));
+                    LearnerProfile newProfile = LearnerProfile.builder()
+                            .user(user)
+                            .totalPracticeSeconds(0L)
+                            .totalStars(0)
+                            .spendableStars(0)
+                            .totalPoints(0)
+                            .currentStreak(0)
+                            .longestStreak(0)
+                            .hasFullAccess(false)
+                            .build();
+                    return learnerProfileRepository.save(newProfile);
+                });
+    }
 
     @Override
     public List<LearnerProgressItemResponse> getLearnerProgress(Long learnerId, Long instrumentId, Long skillLevelId) {
@@ -62,8 +84,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found: " + lessonId));
         
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        LearnerProfile profile = getOrCreateProfile(learnerId);
         
         LessonCompletion completion = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId)
                 .orElse(LessonCompletion.builder()
@@ -150,7 +171,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Integer totalStars = lessonCompletionRepository.sumTotalStarsByLearnerId(learnerId);
         Long completedLessons = lessonCompletionRepository.countCompletedLessonsByLearnerId(learnerId);
 
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId).orElse(null);
+        LearnerProfile profile = getOrCreateProfile(learnerId);
         Integer currentStreak = profile != null ? profile.getCurrentStreak() : 0;
         Integer longestStreak = profile != null ? profile.getLongestStreak() : 0;
         Integer totalPoints = profile != null ? profile.getTotalPoints() : 0;
@@ -178,7 +199,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
         Double bestScore = practiceAttemptRepository.findBestScoreByLessonAndLearner(lessonId, learnerId);
         Integer quizAttempt = quizAttemptRepository.countQuizAttemptsByLessonAndLearner(lessonId, learnerId);
 
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId).orElse(null);
+        LearnerProfile profile = getOrCreateProfile(learnerId);
         boolean isUnlocked = false;
         if (profile != null && Boolean.TRUE.equals(profile.getHasFullAccess())) {
             isUnlocked = true;
@@ -211,8 +232,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
     public com.example.vietstage_web_be.dto.response.LessonAccessResponse getLessonAccess(Long learnerId, Long lessonId) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found: " + lessonId));
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        LearnerProfile profile = getOrCreateProfile(learnerId);
         
         Optional<LessonCompletion> completionOpt = lessonCompletionRepository.findByLessonIdAndLearnerId(lessonId, learnerId);
         String learningStatus = completionOpt.map(LessonCompletion::getStatus).orElse("NOT_STARTED");
@@ -237,8 +257,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
     public com.example.vietstage_web_be.dto.response.LessonAccessResponse startLesson(Long learnerId, Long lessonId) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND, "Lesson not found: " + lessonId));
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        LearnerProfile profile = getOrCreateProfile(learnerId);
         
         boolean isUnlocked = Boolean.TRUE.equals(profile.getHasFullAccess()) || checkIsUnlocked(lesson, learnerId);
         if (!isUnlocked) {
@@ -286,9 +305,9 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
     }
 
     @Override
+    @Transactional
     public com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse getCourseProgress(Long learnerId) {
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+        LearnerProfile profile = getOrCreateProfile(learnerId);
         
         boolean hasFullAccess = Boolean.TRUE.equals(profile.getHasFullAccess());
         

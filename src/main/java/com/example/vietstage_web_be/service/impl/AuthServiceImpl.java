@@ -11,7 +11,9 @@ import com.example.vietstage_web_be.exception.AppException;
 import com.example.vietstage_web_be.exception.ErrorCode;
 import com.example.vietstage_web_be.repository.UserRepository;
 import com.example.vietstage_web_be.repository.RoleRepository;
+import com.example.vietstage_web_be.repository.LearnerProfileRepository;
 import com.example.vietstage_web_be.entity.Role;
+import com.example.vietstage_web_be.entity.LearnerProfile;
 import com.example.vietstage_web_be.security.JwtTokenProvider;
 import com.example.vietstage_web_be.service.IAuthService;
 import com.example.vietstage_web_be.service.IEmailService;
@@ -34,6 +36,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements IAuthService {
     private final UserRepository UserRepository;
     private final RoleRepository RoleRepository;
+    private final LearnerProfileRepository learnerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthSessionService authSessionService;
@@ -101,6 +104,20 @@ public class AuthServiceImpl implements IAuthService {
                 .build();
 
         UserRepository.save(user);
+
+        if (learnerRole.getName().equals("LEARNER")) {
+            LearnerProfile profile = LearnerProfile.builder()
+                    .user(user)
+                    .totalPracticeSeconds(0L)
+                    .totalStars(0)
+                    .spendableStars(0)
+                    .totalPoints(0)
+                    .currentStreak(0)
+                    .longestStreak(0)
+                    .hasFullAccess(false)
+                    .build();
+            learnerProfileRepository.save(profile);
+        }
 
         redisTemplate.delete(REGISTRATION_OTP_PREFIX + request.getEmail());
 
