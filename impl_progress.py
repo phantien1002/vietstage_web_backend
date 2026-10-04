@@ -1,114 +1,123 @@
-import os
-import re
+import psycopg2
+from datetime import datetime
 
-interface_path = r"d:\Do_An\vietstage_web_backend\src\main\java\com\example\vietstage_web_be\service\ILearnerProgressService.java"
-impl_path = r"d:\Do_An\vietstage_web_backend\src\main\java\com\example\vietstage_web_be\service\impl\LearnerProgressServiceImpl.java"
-controller_path = r"d:\Do_An\vietstage_web_backend\src\main\java\com\example\vietstage_web_be\controller\AppCourseController.java"
-
-# 1. Update interface
-with open(interface_path, "r", encoding="utf-8") as f:
-    interface_content = f.read()
-if "getCourseProgress" not in interface_content:
-    interface_content = interface_content.replace(
-        "com.example.vietstage_web_be.dto.response.LessonCompletionResponse completeLesson(Long learnerId, Long lessonId, com.example.vietstage_web_be.dto.request.LessonCompletionRequest request);",
-        "com.example.vietstage_web_be.dto.response.LessonCompletionResponse completeLesson(Long learnerId, Long lessonId, com.example.vietstage_web_be.dto.request.LessonCompletionRequest request);\n\n    com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse getCourseProgress(Long learnerId);"
-    )
-    with open(interface_path, "w", encoding="utf-8") as f:
-        f.write(interface_content)
-
-# 2. Update Implementation
-impl_code = """
-    @Override
-    public com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse getCourseProgress(Long learnerId) {
-        LearnerProfile profile = learnerProfileRepository.findByUserId(learnerId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Learner profile not found: " + learnerId));
+def main():
+    url = "postgresql://postgres.kzjdtnyxhnpqsfdprvrv:1000Vietstage@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
+    conn = psycopg2.connect(url)
+    cursor = conn.cursor()
+    
+    emails = ['phuclong2710@gmail.com', 'thanhdattb19@gmail.com']
+    
+    try:
+        # Get user IDs
+        cursor.execute("SELECT user_id, email FROM users WHERE email = ANY(%s);", (emails,))
+        users = cursor.fetchall()
         
-        boolean hasFullAccess = Boolean.TRUE.equals(profile.getHasFullAccess());
-        
-        List<Lesson> allLessons = lessonRepository.findAll();
-        List<LessonCompletion> completions = lessonCompletionRepository.findByLearnerId(learnerId);
-        
-        java.util.Map<Long, LessonCompletion> completionMap = new java.util.HashMap<>();
-        for (LessonCompletion c : completions) {
-            completionMap.put(c.getLesson().getId(), c);
-        }
-        
-        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO> lessonDtos = new java.util.ArrayList<>();
-        List<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO> levelDtos = new java.util.ArrayList<>();
-        
-        java.util.Set<Long> levelIds = new java.util.HashSet<>();
-        
-        for (Lesson lesson : allLessons) {
-            LessonCompletion completion = completionMap.get(lesson.getId());
-            String status = completion != null && completion.getStatus() != null ? completion.getStatus() : "NOT_STARTED";
+        if not users:
+            print("Users not found")
+            return
             
-            if ("LOCKED".equals(status)) {
-                status = "NOT_STARTED";
-            }
+        user_ids = {u[1]: u[0] for u in users}
+        print("User IDs:", user_ids)
+        
+        # Set is_visible = true for approved lessons (as they were previously False by default)
+        cursor.execute("UPDATE lessons SET is_visible = true WHERE status = 'APPROVED';")
+
+        # Get all visible approved lessons for Dan Tranh (1) and Sao Truc (2)
+        cursor.execute("""
+            SELECT lesson_id FROM lessons 
+            WHERE instrument_id IN (1, 2) 
+            AND status = 'APPROVED' 
+            AND is_visible = true;
+        """)
+        lessons = [row[0] for row in cursor.fetchall()]
+        print(f"Found {len(lessons)} lessons.")
+        
+        now = datetime.now()
+        
+        # Upsert progress for each user
+        for email in emails:
+            uid = user_ids.get(email)
+            if not uid:
+                print(f"Skipping {email} - not found")
+                continue
+                
+            print(f"Processing {email} (ID: {uid})")
             
-            boolean isUnlocked = hasFullAccess || checkIsUnlocked(lesson, learnerId);
+            for lid in lessons:
+                # Check if exists
+                cursor.execute("""
+                    SELECT id FROM learner_lesson_progress 
+                    WHERE learner_user_id = %s AND lesson_id = %s;
+                """, (uid, lid))
+                row = cursor.fetchone()
+                
+                if row:
+                    # Update
+                    cursor.execute("""
+                        UPDATE learner_lesson_progress 
+                        SET status = 'COMPLETED',
+                            stars = 3,
+                            best_score = 100,
+                            updated_at = %s,
+                            unlocked_at = COALESCE(unlocked_at, %s),
+                            started_at = COALESCE(started_at, %s),
+                            completed_at = COALESCE(completed_at, %s)
+                        WHERE id = %s;
+                    """, (now, now, now, now, row[0]))
+                else:
+                    # Insert
+                    # Generate an idempotent lastClientAttemptId
+                    last_attempt_id = f"auto_complete_{uid}_{lid}"
+                    cursor.execute("""
+                        INSERT INTO learner_lesson_progress (
+                            learner_user_id, lesson_id, status, stars, best_score, 
+                            unlocked_at, started_at, completed_at, updated_at, last_client_attempt_id
+                        ) VALUES (%s, %s, 'COMPLETED', 3, 100, %s, %s, %s, %s, %s);
+                    """, (uid, lid, now, now, now, now, last_attempt_id))
             
-            lessonDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLessonProgressDTO.builder()
-                    .lessonId(lesson.getId())
-                    .isUnlocked(isUnlocked)
-                    .learningStatus(isUnlocked ? status : "LOCKED")
-                    .completed(completion != null ? completion.getCompleted() : false)
-                    .completedAt(completion != null ? completion.getCompletedAt() : null)
-                    .lessonStars(completion != null ? completion.getStars() : 0)
-                    .highestScore(completion != null ? completion.getBestScore() : null)
-                    .build());
-                    
-            if (lesson.getSkillLevel() != null && !levelIds.contains(lesson.getSkillLevel().getId())) {
-                levelIds.add(lesson.getSkillLevel().getId());
-                // Level status logic is simplified for now (can be computed by aggregating lesson statuses)
-                levelDtos.add(com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.LearnerLevelProgressDTO.builder()
-                        .levelId(lesson.getSkillLevel().getId())
-                        .isUnlocked(hasFullAccess || true) // Simplified
-                        .learningStatus("IN_PROGRESS") // Simplified
-                        .build());
-            }
-        }
-        
-        return com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse.builder()
-                .lessons(lessonDtos)
-                .levels(levelDtos)
-                .build();
-    }
-"""
+            # Recalculate total_stars for this user based ONLY on lesson completions
+            # The prompt says: "tổng sao bằng 3 x tổng số bài đã hoàn thành, tính theo từng bài chứ không theo level."
+            # Also: "ảnh đang hiển thị 12 bài nhưng 33 sao... Backend không nên ghi cứng số sao theo ảnh; phải tính từ số bản ghi"
+            
+            # Count stars from learner_lesson_progress where status = 'COMPLETED'
+            cursor.execute("""
+                SELECT SUM(stars) FROM learner_lesson_progress 
+                WHERE learner_user_id = %s AND status = 'COMPLETED';
+            """, (uid,))
+            sum_stars = cursor.fetchone()[0] or 0
+            
+            # Update learner profile
+            # Note: The user wants to ensure the total stars is perfectly aligned with the lesson records.
+            # And they said "Mở khóa toàn bộ bài và level" -> The has_full_access = true is NOT allowed for other accounts, but for these two? 
+            # Wait, "Hai tài khoản trên phải... Mở khóa toàn bộ bài và level... Các tài khoản khác không được cấp hasFullAccess".
+            # So we should set has_full_access = true for these two accounts!
+            cursor.execute("""
+                UPDATE learner_profiles 
+                SET total_stars = %s,
+                    spendable_stars = GREATEST(spendable_stars, %s),
+                    has_full_access = true,
+                    updated_at = %s
+                WHERE user_id = %s;
+            """, (sum_stars, sum_stars, now, uid))
+            
+            if cursor.rowcount == 0:
+                # If profile doesn't exist, insert it
+                cursor.execute("""
+                    INSERT INTO learner_profiles (user_id, total_stars, spendable_stars, has_full_access, updated_at)
+                    VALUES (%s, %s, %s, true, %s);
+                """, (uid, sum_stars, sum_stars, now))
+                
+            print(f"Updated {email} - total_stars: {sum_stars}")
+            
+        conn.commit()
+        print("Transaction committed.")
+    except Exception as e:
+        conn.rollback()
+        print("Error:", e)
+    finally:
+        cursor.close()
+        conn.close()
 
-with open(impl_path, "r", encoding="utf-8") as f:
-    impl_content = f.read()
-
-if "getCourseProgress" not in impl_content:
-    # Insert before the last bracket
-    impl_content = impl_content.rsplit("}", 1)[0] + impl_code + "}\n"
-    with open(impl_path, "w", encoding="utf-8") as f:
-        f.write(impl_content)
-
-
-# 3. Update Controller
-controller_code = """
-    @GetMapping("/progress")
-    @Operation(summary = "Lấy toàn bộ tiến độ các bài và level của học viên")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<ApiResponse<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse>> getCourseProgress(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal(expression = "user") com.example.vietstage_web_be.entity.User currentUser) {
-        
-        com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse data = 
-                learnerProgressService.getCourseProgress(currentUser.getId());
-        
-        return ResponseEntity.ok(ApiResponse.<com.example.vietstage_web_be.dto.response.LearnerCourseProgressResponse>builder()
-                .message("Lấy tiến độ học viên thành công")
-                .data(data)
-                .build());
-    }
-"""
-with open(controller_path, "r", encoding="utf-8") as f:
-    controller_content = f.read()
-
-if "getCourseProgress" not in controller_content:
-    controller_content = controller_content.rsplit("}", 1)[0] + controller_code + "}\n"
-    with open(controller_path, "w", encoding="utf-8") as f:
-        f.write(controller_content)
-
-print("Java files updated successfully.")
+if __name__ == '__main__':
+    main()

@@ -15,4 +15,5 @@ public class LearnerForInstructorResponse {
     private String email;
     private String userCode;
     private String instrumentName;
+    private java.util.List<LessonProgressDto> lessonProgress;
 }

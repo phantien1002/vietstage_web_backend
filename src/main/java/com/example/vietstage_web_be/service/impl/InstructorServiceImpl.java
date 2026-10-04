@@ -134,12 +134,28 @@ public class InstructorServiceImpl implements IInstructorService {
         Page<User> learners = userRepository.findActiveLearnersByInstrument(instrumentId, search, pageable);
         return learners.map(user -> {
             String instrumentName = instrumentId != null ? "Selected Instrument" : "All";
+            
+            List<Object[]> progressData = lessonCompletionRepository.findLearnerProgressList(user.getId(), instrumentId, null);
+            List<com.example.vietstage_web_be.dto.response.LessonProgressDto> lessonProgressList = progressData.stream().map(row -> {
+                Long lessonId = (Long) row[0];
+                String title = (String) row[1];
+                Integer stars = ((Number) row[2]).intValue();
+                Boolean completed = (Boolean) row[3];
+                return com.example.vietstage_web_be.dto.response.LessonProgressDto.builder()
+                        .lessonId(lessonId)
+                        .title(title)
+                        .status(Boolean.TRUE.equals(completed) ? "COMPLETED" : "LOCKED")
+                        .stars(stars)
+                        .build();
+            }).collect(Collectors.toList());
+
             return com.example.vietstage_web_be.dto.response.LearnerForInstructorResponse.builder()
                     .id(user.getId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
                     .userCode(user.getUserCode())
                     .instrumentName(instrumentName)
+                    .lessonProgress(lessonProgressList)
                     .build();
         });
     }
