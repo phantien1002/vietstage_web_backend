@@ -66,6 +66,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     }
 
     @Override
+    @Transactional
     public MyCosmeticsResponse getMyCosmetics(User learner) {
         List<CosmeticItem> allActiveItems = cosmeticItemRepository.findByStatus("ACTIVE");
         List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
@@ -102,6 +103,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
     }
 
     @Override
+    @Transactional
     public EquipCosmeticResponse equipCosmetic(User learner, Long cosmeticId, boolean isEquipped) {
         List<LearnerCosmetic> ownedCosmetics = learnerCosmeticRepository.findByLearnerId(learner.getId());
         
