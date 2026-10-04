@@ -315,6 +315,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                             .user(learner)
                             .totalStars(0)
                             .spendableStars(0)
+                            .updatedAt(LocalDateTime.now())
                             .build();
                     return learnerProfileRepository.save(newProfile);
                 });

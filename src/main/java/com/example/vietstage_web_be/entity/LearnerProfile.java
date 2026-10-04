@@ -47,6 +47,7 @@ public class LearnerProfile {
     @Column(name = "last_practice_date")
     private LocalDate lastPracticeDate;
 
+    @org.hibernate.annotations.UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
