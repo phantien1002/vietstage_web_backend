@@ -14,17 +14,16 @@ import java.time.LocalDateTime;
 @Table(name = "learner_cosmetics")
 public class LearnerCosmetic {
 
-    @EmbeddedId
-    @Builder.Default
-    private LearnerCosmeticsId id = new LearnerCosmeticsId();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("learnerId")
-    @JoinColumn(name = "learner_id")
+    @JoinColumn(name = "learner_user_id")
     private User learner;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("cosmeticItemId")
     @JoinColumn(name = "cosmetic_item_id")
     private CosmeticItem cosmeticItem;
 

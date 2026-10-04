@@ -76,11 +76,11 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .collect(Collectors.toSet());
 
         List<LearnerCosmeticResponse> owned = ownedCosmetics.stream()
+                .filter(lc -> "ACTIVE".equals(lc.getCosmeticItem().getStatus()) && "ROOM_DECOR".equals(lc.getCosmeticItem().getItemType()))
                 .map(lc -> LearnerCosmeticResponse.builder()
                         .id(lc.getCosmeticItem().getId())
                         .name(lc.getCosmeticItem().getName())
                         .itemType(lc.getCosmeticItem().getItemType())
-                        
                         .starPrice(lc.getCosmeticItem().getStarPrice())
                         .assetUrl(lc.getCosmeticItem().getAssetUrl())
                         .isEquipped(lc.getIsEquipped())
@@ -89,7 +89,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .collect(Collectors.toList());
 
         List<CosmeticItemResponse> locked = allActiveItems.stream()
-                .filter(item -> !ownedItemIds.contains(item.getId()))
+                .filter(item -> !ownedItemIds.contains(item.getId()) && "ROOM_DECOR".equals(item.getItemType()))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
@@ -113,10 +113,12 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
         if (isEquipped) {
             // Auto unequip other items of the same type
             String itemType = targetCosmetic.getCosmeticItem().getItemType();
-            for (LearnerCosmetic lc : ownedCosmetics) {
-                if (Boolean.TRUE.equals(lc.getIsEquipped()) && lc.getCosmeticItem().getItemType().equals(itemType)) {
-                    lc.setIsEquipped(false);
-                    learnerCosmeticRepository.save(lc);
+            if (!"ROOM_DECOR".equals(itemType)) {
+                for (LearnerCosmetic lc : ownedCosmetics) {
+                    if (Boolean.TRUE.equals(lc.getIsEquipped()) && lc.getCosmeticItem().getItemType().equals(itemType)) {
+                        lc.setIsEquipped(false);
+                        learnerCosmeticRepository.save(lc);
+                    }
                 }
             }
         }
@@ -195,6 +197,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
                 .cosmeticItem(item)
                 .isEquipped(false)
                 .clientRequestId(request != null ? request.getClientRequestId() : null)
+                .unlockedAt(LocalDateTime.now())
                 .build();
         learnerCosmeticRepository.save(ownership);
 
@@ -291,20 +294,7 @@ public class CosmeticsServiceImpl implements ICosmeticsService {
         return mapToResponse(item);
     }
 
-    @Override
-    public void deleteCosmeticItem(Long id) {
-        CosmeticItem item = cosmeticItemRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        
-        long ownersCount = learnerCosmeticRepository.countByCosmeticItemId(id);
-        if (ownersCount == 0) {
-            cosmeticItemRepository.delete(item);
-        } else {
-            // Soft delete
-            item.setStatus("INACTIVE");
-            cosmeticItemRepository.save(item);
-        }
-    }
+
 
     private CosmeticItemResponse mapToResponse(CosmeticItem item) {
         return CosmeticItemResponse.builder()

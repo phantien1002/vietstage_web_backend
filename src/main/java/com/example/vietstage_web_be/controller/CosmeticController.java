@@ -103,10 +103,5 @@ public class CosmeticController {
         return ResponseEntity.ok(BaseResponse.success(response));
     }
 
-    @DeleteMapping("/admin/cosmetics/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<BaseResponse<String>> deleteCosmetic(@PathVariable Long id) {
-        cosmeticsService.deleteCosmeticItem(id);
-        return ResponseEntity.ok(BaseResponse.success("Deleted successfully"));
-    }
+
 }

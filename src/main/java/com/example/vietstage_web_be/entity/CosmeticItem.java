@@ -27,7 +27,7 @@ public class CosmeticItem {
     @Column(name = "asset_url")
     private String assetUrl;
 
-    @Column(name = "star_price")
+    @Column(name = "unlock_value")
     @Builder.Default
     private Integer starPrice = 0;
 

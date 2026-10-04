@@ -17,5 +17,5 @@ public interface ICosmeticsService {
     com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest saveCosmeticLayout(User learner, com.example.vietstage_web_be.dto.request.CosmeticLayoutRequest layout);
     CosmeticItemResponse createCosmeticItem(com.example.vietstage_web_be.dto.request.CreateCosmeticRequest request);
     CosmeticItemResponse updateCosmeticItem(Long id, com.example.vietstage_web_be.dto.request.UpdateCosmeticRequest request);
-    void deleteCosmeticItem(Long id);
+
 }
