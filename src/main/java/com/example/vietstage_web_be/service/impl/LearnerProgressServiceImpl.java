@@ -42,6 +42,7 @@ public class LearnerProgressServiceImpl implements ILearnerProgressService {
                     User user = userRepository.findById(learnerId)
                             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "User not found: " + learnerId));
                     LearnerProfile newProfile = LearnerProfile.builder()
+                            .userId(learnerId)
                             .user(user)
                             .totalPracticeSeconds(0L)
                             .totalStars(0)
