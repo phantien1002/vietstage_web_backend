@@ -45,6 +45,7 @@ public class MinigameServiceImpl implements IMinigameService {
     private final ILeaderboardService leaderboardService;
     private final AppConfigRepository appConfigRepository;
     private final LearnerProfileRepository learnerProfileRepository;
+    private final com.example.vietstage_web_be.repository.InstrumentRepository instrumentRepository;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
@@ -100,7 +101,11 @@ public class MinigameServiceImpl implements IMinigameService {
     public MinigameChallengeResponse createMinigameByInstrument(User actor, Long instrumentId, MinigameChallengeRequest request) {
         validateMinigameRequest(request);
 
+        com.example.vietstage_web_be.entity.Instrument instrument = instrumentRepository.findById(instrumentId)
+                .orElseThrow(() -> new AppException(ErrorCode.INSTRUMENT_NOT_FOUND));
+
         MinigameChallenge challenge = MinigameChallenge.builder()
+                .instrument(instrument)
                 .title(request.getTitle())
                 .challengeType(request.getChallengeType())
                 .contentJson(prepareContentJson(null, request))
@@ -121,7 +126,7 @@ public class MinigameServiceImpl implements IMinigameService {
         validateMinigameRequest(request);
         MinigameChallenge challenge = challengeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
-        validateLessonOwnership(actor, challenge.getLesson());
+        validateChallengeOwnership(actor, challenge);
 
         challenge.setTitle(request.getTitle());
         challenge.setChallengeType(request.getChallengeType());
@@ -142,7 +147,7 @@ public class MinigameServiceImpl implements IMinigameService {
     public void deleteMinigame(User actor, Long id) {
         MinigameChallenge challenge = challengeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.MINIGAME_NOT_FOUND));
-        validateLessonOwnership(actor, challenge.getLesson());
+        validateChallengeOwnership(actor, challenge);
         
         if (challenge.getAttempts() != null && !challenge.getAttempts().isEmpty()) {
             challenge.setStatus("ARCHIVED");
@@ -361,11 +366,31 @@ public class MinigameServiceImpl implements IMinigameService {
     }
 
     private void validateLessonOwnership(User actor, Lesson lesson) {
-        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getName())) {
+        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getRoleName())) {
             return;
         }
-        if (actor == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
+        if (actor == null || lesson == null || lesson.getCreatedBy() == null || !actor.getId().equals(lesson.getCreatedBy().getId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED_LESSON_ACCESS);
+        }
+    }
+
+    private void validateChallengeOwnership(User actor, MinigameChallenge challenge) {
+        if (actor != null && actor.getRole() != null && "ADMIN".equalsIgnoreCase(actor.getRole().getRoleName())) {
+            return;
+        }
+        if (actor != null && actor.getRole() != null && "LEARNER".equalsIgnoreCase(actor.getRole().getRoleName())) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        if (challenge.getLesson() != null) {
+            validateLessonOwnership(actor, challenge.getLesson());
+        } else if (challenge.getInstrument() != null) {
+            // Instructor managing instrument-level minigames.
+            // Currently allowed for all INSTRUCTORs.
+            if (actor == null || !"INSTRUCTOR".equalsIgnoreCase(actor.getRole().getRoleName())) {
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
+        } else {
+            throw new AppException(ErrorCode.FORBIDDEN);
         }
     }
 
